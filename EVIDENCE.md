@@ -988,3 +988,49 @@ Next action:
     ai-loop scaffold
   Keep .ai-loop runtime requests/results/logs/locks out of commits.
 ```
+
+## Commit Split and Project Admin Planning - 2026-06-17
+
+```text
+Date: 2026-06-17
+Agent: Codex
+Purpose:
+  Close the post-cleanup session after committing the current baseline and preparing the next product slice.
+
+Completed commit split:
+  2f20dc9 feat: implement initial setup project slice
+  9ac41aa chore: refresh local ai loop skills
+  c6dafeb chore: add review-only ai loop scaffold
+  b051f93 docs: update evidence and next session handoff
+
+Project Admin planning commits:
+  e47e8a8 docs: design project admin member access slice
+  85dd1cc docs: plan project admin member access implementation
+
+User-confirmed product boundary:
+  Project and Member are peer resources.
+  Project admins grant project-specific member access.
+  One member can belong to multiple projects with different roles.
+  Company information is excluded from this slice.
+  HTML viewer/visual work should be created only when explicitly requested.
+
+Created:
+  docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md
+  docs/superpowers/plans/2026-06-17-project-admin-member-access.md
+
+No implementation code changed for Project Admin:
+  src/ProjectAdminView.tsx was not created.
+  src/projectAdminData.ts was not created.
+  src/App.tsx was not changed for Project Admin.
+
+Verification:
+  No fresh npm test/build/browser verification was run after the Project Admin design and plan commits.
+  The most recent automated verification remains the stale-document cleanup pass recorded above:
+    powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\test-ai-loop-hook.ps1: PASS
+    npm test: PASS, 1 test file / 6 tests passed.
+    npm run build: PASS, tsc && vite build completed.
+
+Next action:
+  Start the next session from Task 0 in docs/superpowers/plans/2026-06-17-project-admin-member-access.md.
+  Do not start Project Admin implementation code before the feature-doc updates and planning gate pass.
+```
