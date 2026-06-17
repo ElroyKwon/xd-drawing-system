@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "project": "xd-drawing-system",
+  "current_mode": "review-only",
+  "automation_status": "test-scaffold",
+  "last_request_id": "0003-baseline-review-ai-terminal",
+  "allowed_modes": [
+    "review-only"
+  ],
+  "blocked_actions": [
+    "file-edit",
+    "format",
+    "commit",
+    "dependency-install",
+    "external-api",
+    "database",
+    "auth",
+    "permission",
+    "deployment"
+  ]
+}

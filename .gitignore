@@ -11,3 +11,14 @@ coverage/
 .env.*
 *.log
 desktop.ini
+.ai-loop/control/inbox/*.request.md
+.ai-loop/control/outbox/*.done.md
+.ai-loop/control/processed/*.request.md
+.ai-loop/workers/codex/inbox/*.request.md
+.ai-loop/workers/codex/running/*.request.md
+.ai-loop/workers/codex/processed/*.request.md
+.ai-loop/workers/codex/results/*.result.md
+.ai-loop/results/*.result.md
+.ai-loop/locks/*
+.ai-loop/logs/*
+!.ai-loop/**/.gitkeep
