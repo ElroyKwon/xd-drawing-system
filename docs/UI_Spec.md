@@ -102,3 +102,66 @@
 - Tablet/mobile: Controls may stack, and the project table may become a horizontally scrollable table or compact list, but text must not overlap or clip.
 - Modal: Width is constrained to viewport, body can scroll if height is insufficient, footer remains reachable.
 - Buttons and labels must fit in Korean at supported widths.
+
+## UI-PA-001 Project Admin Member Access
+
+### Screen
+
+| ID | Screen | Source evidence |
+|---|---|---|
+| UI-PA-001 | Project Admin 구성원 access view for `Study_Project` | ACC #2 `ScreenShot Tool -20260612102437.png`; ACC #3 `Video Screen1781227558018.png` |
+
+### Layout
+
+- Project/Admin context shows `Project Admin` and `Study_Project`.
+- Left rail shows Project Admin navigation with `구성원` selected.
+- Any `회사` rail label is only non-selected navigation context; company information and company management are excluded from this slice.
+- Main panel heading is `구성원`.
+- Main action is `구성원 추가`.
+- Toolbar contains `내보내기`, search, filter affordance, and column/settings affordance.
+- Member access table columns are `이름`, `이메일`, `전화`, `상태`, `역할`, `추가된 일시`.
+- Right inspector shows selected member identity and project-specific role/status.
+
+### Fields
+
+| Field | Display | Requirement |
+|---|---|---|
+| projectName | `Study_Project` context label | FR-PA-001 |
+| name | Member name | FR-PA-002, FR-PA-003, FR-PA-004 |
+| email | Member email | FR-PA-002, FR-PA-003, FR-PA-004 |
+| phone | Member phone | FR-PA-002, FR-PA-004 |
+| status | Project access status, e.g. `활성`, `대기` | FR-PA-002, FR-PA-004 |
+| role | Project-specific role, one of `관리자`, `편집자`, `뷰어` | FR-PA-004, FR-PA-008 |
+| addedAt | Project access added date/time | FR-PA-002 |
+
+### Actions
+
+| Action | Result | Requirement | User-flow step |
+|---|---|---|---|
+| Enter Project Admin from `Study_Project` | Opens Project Admin member access view | FR-PA-001 | UF-PA-001 |
+| Search by name/email | Filters project-access member rows | FR-PA-003 | UF-PA-003 |
+| Clear search | Restores current project access rows | FR-PA-003 | UF-PA-004 |
+| Select member row | Updates right inspector | FR-PA-004 | UF-PA-005 |
+| Click `구성원 추가` | Opens add-existing-member modal | FR-PA-005 | UF-PA-006 |
+| Submit with no member | Shows `구성원을 선택하세요.` and keeps modal open | FR-PA-006 | UF-PA-008 |
+| Submit duplicate member | Shows `이미 이 프로젝트에 추가된 구성원입니다.` and keeps modal open | FR-PA-007 | UF-PA-009 |
+| Submit valid member + role | Adds one local access row and closes modal | FR-PA-008 | UF-PA-010 |
+| Cancel/close add modal | Closes modal without data mutation | FR-PA-005 | UF-PA-012 |
+
+### Add Existing Member Modal
+
+- Title: `구성원 추가`.
+- Fields: existing member selector and role selector.
+- Role choices: `관리자`, `편집자`, `뷰어`.
+- Buttons: `취소`, `추가`, close icon.
+- Validation messages must be exactly:
+  - `구성원을 선택하세요.`
+  - `이미 이 프로젝트에 추가된 구성원입니다.`
+
+### Project Admin States
+
+- Empty selection validation: Add submit is blocked until a member is chosen.
+- Duplicate validation: Same `projectId` + `memberId` cannot be added twice.
+- Empty search result: show stable table shell or compact empty row without mutating state.
+- Server error: Not required because this slice has no backend.
+- Company scope: no company fields, company details, or company management actions are shown; this covers FR-PA-009.

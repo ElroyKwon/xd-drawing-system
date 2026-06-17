@@ -1034,3 +1034,61 @@ Next action:
   Start the next session from Task 0 in docs/superpowers/plans/2026-06-17-project-admin-member-access.md.
   Do not start Project Admin implementation code before the feature-doc updates and planning gate pass.
 ```
+
+## Project Admin Member Access Document Loop - 2026-06-17
+
+```text
+Date: 2026-06-17
+Agent: Codex
+Purpose:
+  Execute Task 0 from docs/superpowers/plans/2026-06-17-project-admin-member-access.md before any Project Admin implementation code.
+
+Created:
+  docs/feature-notes/002-project-admin-member-access.md
+
+Updated:
+  docs/PRD.md
+  docs/TRD.md
+  docs/UI_Spec.md
+  docs/Data_Model.md
+  docs/Task_List.md
+  docs/Acceptance_Criteria.md
+  docs/Test_Scenarios.md
+  docs/Design_Map.md
+  docs/User_Flow.md
+  docs/Planning_Gate_Checklist.md
+  SPEC.md
+  PLAN.md
+  CHECKS.md
+  HUMAN_GATE.md
+
+Planning gate result:
+  PASS for Project Admin member access local mock slice.
+  No required docs missing.
+  FR-PA-001 through FR-PA-009 map to task, acceptance, test, UI, data, design, and user-flow documents.
+  Company information, company management, auth/RBAC, DB/API, email invite, access deletion, Autodesk cloud/API, paid SDK, customer data, and deployment remain out of scope.
+
+Implementation status:
+  Not started in this Task 0 document loop.
+  src/projectAdminData.ts was not created.
+  src/ProjectAdminView.tsx was not created.
+  src/App.tsx was not changed for Project Admin.
+
+Verification:
+  rg -n "FR-PA-00[1-9]" docs SPEC.md PLAN.md CHECKS.md HUMAN_GATE.md EVIDENCE.md
+    PASS
+  rg -n "Company|회사" docs\PRD.md docs\TRD.md docs\UI_Spec.md docs\Data_Model.md docs\Task_List.md docs\Acceptance_Criteria.md docs\Test_Scenarios.md docs\Design_Map.md docs\User_Flow.md docs\Planning_Gate_Checklist.md
+    PASS; matches are limited to explicit out-of-scope, excluded-company, or non-selected navigation-context statements.
+  Planning gate review per .agents\skills\planning-gate\SKILL.md
+    PASS
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\test-ai-loop-hook.ps1
+    PASS; AI loop hook scaffold verification passed.
+  npm test
+    PASS; 1 test file / 6 tests passed.
+  npm run build
+    PASS; tsc && vite build completed.
+
+Next action:
+  Commit Task 0 docs/gate changes.
+  Then begin Task 1 with TDD: write failing projectAdminData helper tests before creating implementation code.
+```

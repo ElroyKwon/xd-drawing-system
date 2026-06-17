@@ -81,3 +81,58 @@ Project
 | FR-IS-007 | No mutation on cancel/close. |
 | FR-IS-008 | Data does not drive layout overflow; long text must be handled by UI. |
 | FR-IS-009 | Local-only persistence boundary. |
+
+## Project Admin Member Access Model
+
+The second slice adds peer-level `Project`, `Member`, and `ProjectMemberAccess` mock records. It does not introduce company entities, auth entities, database schema, or API contracts.
+
+### Entities
+
+```text
+Project
+- id: string
+- name: string
+
+Member
+- id: string
+- name: string
+- email: string
+- phone: string
+
+ProjectMemberAccess
+- projectId: string
+- memberId: string
+- role: "관리자" | "편집자" | "뷰어"
+- status: "활성" | "대기"
+- addedAt: string
+```
+
+### Duplicate Rule
+
+- A `Member` may have access to many projects.
+- One project/member pair may have only one `ProjectMemberAccess` record.
+- Duplicate submit is blocked with `이미 이 프로젝트에 추가된 구성원입니다.`
+
+### CRUD Expectations
+
+| Operation | Required? | Notes |
+|---|---:|---|
+| Create | Yes | Valid add appends one local `ProjectMemberAccess` row. |
+| Read | Yes | Project Admin table reads derived rows for `Study_Project`. |
+| Update | No | Role editing beyond selected add role is not required in this slice. |
+| Delete | No | Access deletion/revocation is out of scope and human-gated. |
+| Undo | No | Cancel/close is a no-change flow, not an undo flow. |
+
+### Project Admin Requirement Mapping
+
+| Requirement ID | Data support |
+|---|---|
+| FR-PA-001 | `selectedProject` mock record uses `Study_Project`. |
+| FR-PA-002 | `ProjectMemberAccess` records filtered by selected project. |
+| FR-PA-003 | `Member.name` and `Member.email` are search targets. |
+| FR-PA-004 | Derived access row contains member identity plus role/status. |
+| FR-PA-005 | Modal state does not create a persistent entity until valid submit. |
+| FR-PA-006 | Empty `memberId` is invalid. |
+| FR-PA-007 | Existing same project/member access is invalid. |
+| FR-PA-008 | Valid submit creates one local access record with selected role. |
+| FR-PA-009 | Separate peer-level data types exclude company/auth/DB/API scope. |

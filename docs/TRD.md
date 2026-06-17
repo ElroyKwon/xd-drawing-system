@@ -59,3 +59,51 @@
 | FR-IS-007 | Close modal without state mutation on cancel/close. |
 | FR-IS-008 | Validate layout manually in desktop/mobile browser and check console. |
 | FR-IS-009 | Keep all data and integration boundaries local-only. |
+
+## Project Admin Member Access Technical Addendum
+
+The Project Admin member-access slice remains frontend-only and uses local mock state. It does not introduce routing libraries, backend persistence, authentication, authorization, database schema, Autodesk cloud/API, paid SDK, deployment, or customer drawing data.
+
+### Data Types
+
+```text
+Project
+- id
+- name
+
+Member
+- id
+- name
+- email
+- phone
+
+ProjectMemberAccess
+- projectId
+- memberId
+- role
+- status
+- addedAt
+```
+
+Derived UI rows join `ProjectMemberAccess` to `Member` by `memberId`. Duplicate access is blocked when the same `projectId` and `memberId` already exist.
+
+### Frontend Handling
+
+- `src/projectAdminData.ts` will own types, mock records, constants, and helper functions.
+- `src/ProjectAdminView.tsx` will own local state, table filtering, row selection, inspector display, add modal state, and validation messages.
+- `src/App.tsx` will expose a small local entry path from `Study_Project` to Project Admin without adding a router.
+- Company information is excluded; if a non-selected `회사` navigation label appears for Project Admin context, it must not expose company fields or management behavior.
+
+### Project Admin Requirement Mapping
+
+| Requirement ID | Technical handling |
+|---|---|
+| FR-PA-001 | Render `ProjectAdminView` for `Study_Project` from local app state. |
+| FR-PA-002 | Build rows by joining `ProjectMemberAccess` to `Member` and filtering by selected project. |
+| FR-PA-003 | Filter derived rows by lowercase member name/email match. |
+| FR-PA-004 | Store selected `memberId` and render details in the right inspector. |
+| FR-PA-005 | Toggle add-existing-member modal visibility from `구성원 추가`. |
+| FR-PA-006 | Block submit and show `구성원을 선택하세요.` when no member is selected. |
+| FR-PA-007 | Block duplicate project/member submit and show `이미 이 프로젝트에 추가된 구성원입니다.` |
+| FR-PA-008 | Append one local `ProjectMemberAccess` row with selected role and close the modal. |
+| FR-PA-009 | Keep `Project`, `Member`, and `ProjectMemberAccess` separate and avoid company/auth/DB/API scope. |

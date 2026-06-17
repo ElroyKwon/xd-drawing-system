@@ -31,10 +31,51 @@
 6. `UF-IS-013` User clicks the close button.
 7. System closes the modal and leaves the project list count unchanged.
 
+## Project Admin Member Access Flow
+
+1. `UF-PA-001` User opens Project Admin member access for `Study_Project` from the project list.
+2. `UF-PA-002` System shows Project Admin with `구성원` selected and the current `Study_Project` access rows.
+3. `UF-PA-003` User searches by member name or email.
+4. `UF-PA-004` User clears search and sees all current `Study_Project` access rows again.
+5. `UF-PA-005` User selects a member row.
+6. System updates the right inspector with the selected member's project-specific role and status.
+7. `UF-PA-006` User clicks `구성원 추가`.
+8. `UF-PA-007` System opens the add-existing-member modal.
+9. `UF-PA-010` User selects a member without current access, chooses `관리자`, `편집자`, or `뷰어`, and submits.
+10. `UF-PA-011` System adds one local `ProjectMemberAccess` row, closes the modal, and shows the new row in the table.
+
+## Project Admin Validation Flow
+
+1. `UF-PA-006` User clicks `구성원 추가`.
+2. `UF-PA-007` System opens the add-existing-member modal.
+3. `UF-PA-008` User submits without selecting a member.
+4. System shows `구성원을 선택하세요.` and does not add access.
+5. User selects an already-added member.
+6. `UF-PA-009` User submits duplicate access for the same project/member pair.
+7. System shows `이미 이 프로젝트에 추가된 구성원입니다.` and does not add access.
+8. `UF-PA-012` User clicks `취소` or close.
+9. System closes the modal without mutating access rows.
+
+## Project Admin Requirement Mapping
+
+| Requirement ID | User-flow coverage |
+|---|---|
+| FR-PA-001 | UF-PA-001, UF-PA-002 |
+| FR-PA-002 | UF-PA-002 |
+| FR-PA-003 | UF-PA-003, UF-PA-004 |
+| FR-PA-004 | UF-PA-005 |
+| FR-PA-005 | UF-PA-006, UF-PA-007 |
+| FR-PA-006 | UF-PA-008 |
+| FR-PA-007 | UF-PA-009 |
+| FR-PA-008 | UF-PA-010, UF-PA-011 |
+| FR-PA-009 | Out-of-scope flow list keeps company/auth/DB/API outside the Project Admin member-access flow. |
+
 ## Out Of Scope Flows
 
 - User does not log in.
-- User does not manage project members, companies, roles, or permissions.
+- User does not manage company information or company records.
+- User does not create new user accounts or send email invitations.
+- User does not enforce real RBAC or edit a role/permission matrix.
 - User does not manage templates beyond selecting a visible modal option.
 - User does not enter the Build module, sheets list, 2D viewer, markup, issue, file, or photo screens.
 - User does not upload, view, edit, or delete customer drawings.

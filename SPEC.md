@@ -33,7 +33,7 @@ Out of scope:
 
 Deferred candidates:
 
-- Project Admin 구성원/회사/역할 관리
+- Project Admin member access
 - Build 앱 셸과 시트 목록
 
 ## Done When
@@ -78,3 +78,38 @@ Done when:
 - `docs/feature-notes/001-initial-setup.md`에 근거 화면, 범위, 사용자 흐름, 데이터 모델, 검증 기준이 연결되어 있다.
 - 구현 후 프로젝트 목록과 프로젝트 작성 모달이 지정된 ACC screenshot 2개와 비교 가능하다.
 - 구현 후 `CHECKS.md`의 초기 설정 화면 수동 검증 기준을 통과하고 결과가 `EVIDENCE.md`에 기록된다.
+
+## Selected Second Product Slice: Project Admin Member Access
+
+Selected scope:
+
+- Project Admin `구성원` access view for `Study_Project`
+- `Project`, `Member`, and `ProjectMemberAccess` peer-level local mock model
+
+In scope:
+
+- Project Admin shell with `구성원` selected
+- Members with access to `Study_Project`
+- Search by member name or email
+- Row selection and right inspector
+- Add existing mock member modal
+- Role choices: `관리자`, `편집자`, `뷰어`
+- Empty selection validation: `구성원을 선택하세요.`
+- Duplicate project/member validation: `이미 이 프로젝트에 추가된 구성원입니다.`
+
+Out of scope:
+
+- Company information and company management
+- New user account creation
+- Email invitation
+- Real authentication, authorization, or RBAC enforcement
+- DB schema, API persistence, deployment
+- Access deletion/revocation
+- Autodesk cloud/API, paid SDK, customer drawing data
+
+Done when:
+
+- `docs/feature-notes/002-project-admin-member-access.md` links the reference screens, scope, user flow, data model, and verification criteria.
+- The seven core docs and UI support docs include FR-PA-001 through FR-PA-009 traceability.
+- The planning gate records PASS for the local mock Project Admin member access slice before implementation starts.
+- Implementation later passes `CHECKS.md` Project Admin manual checks and records evidence in `EVIDENCE.md`.

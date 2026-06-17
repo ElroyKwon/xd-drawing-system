@@ -71,6 +71,29 @@ Pass/fail checks:
 - Browser console has no errors during open, validation, create, cancel, search, and close flows.
 - Desktop and mobile widths do not show overlapping text, clipped button labels, or broken modal layout.
 
+## Manual Checks For Project Admin Member Access
+
+Reference screenshots:
+
+- `reference/acc-screenshots/ScreenShot Tool -20260612102437.png`
+- `reference/acc-screenshots/Video Screen1781227558018.png`
+
+Pass/fail checks:
+
+- Project list exposes a local path to open Project Admin for `Study_Project`.
+- Project Admin shows `Study_Project` context and `구성원` selected in the left rail.
+- Member table shows only current `Study_Project` access rows before adding a new member.
+- Search filters by member name and email and clears back to all current access rows.
+- Selecting a row updates the right inspector.
+- `구성원 추가` modal opens.
+- Empty add submit shows `구성원을 선택하세요.`
+- Duplicate access submit shows `이미 이 프로젝트에 추가된 구성원입니다.`
+- Valid existing member + role submit adds one row and closes the modal.
+- Company information and company management are not shown in the slice.
+- No real auth/RBAC enforcement, DB/API persistence, email invite, access deletion, Autodesk cloud/API, paid SDK, customer drawing, or deployment action is required.
+- Browser console has no errors during open, search, select, add, duplicate validation, cancel, and close flows.
+- Desktop and narrow/mobile widths do not show overlapping text, clipped button labels, or broken modal layout.
+
 ## Current Evidence Files
 
 - `docs/evidence/initial-setup-desktop.png`

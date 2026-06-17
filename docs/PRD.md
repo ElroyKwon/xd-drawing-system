@@ -43,10 +43,61 @@
 | FR-IS-008 | 데스크톱과 모바일 폭에서 주요 버튼, 필드, 테이블/목록, 모달 텍스트가 겹치거나 잘리지 않아야 하며, 브라우저 콘솔 에러가 없어야 한다. | `CHECKS.md` UI 수동 검증; frontend guidance |
 | FR-IS-009 | 이 slice의 데이터는 로컬 mock 데이터로만 동작해야 하며 인증, DB, API, Autodesk 계정, paid SDK, 배포를 요구하지 않아야 한다. | `HUMAN_GATE.md`; user instruction |
 
+## Selected Second Product Slice: Project Admin Member Access
+
+Goal:
+
+- `Study_Project`의 Project Admin에서 프로젝트 접근 구성원 목록과 추가 흐름을 로컬 mock 상태로 검증한다.
+- `Project`, `Member`, `ProjectMemberAccess`를 별도 리소스로 유지한다.
+
+Users:
+
+- Primary user: 프로젝트별 접근 구성원을 확인하고 역할을 부여하는 프로젝트 관리자.
+- Secondary user: 프로젝트 접근 상태를 검토하는 PMO 또는 도면관리 운영자.
+
+In scope:
+
+- Current project context: `Study_Project`.
+- Project Admin shell with `구성원` selected.
+- Members with `ProjectMemberAccess` for `Study_Project`.
+- Search by member name or email.
+- Row selection and right inspector details.
+- Add existing mock member modal.
+- Empty selection and duplicate project/member validation.
+- Role choices: `관리자`, `편집자`, `뷰어`.
+
+Out of scope:
+
+- Company information or company management.
+- New user account creation.
+- Email invitation.
+- Real authentication, authorization, or RBAC enforcement.
+- DB/API persistence.
+- Access deletion/revocation.
+- Autodesk cloud/API integration.
+
+## Project Admin Functional Requirements
+
+| ID | Requirement | Source evidence |
+|---|---|---|
+| FR-PA-001 | Render Project Admin member access view for Study_Project. | ACC #2/#3 screenshots; `docs/feature-notes/002-project-admin-member-access.md` |
+| FR-PA-002 | Show only members with ProjectMemberAccess for Study_Project. | `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md` |
+| FR-PA-003 | Search project-access members by name or email. | ACC #2/#3 search affordance |
+| FR-PA-004 | Select a member row and show right inspector details. | ACC #2 right inspector pattern |
+| FR-PA-005 | Open add-existing-member modal. | ACC #2 `구성원 추가` action |
+| FR-PA-006 | Block add submit when no member is selected. | Local validation requirement |
+| FR-PA-007 | Block duplicate ProjectMemberAccess for the same project/member. | Product decision: one access record per project/member |
+| FR-PA-008 | Add a valid existing member with selected role to Study_Project. | Local mock member access flow |
+| FR-PA-009 | Keep Project, Member, and ProjectMemberAccess separate; exclude company/auth/DB/API. | User-confirmed scope boundary; `HUMAN_GATE.md` |
+
 ## Source Evidence
 
 - `reference/acc-screenshots/ScreenShot Tool -20260612102152.png`
 - `reference/acc-screenshots/Video Screen1781231401038.png`
 - `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #1, #6
 - `docs/feature-notes/001-initial-setup.md`
+- `reference/acc-screenshots/ScreenShot Tool -20260612102437.png`
+- `reference/acc-screenshots/Video Screen1781227558018.png`
+- `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #2, #3
+- `docs/feature-notes/002-project-admin-member-access.md`
 - `SPEC.md`, `CHECKS.md`, `HUMAN_GATE.md`

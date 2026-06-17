@@ -84,10 +84,44 @@ Implementation status:
 - Runtime boundary: local state and mock rows only; no DB/API/Auth/Autodesk/paid SDK/customer data/deployment.
 - Evidence: see `EVIDENCE.md` section `Initial Setup Slice Implementation`.
 
+## Phase 2: Project Admin Member Access Slice
+
+Selected slice:
+
+- `Project Admin - 프로젝트 접근 구성원 관리`
+- Current project context: `Study_Project`
+
+Document-loop tasks:
+
+- [x] Read local loop skills and approved Project Admin design.
+- [x] Create `docs/feature-notes/002-project-admin-member-access.md`.
+- [x] Update `docs/PRD.md`, `docs/TRD.md`, `docs/UI_Spec.md`, `docs/Data_Model.md`, `docs/Task_List.md`, `docs/Acceptance_Criteria.md`, `docs/Test_Scenarios.md`.
+- [x] Update `docs/Design_Map.md`, `docs/User_Flow.md`, `docs/Planning_Gate_Checklist.md`.
+- [x] Update `SPEC.md`, `PLAN.md`, `CHECKS.md`, `HUMAN_GATE.md`, `EVIDENCE.md`.
+- [x] Run document consistency checks for FR-PA-001 through FR-PA-009 and company scope boundaries.
+- [x] Run planning gate for the local mock Project Admin member access slice.
+
+Planning gate status:
+
+- Result: PASS on 2026-06-17.
+- Basis: seven core documents and UI support documents include FR-PA-001 through FR-PA-009, task/acceptance/test mappings are complete, visible UI actions map to user-flow steps, the data model keeps `Project`, `Member`, and `ProjectMemberAccess` separate, and company/auth/DB/API scope remains excluded.
+- Implementation may start only after the docs/gate commit.
+
+Implementation plan after gate:
+
+- [ ] Add Project Admin data helper tests and local mock model.
+- [ ] Add Project Admin view render tests and shell.
+- [ ] Add search and row selection behavior.
+- [ ] Add add-existing-member modal with empty and duplicate validation.
+- [ ] Wire a local path from `Study_Project` in the project list to Project Admin.
+- [ ] Run `npm test`, `npm run build`, browser desktop/narrow checks, and console checks.
+- [ ] Record Project Admin implementation evidence and handoff.
+
 Deferred slices:
 
-1. Project Admin member/company/role screens
-2. Build shell and Sheets list
+1. Build shell and Sheets list
+2. Project Admin role/permission matrix after human approval
+3. Company management after separate scope approval
 
 ## Operating Rule
 

@@ -9,6 +9,11 @@
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #1 | Modal field inventory and reproduction notes. |
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #6 | Project list component inventory and reproduction notes. |
 | `docs/feature-notes/001-initial-setup.md` | Slice boundary, user flow, local mock model. |
+| `reference/acc-screenshots/ScreenShot Tool -20260612102437.png` | Project Admin member list, left rail, add-member action, and right inspector context. |
+| `reference/acc-screenshots/Video Screen1781227558018.png` | Full member table view, search/filter/table structure. |
+| `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #2/#3 | Project Admin 구성원 screen inventory and table/inspector patterns. |
+| `docs/feature-notes/002-project-admin-member-access.md` | Project Admin member access slice boundary and validation rules. |
+| `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md` | Approved ProjectMemberAccess design and exclusions. |
 | `HUMAN_GATE.md` | External integration and risky-change boundaries. |
 
 ## Feature To UI Map
@@ -24,6 +29,15 @@
 | FR-IS-007 | `취소` and close button | User dismisses without changes. |
 | FR-IS-008 | Responsive list/modal layout | User uses the flow at desktop and mobile widths. |
 | FR-IS-009 | Local-only runtime boundary | User completes flow without external accounts or services. |
+| FR-PA-001 | Project Admin shell and `Study_Project` context | User enters Project Admin member access. |
+| FR-PA-002 | Member access table | User reviews current project access members. |
+| FR-PA-003 | Member search input | User filters by name or email and clears search. |
+| FR-PA-004 | Table row and right inspector | User selects a member and reviews project-specific details. |
+| FR-PA-005 | `구성원 추가` action and modal | User opens add-existing-member flow. |
+| FR-PA-006 | Member selector validation | User attempts add without choosing a member. |
+| FR-PA-007 | Duplicate project/member validation | User attempts to add a member already assigned to `Study_Project`. |
+| FR-PA-008 | Existing member selector and role selector | User adds a valid member access row. |
+| FR-PA-009 | Local mock Project/Member/ProjectMemberAccess model | User completes the flow without company/auth/DB/API dependencies. |
 
 ## ACC To XD Adaptation
 
@@ -31,3 +45,4 @@
 - Autodesk cross-sell products shown in ACC screenshots are not functional requirements for this slice.
 - `Build` as default access may remain as a benchmark label in mock data until XD module naming is decided.
 - Template selection is represented only as a modal field; template management remains out of scope.
+- Company references in Project Admin are treated as excluded context only; company details and company management are not implemented in the ProjectMemberAccess slice.
