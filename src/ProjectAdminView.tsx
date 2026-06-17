@@ -4,6 +4,7 @@ import {
   buildProjectAccessRows,
   initialMembers,
   initialProjectAccess,
+  memberHasProjectAccess,
   memberRoles,
   selectedProject,
   type ProjectAccessRow,
@@ -25,7 +26,7 @@ const emptyAddMemberForm: AddMemberForm = {
 };
 
 export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewProps) {
-  const [accessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
+  const [accessRecords, setAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("member-owner");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -63,7 +64,28 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
 
   function submitAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setAddError("구성원을 선택하세요.");
+
+    if (!addForm.memberId) {
+      setAddError("구성원을 선택하세요.");
+      return;
+    }
+
+    if (memberHasProjectAccess(selectedProject.id, addForm.memberId, accessRecords)) {
+      setAddError("이미 이 프로젝트에 추가된 구성원입니다.");
+      return;
+    }
+
+    const nextAccess: ProjectMemberAccess = {
+      projectId: selectedProject.id,
+      memberId: addForm.memberId,
+      role: addForm.role,
+      status: "활성",
+      addedAt: "방금 전"
+    };
+
+    setAccessRecords((current) => [...current, nextAccess]);
+    setSelectedMemberId(addForm.memberId);
+    closeAddModal();
   }
 
   return (
@@ -90,7 +112,7 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
           <strong>{selectedProject.name}</strong>
         </header>
 
-        <section className="admin-panel" aria-labelledby="member-access-title">
+        <section className="admin-panel" aria-label="Project Admin 구성원 목록">
           <div className="admin-heading">
             <h1 id="member-access-title">구성원</h1>
             <button className="primary-action" type="button" onClick={openAddModal}>
@@ -188,14 +210,14 @@ function MemberInspector({ row }: { row: ProjectAccessRow | undefined }) {
       <a href={`mailto:${row.email}`}>{row.email}</a>
       <p>{row.phone}</p>
       <span className="status-pill">{row.status}</span>
-      <label className="field select-field">
+      <div className="field select-field">
         <span>역할</span>
-        <select value={row.role} disabled>
+        <select aria-label="현재 역할" value={row.role} disabled>
           {memberRoles.map((role) => (
             <option key={role}>{role}</option>
           ))}
         </select>
-      </label>
+      </div>
     </aside>
   );
 }

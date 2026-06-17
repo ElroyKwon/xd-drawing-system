@@ -72,4 +72,44 @@ describe("ProjectAdminView", () => {
     expect(within(inspector).getByText("reviewer@xd.local")).toBeInTheDocument();
     expect(within(inspector).getByDisplayValue("편집자")).toBeInTheDocument();
   });
+
+  it("opens add-member modal and blocks empty submit", async () => {
+    const { user } = renderProjectAdmin();
+
+    await user.click(screen.getByRole("button", { name: "구성원 추가" }));
+    expect(screen.getByRole("dialog", { name: "구성원 추가" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "추가" }));
+    expect(screen.getByText("구성원을 선택하세요.")).toBeInTheDocument();
+    expect(accessRows()).toHaveLength(2);
+  });
+
+  it("blocks duplicate project-member access", async () => {
+    const { user } = renderProjectAdmin();
+
+    await user.click(screen.getByRole("button", { name: "구성원 추가" }));
+    await user.selectOptions(screen.getByLabelText("구성원"), "member-owner");
+    await user.click(screen.getByRole("button", { name: "추가" }));
+
+    expect(screen.getByText("이미 이 프로젝트에 추가된 구성원입니다.")).toBeInTheDocument();
+    expect(accessRows()).toHaveLength(2);
+  });
+
+  it("adds an existing mock member with a selected project role", async () => {
+    const { user } = renderProjectAdmin();
+
+    await user.click(screen.getByRole("button", { name: "구성원 추가" }));
+    await user.selectOptions(screen.getByLabelText("구성원"), "member-field");
+    await user.selectOptions(screen.getByLabelText("역할"), "뷰어");
+    await user.click(screen.getByRole("button", { name: "추가" }));
+
+    expect(screen.queryByRole("dialog", { name: "구성원 추가" })).not.toBeInTheDocument();
+    expect(accessRows()).toHaveLength(3);
+    expect(within(accessRows()[2]).getByText("현장 담당자")).toBeInTheDocument();
+
+    await user.click(within(accessRows()[2]).getByText("현장 담당자"));
+    const inspector = screen.getByRole("complementary", { name: "구성원 상세" });
+    expect(within(inspector).getByText("field@xd.local")).toBeInTheDocument();
+    expect(within(inspector).getByDisplayValue("뷰어")).toBeInTheDocument();
+  });
 });
