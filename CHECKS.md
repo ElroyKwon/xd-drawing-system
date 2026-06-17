@@ -11,14 +11,36 @@ Get-ChildItem -File -LiteralPath "D:\_Project\xd-drawing-system\reference\acc-sc
 Get-ChildItem -Recurse -File -LiteralPath "D:\_Project\xd-drawing-system\reference\dks-design-docs\도면관리시스템_상세설계" | Measure-Object
 ```
 
-## Future App Checks
+## Current App Checks
 
-These commands are placeholders for the first app implementation. Do not claim them as passing until a package exists.
+Run these before claiming the current app baseline is passing.
 
 ```powershell
 npm install
 npm run build
 npm test
+npm run dev -- --port 5173
+```
+
+## AI Loop Hook Checks
+
+Run this before claiming the test-scope `.ai-loop` hook scaffold is present.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\test-ai-loop-hook.ps1
+```
+
+Dry-run the first queued review request without launching a worker:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once -DryRun
+```
+
+For normal code changes after dependencies are installed, at minimum run:
+
+```powershell
+npm test
+npm run build
 ```
 
 ## Manual Checks For UI Work
@@ -48,3 +70,10 @@ Pass/fail checks:
 - No external Autodesk account, API, paid SDK, database, customer drawing, or deployment action is required.
 - Browser console has no errors during open, validation, create, cancel, search, and close flows.
 - Desktop and mobile widths do not show overlapping text, clipped button labels, or broken modal layout.
+
+## Current Evidence Files
+
+- `docs/evidence/initial-setup-desktop.png`
+- `docs/evidence/initial-setup-mobile-list.png`
+- `docs/evidence/initial-setup-mobile-modal.png`
+- `docs/evidence/initial-setup-mobile-modal-bottom.png`

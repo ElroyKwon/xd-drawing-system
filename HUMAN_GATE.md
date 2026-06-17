@@ -17,3 +17,4 @@ Decisions already accepted:
 - Product family direction: XD system integration
 - UI/UX source: saved ACC Build screenshots and local analysis documents
 - Initial work: project setup and reference material copy only
+- Initial setup slice implementation may use local mock data and local-only app scaffold.

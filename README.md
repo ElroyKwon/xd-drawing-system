@@ -6,7 +6,14 @@ XD 제품군에 포함될 도면관리 시스템 개발 프로젝트.
 
 ## 현재 단계
 
-초기 세팅 완료. 아직 앱 코드는 만들지 않았다.
+초기 세팅과 첫 구현 slice가 완료되었다.
+
+구현된 slice:
+
+- ACC #6 `프로젝트 목록`
+- ACC #1 `프로젝트 작성 모달`
+
+앱 scaffold는 Vite + React + TypeScript + Vitest 기반이며, 현재 구현은 로컬 mock 데이터와 클라이언트 상태만 사용한다. DB/API/Auth/Autodesk 연동/paid SDK/배포는 아직 없다.
 
 다음 Codex 세션은 이 폴더에서 시작한다.
 
@@ -59,3 +66,11 @@ reference/
 - `HUMAN_GATE.md`: 사람 승인 또는 중단이 필요한 항목
 
 완료로 말하기 전에는 `EVIDENCE.md`에 실제 검증 결과가 있어야 한다.
+
+현재 구현 증거:
+
+- `EVIDENCE.md`의 `Initial Setup Slice Implementation`
+- `docs/evidence/initial-setup-desktop.png`
+- `docs/evidence/initial-setup-mobile-list.png`
+- `docs/evidence/initial-setup-mobile-modal.png`
+- `docs/evidence/initial-setup-mobile-modal-bottom.png`

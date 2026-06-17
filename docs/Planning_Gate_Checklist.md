@@ -22,15 +22,22 @@
 - [x] Data model supports required create/read behavior and explicitly excludes update/delete/undo for this slice.
 - [x] Human approval gates are documented through `HUMAN_GATE.md`, `docs/PRD.md`, `docs/TRD.md`, and `docs/Acceptance_Criteria.md`.
 
-## Boundary Check
+## Pre-Implementation Boundary Check
 
-- [x] No app scaffold.
-- [x] No `npm install`.
-- [x] No UI implementation.
+- [x] The planning-gate pass itself made no app scaffold changes.
+- [x] The planning-gate pass itself made no `npm install` or dependency changes.
+- [x] The planning-gate pass itself made no UI implementation changes.
 - [x] No DB/API/Auth/Autodesk integration.
 - [x] No paid SDK.
 - [x] No customer drawing data.
 - [x] No deployment.
+
+## Post-Gate Implementation Status
+
+- [x] Initial setup slice was implemented after PASS using Vite + React + TypeScript + Vitest.
+- [x] Implementation remains local mock state only.
+- [x] `npm test` and `npm run build` passing evidence is recorded in `EVIDENCE.md`.
+- [x] Desktop/mobile browser evidence is recorded under `docs/evidence/`.
 
 ## Gate Status
 

@@ -1,6 +1,6 @@
 # Test Scenarios
 
-No app exists yet, so these scenarios define the checks to run after implementation is approved and completed.
+These scenarios define the active checks for the implemented local mock initial setup slice.
 
 | Test ID | Requirement ID | Acceptance ID | Scenario | Expected result |
 |---|---|---|---|---|
@@ -16,8 +16,9 @@ No app exists yet, so these scenarios define the checks to run after implementat
 
 ## Automated Checks
 
-- Future app package tests should cover search filtering, required-name validation, successful create append, and cancel/close no-change behavior.
-- Do not claim `npm test`, `npm run build`, or browser automation as passing until an app package exists.
+- `npm test` should cover list structure, search filtering, required-name validation, successful create append, and cancel/close no-change behavior.
+- `npm run build` should pass before the baseline is considered stable.
+- Browser automation or manual browser checks should be recorded in `EVIDENCE.md` with screenshot paths when UI behavior changes.
 
 ## Manual Browser Checks
 

@@ -60,22 +60,29 @@ Enhanced planning gate status:
 - Result: PASS on 2026-06-15.
 - Basis: seven core documents exist and FR-IS-001 through FR-IS-009 map to tasks, acceptance criteria, test scenarios, UI/data support, and local-only boundaries.
 - UI support documents also exist: `docs/Design_Map.md`, `docs/User_Flow.md`, `docs/Planning_Gate_Checklist.md`.
-- Implementation is not started in this session because the session objective is AI development loop skill testing only.
+- Implementation started after this PASS in the 2026-06-15 implementation-loop test session.
 
 Implementation plan after gate:
 
-- [ ] Choose app scaffold and package scripts without changing `reference/`.
-- [ ] Build a hub-level project list screen matching ACC #6 layout.
-- [ ] Add local mock project data.
-- [ ] Add search by project name or number.
-- [ ] Add `+ 프로젝트 만들기` action.
-- [ ] Build the ACC #1 project creation modal.
-- [ ] Add required-name validation.
-- [ ] Add local mock create flow that appends a project to the list.
-- [ ] Add cancel and close flows that do not mutate the list.
-- [ ] Run automated checks available in the app package.
-- [ ] Run manual checks in `CHECKS.md`.
-- [ ] Record implementation evidence in `EVIDENCE.md`.
+- [x] Choose app scaffold and package scripts without changing `reference/`.
+- [x] Build a hub-level project list screen matching ACC #6 layout.
+- [x] Add local mock project data.
+- [x] Add search by project name or number.
+- [x] Add `+ 프로젝트 만들기` action.
+- [x] Build the ACC #1 project creation modal.
+- [x] Add required-name validation.
+- [x] Add local mock create flow that appends a project to the list.
+- [x] Add cancel and close flows that do not mutate the list.
+- [x] Run automated checks available in the app package.
+- [x] Run manual checks in `CHECKS.md`.
+- [x] Record implementation evidence in `EVIDENCE.md`.
+
+Implementation status:
+
+- Result: PASS on 2026-06-15 for the local mock initial setup slice.
+- App scaffold: Vite + React + TypeScript + Vitest.
+- Runtime boundary: local state and mock rows only; no DB/API/Auth/Autodesk/paid SDK/customer data/deployment.
+- Evidence: see `EVIDENCE.md` section `Initial Setup Slice Implementation`.
 
 Deferred slices:
 
