@@ -37,6 +37,8 @@ docs/Planning_Gate_Checklist.md
 
 If the user has already selected the feature or slice and explicitly asks to create the feature-document set, do not restart a separate brainstorming approval loop before writing these documents. Treat the selected slice, existing project docs, and source evidence as the approved planning input.
 
+If the feature or slice is not selected, or if exclusions, persistence boundary, verification route, or browser/E2E needs are unclear, do not create the document set yet. Ask for `socratic-planning` first so the user chooses a concrete scope.
+
 This skill may create planning documents, but it must not scaffold app code, install packages, implement UI, or change runtime behavior. If another skill asks for brainstorming before implementation, apply it after the document scaffold only when the next action would change product behavior or code.
 
 Record any conflict between this document-scaffold flow and a broader brainstorming workflow as a skill-improvement note instead of blocking the requested document pass.

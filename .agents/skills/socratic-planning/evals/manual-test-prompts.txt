@@ -1,0 +1,32 @@
+Manual test prompts for socratic-planning
+=========================================
+
+Use these prompts in a fresh terminal session from:
+
+cd /d D:\_Project\xd-drawing-system
+
+Prompt 1 - unclear ACC first slice
+----------------------------------
+Read AGENTS.md first. Then read .agents/skills/socratic-planning/SKILL.md and follow it.
+
+I want to start the ACC setup area in this project, but I am not sure whether the first slice should be project creation, project list, template selection, or the whole setup wizard.
+
+Do not code. Do not create PRD/TRD/UI/Data/Task/Test documents yet.
+
+First decide the scope using socratic-planning. Give me 2-3 concrete scope candidates, explain inclusions, exclusions, verification difficulty, and recommend one. Stop after asking me to choose.
+
+Prompt 2 - broad calendar MVP
+-----------------------------
+Read .agents/skills/socratic-planning/SKILL.md and follow it.
+
+Build me a no-login personal calendar MVP. It should support events, recurring schedules, drag and drop, notifications, mobile layout, local save, and maybe sync later.
+
+Start with planning, not implementation. Do not create files yet.
+
+Prompt 3 - handoff to feature-docs-scaffold after choice
+--------------------------------------------------------
+Read .agents/skills/socratic-planning/SKILL.md and follow it.
+
+For the ACC setup area, choose the smallest useful slice: project creation modal plus the project list entry after creation. Exclude template management, external APIs, auth, team permissions, and backend persistence. Use local mock/localStorage only if needed. Verification should include a browser scenario.
+
+Produce the Socratic Planning Result handoff block only. Do not create documents yet.

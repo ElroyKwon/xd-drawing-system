@@ -13,6 +13,7 @@ Determine the current development-loop stage and route to the next required skil
 
 ```text
 0. Bootstrap
+0.5 Scope interview
 1. Feature docs
 2. Planning gate
 3. Implementation
@@ -26,6 +27,7 @@ Determine the current development-loop stage and route to the next required skil
 Use these skills as needed:
 
 - `project-bootstrap` for Stage 0
+- `socratic-planning` for Stage 0.5
 - `feature-docs-scaffold` for Stage 1
 - `planning-gate` for Stage 2
 - `validator-loop` for Stage 4
@@ -70,6 +72,7 @@ Then decide:
 | Condition | Stage | Next action |
 |---|---:|---|
 | Project instructions or loop files missing | 0 | Run `project-bootstrap` |
+| Feature or MVP request exists but exact slice, exclusions, persistence, or verification route are unclear | 0.5 | Run `socratic-planning` |
 | Feature selected but 7 core docs missing | 1 | Run `feature-docs-scaffold` |
 | Docs exist but cross-links not verified | 2 | Run `planning-gate` |
 | Gate result is `FAIL` | 1 or 2 | Fix docs; do not implement |
