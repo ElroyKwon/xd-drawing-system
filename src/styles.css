@@ -391,6 +391,22 @@ button {
   border-radius: 4px;
 }
 
+.inline-link-action {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #1476b8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inline-link-action:hover {
+  text-decoration: underline;
+}
+
 .empty-state {
   min-width: 980px;
   padding: 28px 16px;

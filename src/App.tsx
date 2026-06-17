@@ -14,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
+import ProjectAdminView from "./ProjectAdminView";
 
 type Project = {
   id: string;
@@ -111,6 +112,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<ProjectForm>(emptyForm);
   const [nameError, setNameError] = useState(false);
+  const [activeView, setActiveView] = useState<"projects" | "project-admin">("projects");
 
   const filteredProjects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -181,6 +183,10 @@ export default function App() {
     filteredProjects.length === 0
       ? `${projects.length}개 중 0개 표시 중`
       : `${projects.length}개 중 1-${filteredProjects.length}개 표시 중`;
+
+  if (activeView === "project-admin") {
+    return <ProjectAdminView onBackToProjects={() => setActiveView("projects")} />;
+  }
 
   return (
     <main className="app-shell">
@@ -272,6 +278,16 @@ export default function App() {
                       <div className="name-cell">
                         <span>{project.name}</span>
                         {project.address ? <small>{project.address}</small> : null}
+                        {project.id === "project-study" ? (
+                          <button
+                            className="inline-link-action"
+                            type="button"
+                            aria-label={`${project.name} Project Admin 열기`}
+                            onClick={() => setActiveView("project-admin")}
+                          >
+                            Project Admin
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                     <td>{project.number || "-"}</td>

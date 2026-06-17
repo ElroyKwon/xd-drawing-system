@@ -117,4 +117,15 @@ describe("initial setup project list and create modal", () => {
     expect(screen.queryByText("Closed Project")).not.toBeInTheDocument();
     expect(projectRows()).toHaveLength(2);
   });
+
+  it("opens Project Admin member access for Study_Project from the project list", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Study_Project Project Admin 열기" }));
+
+    expect(screen.getByText("Project Admin")).toBeInTheDocument();
+    expect(screen.getByText("Study_Project")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
+    expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
+  });
 });
