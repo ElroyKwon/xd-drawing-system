@@ -588,6 +588,155 @@ button {
   border: 0;
 }
 
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 360px;
+  background: #f7f9fb;
+}
+
+.admin-rail {
+  background: #eef3f7;
+  border-right: 1px solid #d9e1e8;
+  padding: 16px 10px;
+}
+
+.admin-product,
+.admin-rail button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: #26384a;
+  font-weight: 600;
+  text-align: left;
+}
+
+.admin-rail button {
+  padding: 0 10px;
+  border-radius: 3px;
+}
+
+.admin-rail button[aria-current="page"] {
+  color: #1476b8;
+  background: #dfeffc;
+}
+
+.admin-main {
+  min-width: 0;
+  padding: 24px;
+}
+
+.admin-topline,
+.admin-heading,
+.admin-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ghost-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  color: #365266;
+  background: transparent;
+  font-weight: 700;
+}
+
+.admin-panel {
+  margin-top: 24px;
+}
+
+.admin-heading h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0;
+}
+
+.admin-tools {
+  justify-content: flex-end;
+  margin: 22px 0 14px;
+}
+
+.admin-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-search {
+  min-width: 320px;
+  max-width: 460px;
+}
+
+.admin-table-scroll {
+  background: #ffffff;
+}
+
+.admin-member-table {
+  min-width: 900px;
+}
+
+.admin-member-table tr {
+  cursor: pointer;
+}
+
+.selected-row {
+  background: #edf8ff;
+}
+
+.admin-inspector {
+  background: #ffffff;
+  border-left: 1px solid #d9e1e8;
+  padding: 28px;
+}
+
+.member-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #d8e0eb;
+  color: #3d4c5f;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.admin-inspector h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.admin-inspector a {
+  color: var(--blue);
+  word-break: break-word;
+}
+
+.status-pill {
+  display: inline-flex;
+  margin: 12px 0 18px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #dff2e2;
+  color: #2e7d3c;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.member-modal {
+  max-width: 520px;
+}
+
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -669,5 +818,32 @@ button {
 
   .modal-footer {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 980px) {
+  .admin-shell {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .admin-rail span,
+  .admin-product span {
+    display: none;
+  }
+
+  .admin-inspector {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid #d9e1e8;
+  }
+
+  .admin-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-search {
+    min-width: 0;
+    max-width: none;
   }
 }
