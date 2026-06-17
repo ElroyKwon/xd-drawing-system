@@ -1,15 +1,25 @@
 {
-  "version": 1,
+  "version": 2,
   "project": "xd-drawing-system",
-  "current_mode": "review-only",
-  "automation_status": "test-scaffold",
-  "last_request_id": "0003-baseline-review-ai-terminal",
+  "current_mode": "mode-dispatch",
+  "automation_status": "mode-dispatch-test-scaffold",
+  "last_request_id": "0005-ai-loop-implementation-mode-readiness",
   "allowed_modes": [
-    "review-only"
+    "review-only",
+    "validation-evidence",
+    "implementation"
   ],
+  "sandbox_by_mode": {
+    "review-only": "read-only",
+    "validation-evidence": "workspace-write",
+    "implementation": "workspace-write"
+  },
+  "prompt_by_mode": {
+    "review-only": "baseline-review.md",
+    "validation-evidence": "validation-evidence.md",
+    "implementation": "implementation.md"
+  },
   "blocked_actions": [
-    "file-edit",
-    "format",
     "commit",
     "dependency-install",
     "external-api",

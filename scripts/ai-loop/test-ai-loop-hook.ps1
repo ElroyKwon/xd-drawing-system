@@ -79,6 +79,8 @@ foreach ($relativePath in $requiredDirectories) {
 $requiredFiles = @(
   ".ai-loop\README.md",
   ".ai-loop\prompts\baseline-review.md",
+  ".ai-loop\prompts\validation-evidence.md",
+  ".ai-loop\prompts\implementation.md",
   ".ai-loop\state\loop-state.json",
   "scripts\ai-loop\run-next-ai-loop-request.ps1",
   "scripts\ai-loop\watch-ai-loop.ps1"
@@ -89,18 +91,32 @@ foreach ($relativePath in $requiredFiles) {
 }
 
 Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\README.md") -Pattern "review-only" -Label "review-only protocol"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\README.md") -Pattern "validation-evidence" -Label "validation-evidence protocol"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\README.md") -Pattern "implementation" -Label "implementation protocol"
 Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\prompts\baseline-review.md") -Pattern "Do not modify files" -Label "read-only worker instruction"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\prompts\validation-evidence.md") -Pattern "Do not edit implementation code" -Label "validation evidence implementation-code boundary"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\prompts\implementation.md") -Pattern "owned files" -Label "implementation owned-file boundary"
 Assert-AnyPathExists -Paths @(
   (Join-Path $ProjectRoot ".ai-loop\control\inbox\0001-baseline-review.request.md"),
   (Join-Path $ProjectRoot ".ai-loop\control\processed\0001-baseline-review.request.md")
 ) -Label "0001 baseline review request"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "codex\.cmd" -Label "Codex cmd invocation"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "Start-Process" -Label "native command isolation"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "Get-ModeConfig" -Label "mode dispatch config"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "validation-evidence" -Label "validation-evidence mode dispatch"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "implementation" -Label "implementation mode dispatch"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "Unsupported mode" -Label "unknown mode failure"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "workspace-write" -Label "writable mode sandbox"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "baseline-review\.md" -Label "review-only prompt mapping"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "validation-evidence\.md" -Label "validation-evidence prompt mapping"
+Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "implementation\.md" -Label "implementation prompt mapping"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "LC_ALL" -Label "UTF-8 child process locale"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "\[Console\]::OutputEncoding" -Label "UTF-8 console output"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern 'Remove-Item -LiteralPath \$promptPath' -Label "temporary prompt cleanup"
 Assert-FileDoesNotContain -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "\$prompt\s*\|\s*&" -Label "PowerShell pipeline native command invocation"
 Assert-FileDoesNotContain -Path (Join-Path $ProjectRoot "scripts\ai-loop\run-next-ai-loop-request.ps1") -Pattern "-a\s+never" -Label "unsupported approval flag"
 Assert-FileContains -Path (Join-Path $ProjectRoot "scripts\ai-loop\watch-ai-loop.ps1") -Pattern "run-next-ai-loop-request.ps1" -Label "compatibility wrapper"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\state\loop-state.json") -Pattern "validation-evidence" -Label "validation-evidence state mode"
+Assert-FileContains -Path (Join-Path $ProjectRoot ".ai-loop\state\loop-state.json") -Pattern "implementation" -Label "implementation state mode"
 
 Write-Output "AI loop hook scaffold verification passed."

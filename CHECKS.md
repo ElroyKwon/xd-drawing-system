@@ -36,6 +36,20 @@ Dry-run the first queued review request without launching a worker:
 powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once -DryRun
 ```
 
+Mode dispatch dry-runs should cover each supported mode before claiming the runner supports mode dispatch:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once -DryRun
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once -DryRun
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once -DryRun
+```
+
+Prepare one queued request per mode before running those dry-runs:
+
+- `review-only`
+- `validation-evidence`
+- `implementation`
+
 For normal code changes after dependencies are installed, at minimum run:
 
 ```powershell

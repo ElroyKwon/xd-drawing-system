@@ -37,6 +37,37 @@ function Get-RequestMode {
   return $match.Groups["mode"].Value
 }
 
+function Get-ModeConfig {
+  param([Parameter(Mandatory=$true)][string]$Mode)
+
+  switch ($Mode) {
+    "review-only" {
+      return [pscustomobject]@{
+        Mode = "review-only"
+        PromptFile = "baseline-review.md"
+        Sandbox = "read-only"
+      }
+    }
+    "validation-evidence" {
+      return [pscustomobject]@{
+        Mode = "validation-evidence"
+        PromptFile = "validation-evidence.md"
+        Sandbox = "workspace-write"
+      }
+    }
+    "implementation" {
+      return [pscustomobject]@{
+        Mode = "implementation"
+        PromptFile = "implementation.md"
+        Sandbox = "workspace-write"
+      }
+    }
+    default {
+      throw "Unsupported mode '$Mode'. Supported modes: review-only, validation-evidence, implementation."
+    }
+  }
+}
+
 function Write-TextFile {
   param(
     [Parameter(Mandatory=$true)][string]$Path,
@@ -77,10 +108,7 @@ function Invoke-AiLoopRequest {
   try {
     $requestContent = Get-Content -LiteralPath $RequestFile.FullName -Raw -Encoding UTF8
     $mode = Get-RequestMode -Content $requestContent
-
-    if ($mode -ne "review-only") {
-      throw "Unsupported mode '$mode'. This test runner only supports review-only."
-    }
+    $modeConfig = Get-ModeConfig -Mode $mode
 
     $workerInboxPath = Join-Path $loopRoot "workers\codex\inbox\$($RequestFile.Name)"
     $workerRunningPath = Join-Path $loopRoot "workers\codex\running\$($RequestFile.Name)"
@@ -90,7 +118,7 @@ function Invoke-AiLoopRequest {
     $humanResultPath = Join-Path $loopRoot "results\$requestId.result.md"
     $eventPath = Join-Path $loopRoot "control\outbox\$requestId.done.md"
     $logPath = Join-Path $loopRoot "logs\$requestId.log"
-    $templatePath = Join-Path $loopRoot "prompts\baseline-review.md"
+    $templatePath = Join-Path $loopRoot "prompts\$($modeConfig.PromptFile)"
     $codexCommand = Get-CodexCommand
 
     Copy-Item -LiteralPath $RequestFile.FullName -Destination $workerInboxPath -Force
@@ -103,16 +131,18 @@ function Invoke-AiLoopRequest {
       $dryRunResult = @"
 # $requestId Result
 
-Mode: review-only
+Mode: $mode
 Status: DRY-RUN
+Prompt: $($modeConfig.PromptFile)
+Sandbox: $($modeConfig.Sandbox)
 
 The runner detected the request and would run:
 
-```powershell
-$codexCommand exec -C "$ProjectRoot" -s read-only -o "$workerResultPath" -
-```
+~~~powershell
+$codexCommand exec -C "$ProjectRoot" -s $($modeConfig.Sandbox) -o "$workerResultPath" -
+~~~
 
-No Codex worker was launched because `-DryRun` was set.
+No Codex worker was launched because -DryRun was set.
 "@
       Write-TextFile -Path $workerResultPath -Content $dryRunResult
       Write-TextFile -Path $logPath -Content "dry-run=$(Get-Date -Format o)`nrequest=$($RequestFile.FullName)`n"
@@ -127,7 +157,7 @@ No Codex worker was launched because `-DryRun` was set.
       $arguments = @(
         "exec",
         "-C", $ProjectRoot,
-        "-s", "read-only",
+        "-s", $modeConfig.Sandbox,
         "-o", $workerResultPath,
         "-"
       )
@@ -148,7 +178,9 @@ No Codex worker was launched because `-DryRun` was set.
         $log = @"
 completed=$(Get-Date -Format o)
 exit_code=$($process.ExitCode)
-command=$codexCommand exec -C "$ProjectRoot" -s read-only -o "$workerResultPath" -
+command=$codexCommand exec -C "$ProjectRoot" -s $($modeConfig.Sandbox) -o "$workerResultPath" -
+mode=$mode
+prompt=$($modeConfig.PromptFile)
 
 --- stdout ---
 $stdout
