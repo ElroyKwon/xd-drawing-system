@@ -17,9 +17,77 @@ Read in order:
 6. `HUMAN_GATE.md`
 7. `reference/README.md`
 
+## Immediate Resume - 2026-06-17 Update
+
+Do not start the next product feature first. The stale planning-era document cleanup has been completed; resume by deciding the commit split for the current dirty baseline.
+
+First actions:
+
+1. Review the 2026-06-17 evidence section in `EVIDENCE.md`.
+2. Confirm current diff and decide commit split:
+   - product baseline: `package*.json`, config, `index.html`, `src/**`, product docs/evidence
+   - local skill loop: `.agents/skills/**`, `.claude/skills/**`
+   - ai-loop scaffold: `.ai-loop/README.md`, `.ai-loop/prompts/**`, `.ai-loop/state/**`, `scripts/ai-loop/**`, `.gitignore`
+3. Re-run verification if more edits are made:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\test-ai-loop-hook.ps1
+   npm test
+   npm run build
+   ```
+4. Keep `.ai-loop` runtime requests/results/logs/locks out of commits. `.gitignore` now excludes those runtime artifacts; only scaffold files and `.gitkeep` placeholders should be considered.
+
+Latest verification:
+
+```text
+Date: 2026-06-17
+Commands:
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\test-ai-loop-hook.ps1
+  npm test
+  npm run build
+Result:
+  AI loop hook scaffold verification: PASS
+  npm test: PASS, 1 test file / 6 tests passed
+  npm run build: PASS, tsc && vite build completed
+Not run:
+  npm run dev -- --port 5173
+  Browser desktop/mobile verification
+```
+
+AI terminal automation status:
+
+- Codex does not currently have the same built-in hook behavior as Claude Code in this setup.
+- The project uses an external PowerShell polling runner around `codex exec`.
+- Continuous runner command for another AI terminal:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1
+  ```
+- One-shot runner command:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once
+  ```
+- Current runner mode is `review-only`; do not use it for implementation yet.
+- `0003-baseline-review-ai-terminal` was processed, but its Korean result text is mojibake because it ran before UTF-8 hardening. Use the `EVIDENCE.md` summary rather than the raw result as the readable handoff.
+- UTF-8 hardening has passed source-level scaffold checks, but a fresh real worker run after that hardening has not been executed yet.
+
 ## Current State
 
-Project setup is complete. No application code exists yet.
+Project setup and the first implementation slice are complete.
+
+Implemented slice:
+
+- ACC #6 `프로젝트 목록`
+- ACC #1 `프로젝트 작성 모달`
+
+Current app baseline:
+
+- Vite + React + TypeScript + Vitest scaffold exists.
+- `src/App.tsx` implements a local mock project list and creation modal.
+- `src/App.test.tsx` covers list structure, search, modal fields, required-name validation, valid create, cancel, and close no-change behavior.
+- `docs/evidence/` contains desktop/mobile screenshot evidence, including the latest validator screenshots:
+  - `docs/evidence/validator-current-desktop.png`
+  - `docs/evidence/validator-current-mobile-list.png`
+- No DB/API/Auth/Autodesk cloud/paid SDK/customer drawing/deployment/CAD editor work has been introduced.
+- Latest validator-loop run recorded a non-blocking Chrome DevTools Issues note: form fields should have `id` or `name` attributes. Browser console errors were not observed.
 
 User's long-term goal is not just to create a skill collection. The goal is to build and test a low-intervention AI development loop where one main orchestrator can drive sub-skills for design, planning gate, implementation, validation, evidence, and iteration.
 
@@ -38,38 +106,90 @@ The project contains:
 - Previous prototype documentation and data
 - AI development loop templates and local skills
 
-## Recommended First Work
+## Recommended Next Work
 
-Next work: 스킬 보강 후 초기 설정 slice 재진입.
+Start by checking the completed implementation evidence:
 
-Do not start implementation yet.
+1. Run `git status --short`.
+2. Read `PLAN.md`, `CHECKS.md`, `EVIDENCE.md`, and `docs/TRD.md`.
+3. Run current verification:
+   ```powershell
+   npm test
+   npm run build
+   npm run dev -- --port 5173
+   ```
+4. Open `http://127.0.0.1:5173/` and confirm the initial setup slice still behaves as recorded.
 
-The selected first slice is limited to:
+Next feature should not start from code directly. Select one slice, then run the document loop again:
 
-1. ACC #1 `프로젝트 작성 모달`
-2. ACC #6 `프로젝트 목록`
+1. `development-loop-orchestrator`
+2. `feature-docs-scaffold` if the next slice lacks current 7-core docs
+3. `planning-gate`
+4. implementation
+5. `validator-loop`
+6. `evidence-report`
 
-Current planning status:
+Candidate next slices:
 
-- `docs/feature-notes/001-initial-setup.md` exists.
-- `SPEC.md`, `PLAN.md`, and `CHECKS.md` were updated for this slice.
-- The planning-gate result is only a feature-note-based temporary pass.
-- It has not yet satisfied the original AI development loop's seven-document standard.
+1. Project Admin member/company/role screens
+2. Build shell and Sheets list
 
-Recommended next steps:
+Optional cleanup before the next product slice:
 
-1. Run `development-loop-orchestrator` against the current project files.
-2. Run `feature-docs-scaffold` for the initial setup slice.
-3. Create or update the seven core docs:
-   - `docs/PRD.md`
-   - `docs/TRD.md`
-   - `docs/UI_Spec.md`
-   - `docs/Data_Model.md`
-   - `docs/Task_List.md`
-   - `docs/Acceptance_Criteria.md`
-   - `docs/Test_Scenarios.md`
-4. Run the enhanced `planning-gate`.
-5. Only then decide whether to scaffold app code.
+1. Decide whether to address the non-blocking form field `id`/`name` accessibility issue as a small bugfix slice.
+2. If yes, run the same document loop for that bugfix before changing implementation.
+
+Latest automated status check:
+
+```text
+Date: 2026-06-16
+Commands:
+  git status --short
+  npm test
+  npm run build
+Result:
+  npm test: PASS, 1 test file / 6 tests passed
+  npm run build: PASS, tsc && vite build completed
+  git status: dirty/uncommitted implementation baseline remains after commit 054e754 Initial project baseline
+Not run:
+  npm run dev -- --port 5173
+  Browser desktop/mobile verification
+Evidence:
+  EVIDENCE.md / Current Status Check - 2026-06-16
+```
+
+AI loop hook test scaffold:
+
+```text
+Date: 2026-06-16
+Status:
+  Test-scope .ai-loop file protocol exists.
+  scripts/ai-loop/run-next-ai-loop-request.ps1 supports review-only requests.
+  scripts/ai-loop/watch-ai-loop.ps1 remains as a compatibility wrapper.
+  scripts/ai-loop/test-ai-loop-hook.ps1 verifies the scaffold.
+Verified:
+  AI loop hook scaffold verification: PASS
+  Watcher dry-run: PASS, processed 0001-baseline-review
+  Real worker runner mechanics: PASS, processed 0003-baseline-review-ai-terminal
+  PowerShell parse check: PASS
+  npm test: PASS, 1 test file / 6 tests passed
+  npm run build: PASS, tsc && vite build completed
+Continuous runner command for another AI terminal:
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1
+One-shot runner command:
+  powershell -ExecutionPolicy Bypass -File .\scripts\ai-loop\run-next-ai-loop-request.ps1 -Once
+Read result from:
+  .ai-loop/results/0003-baseline-review-ai-terminal.result.md
+Safety:
+  Current mode is review-only. Do not treat this as full hook automation.
+Compatibility note:
+  run-next-ai-loop-request.ps1 no longer passes `-a never` to `codex exec`.
+  It uses `codex exec -C <project> -s read-only -o <result> -` for local CLI compatibility.
+  It prefers codex.cmd on Windows and uses Start-Process with redirected stdin/stdout/stderr.
+Known limitation:
+  The 0003 worker result was generated before UTF-8 hardening and its Korean text is garbled.
+  The runner now sets UTF-8 environment variables, but a fresh real worker run after that change has not been executed yet.
+```
 
 Local skills now expected:
 
@@ -86,6 +206,30 @@ Local skill path status:
 - `.agents/skills/<skill>/SKILL.md` and `.claude/skills/<skill>/SKILL.md` were refreshed from the AI loop package on 2026-06-15.
 - Duplicate nested skill directories were removed.
 - `planning-gate` now includes `SLICE-ONLY PASS` at the top-level local skill path.
+
+## Last Verified
+
+```text
+Date: 2026-06-15
+Commands:
+  npm test
+  npm run build
+  npm run dev -- --port 5173
+Result:
+  PASS
+Browser:
+  Chrome DevTools MCP fallback used because Browser iab was unavailable.
+  Desktop 1440x900 and mobile 390x844 checks passed.
+  Browser console errors: none observed.
+Evidence:
+  EVIDENCE.md / Initial Setup Slice Implementation
+  EVIDENCE.md / Validator Loop Evidence Refresh
+  docs/evidence/validator-current-desktop.png
+  docs/evidence/validator-current-mobile-list.png
+Remaining risk:
+  No new modal screenshot was created in the latest validator-loop run.
+  Chrome DevTools Issues reported a non-blocking form field id/name accessibility issue.
+```
 
 ## Key Product Boundary
 
