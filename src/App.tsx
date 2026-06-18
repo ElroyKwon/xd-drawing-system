@@ -14,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
+import BuildSheetsView from "./BuildSheetsView";
 import ProjectAdminView from "./ProjectAdminView";
 
 type Project = {
@@ -112,7 +113,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<ProjectForm>(emptyForm);
   const [nameError, setNameError] = useState(false);
-  const [activeView, setActiveView] = useState<"projects" | "project-admin">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "project-admin" | "build-sheets">("projects");
 
   const filteredProjects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -188,6 +189,10 @@ export default function App() {
     return <ProjectAdminView onBackToProjects={() => setActiveView("projects")} />;
   }
 
+  if (activeView === "build-sheets") {
+    return <BuildSheetsView onBackToProjects={() => setActiveView("projects")} />;
+  }
+
   return (
     <main className="app-shell">
       <TopBar />
@@ -232,6 +237,7 @@ export default function App() {
                 <Search size={18} aria-hidden="true" />
                 <input
                   aria-label="프로젝트 검색"
+                  name="project-search"
                   placeholder="이름 또는 번호로 프로젝트 검색..."
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -292,7 +298,12 @@ export default function App() {
                     </td>
                     <td>{project.number || "-"}</td>
                     <td>
-                      <button className="access-button" type="button" aria-label={`${project.name} 기본 액세스`}>
+                      <button
+                        className="access-button"
+                        type="button"
+                        aria-label={project.id === "project-study" ? `${project.name} Build 열기` : `${project.name} 기본 액세스`}
+                        onClick={project.id === "project-study" ? () => setActiveView("build-sheets") : undefined}
+                      >
                         <span className="access-icon">
                           <Hammer size={18} />
                         </span>

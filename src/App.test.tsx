@@ -20,7 +20,7 @@ describe("initial setup project list and create modal", () => {
 
     expect(screen.getByRole("tab", { name: "프로젝트", selected: true })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 만들기" })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("이름 또는 번호로 프로젝트 검색...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("이름 또는 번호로 프로젝트 검색...")).toHaveAttribute("name", "project-search");
 
     ["유형", "이름", "번호", "기본 액세스", "허브", "작성 날짜"].forEach((column) => {
       expect(screen.getByRole("columnheader", { name: column })).toBeInTheDocument();
@@ -127,5 +127,17 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
     expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
+  });
+
+  it("opens Build sheets for Study_Project from the project list", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Study_Project Build 열기" }));
+
+    expect(screen.getByText("Build")).toBeInTheDocument();
+    expect(screen.getByText("Study_Project")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "시트" })).toBeInTheDocument();
+    expect(screen.getByText("A001")).toBeInTheDocument();
+    expect(screen.getByText("6 중 1-6 표시")).toBeInTheDocument();
   });
 });

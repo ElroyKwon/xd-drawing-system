@@ -107,3 +107,44 @@ Derived UI rows join `ProjectMemberAccess` to `Member` by `memberId`. Duplicate 
 | FR-PA-007 | Block duplicate project/member submit and show `이미 이 프로젝트에 추가된 구성원입니다.` |
 | FR-PA-008 | Append one local `ProjectMemberAccess` row with selected role and close the modal. |
 | FR-PA-009 | Keep `Project`, `Member`, and `ProjectMemberAccess` separate and avoid company/auth/DB/API scope. |
+
+## Build Shell And Sheets List Technical Addendum
+
+The Build shell and sheets list slice remains frontend-only and uses local mock sheet metadata. It does not introduce a router, backend persistence, authentication, authorization, database schema, Autodesk cloud/API, paid SDK, deployment, customer drawing data, upload/publish flow, or 2D viewer engine.
+
+### Data Types
+
+```text
+Sheet
+- id
+- projectId
+- number
+- title
+- version
+- versionSet
+- disciplineCode
+- disciplineLabel
+- tag
+- lastUpdatedBy
+```
+
+### Frontend Handling
+
+- `src/buildSheetsData.ts` owns sheet types, mock rows, and filtering helpers.
+- `src/BuildSheetsView.tsx` owns the Build shell, selected `시트` navigation state, sheet table, search query, and list/grid view toggle affordance.
+- `src/App.tsx` exposes a local entry path from `Study_Project` to Build sheets without adding a routing library.
+- Grid view is an affordance in this slice. The functional, tested view is the ACC #10 table/list.
+
+### Build Shell Requirement Mapping
+
+| Requirement ID | Technical handling |
+|---|---|
+| FR-BS-001 | Render `BuildSheetsView` for `Study_Project` from local app state. |
+| FR-BS-002 | Render fixed Build header and left rail; set `시트` as selected. |
+| FR-BS-003 | Render local `Sheet[]` rows filtered by selected project. |
+| FR-BS-004 | Display sheet metadata fields directly from mock rows. |
+| FR-BS-005 | Filter rows by lowercase number/title/discipline/tag match. |
+| FR-BS-006 | Store selected view mode locally and expose list/grid toggle affordance. |
+| FR-BS-007 | Render inert local affordances for export, filter, row menu, and pagination. |
+| FR-BS-008 | Exclude viewer/upload/storage/compare/markup/issues from code paths. |
+| FR-BS-009 | Keep external integrations and persistence out of scope. |

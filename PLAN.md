@@ -109,17 +109,61 @@ Planning gate status:
 
 Implementation plan after gate:
 
-- [ ] Add Project Admin data helper tests and local mock model.
-- [ ] Add Project Admin view render tests and shell.
-- [ ] Add search and row selection behavior.
-- [ ] Add add-existing-member modal with empty and duplicate validation.
-- [ ] Wire a local path from `Study_Project` in the project list to Project Admin.
+- [x] Add Project Admin data helper tests and local mock model.
+- [x] Add Project Admin view render tests and shell.
+- [x] Add search and row selection behavior.
+- [x] Add add-existing-member modal with empty and duplicate validation.
+- [x] Wire a local path from `Study_Project` in the project list to Project Admin.
 - [ ] Run `npm test`, `npm run build`, browser desktop/narrow checks, and console checks.
 - [ ] Record Project Admin implementation evidence and handoff.
 
+Implementation status:
+
+- Product implementation commits exist through `17259c2 feat: open project admin from project list`.
+- Automated checks passed in the 0007/0008 Task 6 runs, but browser evidence is blocked by `BLOCKED_BROWSER_UNAVAILABLE`.
+- Do not mark Project Admin Task 6 PASS until fresh browser interaction, console state, and screenshots are recorded.
+
+## Phase 3: Build Shell And Sheets List Slice
+
+Selected slice:
+
+- `Build shell + Sheets list`
+- Current project context: `Study_Project`
+
+Document-loop tasks:
+
+- [x] Confirm prior Project Admin Task 6 blocker is evidence-path only.
+- [x] Create `docs/feature-notes/003-build-shell-sheets-list.md`.
+- [x] Update `docs/PRD.md`, `docs/TRD.md`, `docs/UI_Spec.md`, `docs/Data_Model.md`, `docs/Task_List.md`, `docs/Acceptance_Criteria.md`, `docs/Test_Scenarios.md`.
+- [x] Update `docs/Design_Map.md`, `docs/User_Flow.md`, `docs/Planning_Gate_Checklist.md`.
+- [x] Update `SPEC.md`, `PLAN.md`, `CHECKS.md`, `HUMAN_GATE.md`.
+- [x] Run document consistency checks for FR-BS-001 through FR-BS-009 and local-only scope boundaries.
+- [x] Run planning gate for the local mock Build shell and sheets list slice.
+
+Planning gate status:
+
+- Result: PASS on 2026-06-18.
+- Basis: seven core documents and UI support documents include FR-BS-001 through FR-BS-009, task/acceptance/test mappings are complete, visible UI actions map to user-flow steps, and 2D viewer/upload/auth/DB/API/Autodesk/customer drawing/deployment scope remains excluded.
+
+Implementation plan after gate:
+
+- [x] Add sheet data helper tests and local mock sheet model.
+- [x] Add Build sheets view render tests and shell.
+- [x] Add sheet search and view toggle behavior.
+- [x] Wire a local path from `Study_Project` in the project list to Build sheets.
+- [x] Run `npm test` and `npm run build`.
+- [x] Record Build shell implementation evidence and Task 6 browser blocker separation.
+
+Implementation status:
+
+- Result: PASS on 2026-06-18 for the local mock Build shell and Sheets list slice.
+- App path: Project List -> `Study_Project Build 열기` -> Build sheets view.
+- Runtime boundary: local state and mock sheet rows only; no 2D viewer/upload/auth/DB/API/Autodesk/paid SDK/customer drawing/deployment.
+- Evidence: see `EVIDENCE.md` section `Build Shell And Sheets List Implementation - 2026-06-18`.
+
 Deferred slices:
 
-1. Build shell and Sheets list
+1. 2D sheet viewer
 2. Project Admin role/permission matrix after human approval
 3. Company management after separate scope approval
 

@@ -32,8 +32,23 @@ These scenarios define the active checks for the implemented local mock initial 
 
 - `npm test` should cover list structure, search filtering, required-name validation, successful create append, and cancel/close no-change behavior.
 - `npm test` should cover Project Admin rendering, current project access rows, search, row selection, add modal, empty validation, duplicate validation, and valid add.
+- `npm test` should cover Build shell rendering, selected sheets navigation, sheet metadata rows, search, view toggle affordance, and app entry from `Study_Project`.
 - `npm run build` should pass before the baseline is considered stable.
 - Browser automation or manual browser checks should be recorded in `EVIDENCE.md` with screenshot paths when UI behavior changes.
+
+## Build Shell And Sheets List Scenarios
+
+| Test ID | Requirement ID | Acceptance ID | Scenario | Expected result |
+|---|---|---|---|---|
+| TS-BS-001 | FR-BS-001 | AC-BS-001 | Open Build for `Study_Project` from the project list. | Build sheets view renders for the current project. |
+| TS-BS-002 | FR-BS-002 | AC-BS-002 | Inspect the Build shell. | Header and left rail are visible with `시트` selected. |
+| TS-BS-003 | FR-BS-003 | AC-BS-003 | Inspect the initial sheets table. | Six local mock sheet rows for `Study_Project` are visible. |
+| TS-BS-004 | FR-BS-004 | AC-BS-004 | Inspect a sheet row. | Thumbnail, number/title, version chip, version set, discipline, tag, last updater, and row menu are present. |
+| TS-BS-005 | FR-BS-005 | AC-BS-005 | Search by `A101`, by `mechanical`, then clear search. | Matching rows filter correctly and all current sheets return after clear. |
+| TS-BS-006 | FR-BS-006 | AC-BS-006 | Toggle grid view and back to list view. | Selected affordance changes and functional sheet list remains usable. |
+| TS-BS-007 | FR-BS-007 | AC-BS-007 | Inspect export, filter, row menu, and pagination affordances. | Controls are present and do not require backend/file export. |
+| TS-BS-008 | FR-BS-008 | AC-BS-008 | Try the Build sheets slice without opening a viewer or upload flow. | No 2D viewer/upload/storage/compare/markup/issues workflow is required. |
+| TS-BS-009 | FR-BS-009 | AC-BS-009 | Review dependencies and runtime requirements. | No auth, DB, API, Autodesk account, paid SDK, customer drawing, or deployment is required. |
 
 ## Manual Browser Checks
 
@@ -42,6 +57,8 @@ These scenarios define the active checks for the implemented local mock initial 
   - `reference/acc-screenshots/Video Screen1781231401038.png`
   - `reference/acc-screenshots/ScreenShot Tool -20260612102437.png`
   - `reference/acc-screenshots/Video Screen1781227558018.png`
+  - `reference/acc-screenshots/Video Screen1781231464329.png`
+  - `reference/acc-screenshots/Video Screen1781231492911.png`
 - Check desktop width.
 - Check mobile width.
 - Check Korean label/button fit.

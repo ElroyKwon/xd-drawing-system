@@ -108,9 +108,32 @@ Pass/fail checks:
 - Browser console has no errors during open, search, select, add, duplicate validation, cancel, and close flows.
 - Desktop and narrow/mobile widths do not show overlapping text, clipped button labels, or broken modal layout.
 
+## Manual Checks For Build Shell And Sheets List
+
+Reference screenshots:
+
+- `reference/acc-screenshots/Video Screen1781231464329.png`
+- `reference/acc-screenshots/Video Screen1781231492911.png`
+
+Pass/fail checks:
+
+- Project list exposes a local path to open Build for `Study_Project`.
+- Build shell shows project context and a left rail with `홈`, `시트`, `파일`, `이슈`, `양식`, `사진`, plus bottom admin items.
+- `시트` is selected in the left rail.
+- Sheets table shows local mock sheet rows for `Study_Project`.
+- Sheets table includes thumbnail, number, version chip, version set, discipline, tags, last updater, and row menu affordance.
+- Search filters by sheet number, title, discipline, or tag and clears back to all current sheet rows.
+- List/grid view toggle changes the selected view affordance without requiring a separate grid implementation.
+- Export, filter, row menu, and pagination remain local UI affordances only.
+- Opening a 2D viewer, uploading/publishing sheets, version compare, file storage, markup, issues, Autodesk cloud/API, paid SDK, customer drawing, DB/API, auth/RBAC, and deployment are not required.
+- Browser console has no errors during open, search, view toggle, and return-to-project-list flows when browser automation is available.
+- Desktop and narrow/mobile widths do not show overlapping text, clipped labels, or broken shell/table layout.
+
 ## Current Evidence Files
 
 - `docs/evidence/initial-setup-desktop.png`
 - `docs/evidence/initial-setup-mobile-list.png`
 - `docs/evidence/initial-setup-mobile-modal.png`
 - `docs/evidence/initial-setup-mobile-modal-bottom.png`
+- `docs/evidence/build-sheets-desktop.jpeg`
+- `docs/evidence/build-sheets-narrow.jpeg`

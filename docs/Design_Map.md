@@ -14,6 +14,10 @@
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #2/#3 | Project Admin 구성원 screen inventory and table/inspector patterns. |
 | `docs/feature-notes/002-project-admin-member-access.md` | Project Admin member access slice boundary and validation rules. |
 | `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md` | Approved ProjectMemberAccess design and exclusions. |
+| `reference/acc-screenshots/Video Screen1781231464329.png` | Build shell header, left rail navigation, quick link context, and project-level module framing. |
+| `reference/acc-screenshots/Video Screen1781231492911.png` | Sheets list toolbar, columns, sheet row metadata, view toggle, row menu, and pagination. |
+| `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #8/#10 | Build home shell and sheets list reproduction notes. |
+| `docs/feature-notes/003-build-shell-sheets-list.md` | Build shell and sheets list slice boundary and local-only exclusions. |
 | `HUMAN_GATE.md` | External integration and risky-change boundaries. |
 
 ## Feature To UI Map
@@ -38,6 +42,15 @@
 | FR-PA-007 | Duplicate project/member validation | User attempts to add a member already assigned to `Study_Project`. |
 | FR-PA-008 | Existing member selector and role selector | User adds a valid member access row. |
 | FR-PA-009 | Local mock Project/Member/ProjectMemberAccess model | User completes the flow without company/auth/DB/API dependencies. |
+| FR-BS-001 | Build entry action from `Study_Project` | User opens Build sheets. |
+| FR-BS-002 | Build header and left rail with `시트` selected | User confirms project module context. |
+| FR-BS-003 | Sheets table | User reviews current project sheet rows. |
+| FR-BS-004 | Sheet row metadata | User reads drawing number, title, version, discipline, tag, updater. |
+| FR-BS-005 | Sheets search input | User filters by number/title/discipline/tag and clears search. |
+| FR-BS-006 | List/grid toggle | User switches the selected view affordance. |
+| FR-BS-007 | Export/filter/row menu/pagination affordances | User sees ACC-like list controls without data mutation. |
+| FR-BS-008 | Local-only sheets list boundary | User does not open viewer/upload/storage/compare/markup/issues. |
+| FR-BS-009 | Integration boundary | User completes the slice without auth/DB/API/Autodesk/customer drawing dependencies. |
 
 ## ACC To XD Adaptation
 
@@ -46,3 +59,4 @@
 - `Build` as default access may remain as a benchmark label in mock data until XD module naming is decided.
 - Template selection is represented only as a modal field; template management remains out of scope.
 - Company references in Project Admin are treated as excluded context only; company details and company management are not implemented in the ProjectMemberAccess slice.
+- ACC Build shell and sheets list are reproduced as local UI and metadata only; real drawing files, viewer engines, upload/publish, and Autodesk-backed processing are excluded until a later approved slice.

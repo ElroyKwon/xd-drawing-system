@@ -113,3 +113,33 @@ Done when:
 - The seven core docs and UI support docs include FR-PA-001 through FR-PA-009 traceability.
 - The planning gate records PASS for the local mock Project Admin member access slice before implementation starts.
 - Implementation later passes `CHECKS.md` Project Admin manual checks and records evidence in `EVIDENCE.md`.
+
+## Selected Third Product Slice: Build Shell And Sheets List
+
+Selected scope:
+
+- ACC Build project shell for `Study_Project`
+- `시트` module list backed by local mock sheet metadata
+
+In scope:
+
+- Local path from `Study_Project` in the project list to Build
+- Build header and left rail with `시트` selected
+- Sheet table with thumbnail, number, version chip, version set, discipline, tags, and last updater
+- Search by sheet number, title, discipline, or tag
+- List/grid view toggle affordance
+- Export, filter, row menu, and pagination affordances
+
+Out of scope:
+
+- 2D sheet viewer
+- Sheet upload, publish, compare, or file storage
+- Markup, issue, form, photo, file, and Bridge workflows
+- Real auth/RBAC, DB/API persistence, Autodesk API, paid SDK, customer drawing data, deployment
+
+Done when:
+
+- `docs/feature-notes/003-build-shell-sheets-list.md` links the reference screens, scope, user flow, data model, and verification criteria.
+- The seven core docs and UI support docs include FR-BS-001 through FR-BS-009 traceability.
+- The planning gate records PASS for the local mock Build shell and sheets list slice before implementation starts.
+- Implementation passes `npm test` and `npm run build`; browser evidence remains separately BLOCKED unless fresh browser interaction, console state, and screenshots are captured.

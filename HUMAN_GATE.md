@@ -15,6 +15,8 @@ Stop and ask before:
 - Sending email invites or provisioning user accounts
 - Adding company management or company data to the Project Admin member-access slice
 - Deleting or revoking project access records
+- Opening, uploading, publishing, storing, or syncing real customer drawing files
+- Adding a real 2D viewer engine, sheet version compare, or Autodesk-backed sheet processing
 
 Decisions already accepted:
 
@@ -25,3 +27,5 @@ Decisions already accepted:
 - Initial setup slice implementation may use local mock data and local-only app scaffold.
 - Project Admin member-access slice may use local mock `Project`, `Member`, and `ProjectMemberAccess` data only.
 - Company information is excluded from the Project Admin member-access slice.
+- Build shell and sheets list slice may use local mock `Sheet` metadata only.
+- 2D viewer, upload/publish, sheet compare, file storage, Autodesk API, DB/API persistence, auth/RBAC, customer drawing data, and deployment are excluded from the Build shell and sheets list slice.

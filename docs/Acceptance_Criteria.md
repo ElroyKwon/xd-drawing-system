@@ -26,8 +26,23 @@
 | AC-PA-008 | FR-PA-008 | PASS if selecting an existing member and role adds exactly one local `ProjectMemberAccess` row for `Study_Project` and closes the modal. FAIL if zero or multiple rows are added or the modal remains open. |
 | AC-PA-009 | FR-PA-009 | PASS if the slice keeps `Project`, `Member`, and `ProjectMemberAccess` separate and runs without company data, auth/RBAC, DB, API, Autodesk, paid SDK, customer data, or deployment. FAIL if any gated scope becomes required. |
 
+## Build Shell And Sheets List Criteria
+
+| AC ID | Requirement ID | Pass/fail criterion |
+|---|---|---|
+| AC-BS-001 | FR-BS-001 | PASS if the app can open a Build sheets view for `Study_Project` from the project list. FAIL if there is no local entry path or it opens an unrelated screen. |
+| AC-BS-002 | FR-BS-002 | PASS if the Build header and left rail render with `시트` selected. FAIL if the project context or selected sheets navigation is missing. |
+| AC-BS-003 | FR-BS-003 | PASS if the sheets table shows local mock rows for `Study_Project`. FAIL if it requires network data or shows no current project sheets. |
+| AC-BS-004 | FR-BS-004 | PASS if each row shows thumbnail, number/title, version chip, version set, discipline, tag, last updater, and row menu affordance. FAIL if required sheet metadata is absent. |
+| AC-BS-005 | FR-BS-005 | PASS if searching by sheet number, title, discipline, or tag narrows the table and clearing search restores all rows. FAIL if search mutates data or cannot restore rows. |
+| AC-BS-006 | FR-BS-006 | PASS if list/grid toggle updates the selected view affordance and keeps the functional list visible. FAIL if toggle breaks the table or implies an unsupported grid implementation. |
+| AC-BS-007 | FR-BS-007 | PASS if export, filter, row menu, and pagination render as local affordances without data mutation. FAIL if they require backend, file export, or external services. |
+| AC-BS-008 | FR-BS-008 | PASS if the slice does not open a 2D viewer, upload/publish sheets, store files, compare versions, or implement markup/issues. FAIL if any excluded drawing workflow becomes required. |
+| AC-BS-009 | FR-BS-009 | PASS if the slice runs without auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, or deployment. FAIL if any gated dependency is introduced. |
+
 ## Human Approval Criteria
 
 - PASS for planning only if all `HUMAN_GATE.md` risky items remain out of scope.
 - FAIL or stop before implementation if a task introduces auth, permission, DB schema, customer data, Autodesk cloud/API, paid SDK, deletion of reference data, or deployment.
 - FAIL or stop before implementation if Project Admin work expands into company management, real RBAC enforcement, email invitation, DB/API persistence, or access deletion.
+- FAIL or stop before implementation if Build sheets work expands into real drawing files, upload/publish, viewer engine, sheet compare, DB/API persistence, Autodesk API, paid SDK, or deployment.

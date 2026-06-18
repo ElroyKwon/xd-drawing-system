@@ -90,6 +90,50 @@ Out of scope:
 | FR-PA-008 | Add a valid existing member with selected role to Study_Project. | Local mock member access flow |
 | FR-PA-009 | Keep Project, Member, and ProjectMemberAccess separate; exclude company/auth/DB/API. | User-confirmed scope boundary; `HUMAN_GATE.md` |
 
+## Selected Third Product Slice: Build Shell And Sheets List
+
+Goal:
+
+- Enter an ACC Build-style project module for `Study_Project` and render the first drawing-facing screen: `시트`.
+- Prove the module shell and sheet metadata list before implementing a 2D viewer or drawing storage.
+
+Users:
+
+- Primary user: 도면 목록을 검토하고 특정 시트를 찾는 프로젝트 도면관리 사용자.
+- Secondary user: Build module navigation and sheet metadata structure를 확인하는 PMO 또는 운영 사용자.
+
+In scope:
+
+- Local entry from `Study_Project` to Build.
+- Build shell with top header and left rail.
+- `시트` selected in the left rail.
+- Local mock sheet metadata table.
+- Search by sheet number, title, discipline, or tag.
+- List/grid view toggle affordance.
+- Export, filter, row menu, and pagination affordances.
+
+Out of scope:
+
+- 2D viewer and drawing canvas.
+- Sheet upload, publish, version compare, and file storage.
+- Markup, issue, form, photo, file, and Bridge workflows.
+- Real authentication, authorization, RBAC, DB/API persistence.
+- Autodesk cloud/API, paid SDK, customer drawing data, deployment.
+
+## Build Shell And Sheets Functional Requirements
+
+| ID | Requirement | Source evidence |
+|---|---|---|
+| FR-BS-001 | Open a Build module shell for `Study_Project` from the project list. | ACC #8; ACC #6 default access `Build`; `docs/feature-notes/003-build-shell-sheets-list.md` |
+| FR-BS-002 | Render Build top context and left rail navigation with `시트` selected. | ACC #8 and #10 left rail/header |
+| FR-BS-003 | Show local mock sheets for `Study_Project` in a sheets table. | ACC #10 sheet list |
+| FR-BS-004 | Show sheet thumbnail, number, version chip, version set, discipline, tags, last updater, and row menu affordance. | ACC #10 table columns and row structure |
+| FR-BS-005 | Search sheets by number, title, discipline, or tag and restore all rows when cleared. | ACC #10 search/filter toolbar |
+| FR-BS-006 | Provide list/grid view toggle affordance with list view as the functional view. | ACC #10 view toggle |
+| FR-BS-007 | Provide export, filter, row menu, and pagination as local UI affordances only. | ACC #10 toolbar and footer |
+| FR-BS-008 | Keep the slice local mock state only; no viewer/upload/storage/compare/markup/issues. | User scope boundary; `HUMAN_GATE.md` |
+| FR-BS-009 | Avoid auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment. | `HUMAN_GATE.md` |
+
 ## Source Evidence
 
 - `reference/acc-screenshots/ScreenShot Tool -20260612102152.png`
@@ -100,4 +144,8 @@ Out of scope:
 - `reference/acc-screenshots/Video Screen1781227558018.png`
 - `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #2, #3
 - `docs/feature-notes/002-project-admin-member-access.md`
+- `reference/acc-screenshots/Video Screen1781231464329.png`
+- `reference/acc-screenshots/Video Screen1781231492911.png`
+- `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #8, #10
+- `docs/feature-notes/003-build-shell-sheets-list.md`
 - `SPEC.md`, `CHECKS.md`, `HUMAN_GATE.md`

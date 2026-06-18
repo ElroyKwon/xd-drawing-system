@@ -136,3 +136,54 @@ ProjectMemberAccess
 | FR-PA-007 | Existing same project/member access is invalid. |
 | FR-PA-008 | Valid submit creates one local access record with selected role. |
 | FR-PA-009 | Separate peer-level data types exclude company/auth/DB/API scope. |
+
+## Build Shell And Sheets List Model
+
+The third slice adds local mock `Sheet` metadata for the Build sheets list. It does not introduce drawing files, sheet binary storage, published versions, database schema, API contracts, Autodesk objects, or customer drawing data.
+
+### Entity
+
+```text
+Sheet
+- id: string
+- projectId: string
+- number: string
+- title: string
+- version: string
+- versionSet: string
+- disciplineCode: "A" | "E" | "M" | "P"
+- disciplineLabel: string
+- tag: string
+- lastUpdatedBy: string
+```
+
+### CRUD Expectations
+
+| Operation | Required? | Notes |
+|---|---:|---|
+| Create | No | Upload/publish is out of scope. |
+| Read | Yes | Build sheets table reads local mock sheets for `Study_Project`. |
+| Update | No | Metadata editing is out of scope. |
+| Delete | No | Sheet deletion is out of scope and customer-data-sensitive. |
+| Undo | No | No mutating action exists in this slice. |
+
+### Search Expectations
+
+- Search target fields: `number`, `title`, `disciplineLabel`, `tag`.
+- Search is local and case-insensitive.
+- Clearing search restores all current project sheet rows.
+- Empty result displays a stable empty row without mutating data.
+
+### Build Sheets Requirement Mapping
+
+| Requirement ID | Data support |
+|---|---|
+| FR-BS-001 | `projectId` ties sheets to the selected local project. |
+| FR-BS-002 | Shell state selects the sheets module; no persisted entity needed. |
+| FR-BS-003 | `Sheet[]` provides the local rows. |
+| FR-BS-004 | Sheet metadata fields support table display. |
+| FR-BS-005 | `number`, `title`, `disciplineLabel`, and `tag` support search. |
+| FR-BS-006 | View-mode state is UI state only. |
+| FR-BS-007 | Toolbar/menu/pagination affordances do not mutate data. |
+| FR-BS-008 | No drawing file or viewer entity is introduced. |
+| FR-BS-009 | Local-only data excludes auth/DB/API/Autodesk/customer drawing scope. |

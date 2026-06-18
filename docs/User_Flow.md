@@ -70,6 +70,32 @@
 | FR-PA-008 | UF-PA-010, UF-PA-011 |
 | FR-PA-009 | Out-of-scope flow list keeps company/auth/DB/API outside the Project Admin member-access flow. |
 
+## Build Shell And Sheets List Flow
+
+1. `UF-BS-001` User opens Build for `Study_Project` from the project list.
+2. `UF-BS-002` System shows Build shell with project context and `시트` selected in the left rail.
+3. `UF-BS-003` User searches sheets by number, title, discipline, or tag.
+4. `UF-BS-004` User clears search and sees all current local mock sheets again.
+5. `UF-BS-005` User toggles between list and grid view affordance.
+6. System updates the selected view button while keeping the functional sheets list available.
+7. `UF-BS-006` User reviews export, filter, row menu, and pagination affordances.
+8. System does not mutate data or require backend/export services.
+9. `UF-BS-007` User returns to the project list.
+
+## Build Shell Requirement Mapping
+
+| Requirement ID | User-flow coverage |
+|---|---|
+| FR-BS-001 | UF-BS-001, UF-BS-007 |
+| FR-BS-002 | UF-BS-002 |
+| FR-BS-003 | UF-BS-002 |
+| FR-BS-004 | UF-BS-002 |
+| FR-BS-005 | UF-BS-003, UF-BS-004 |
+| FR-BS-006 | UF-BS-005 |
+| FR-BS-007 | UF-BS-006 |
+| FR-BS-008 | Out-of-scope flow list keeps viewer/upload/storage/compare/markup/issues outside this slice. |
+| FR-BS-009 | Out-of-scope flow list keeps auth/DB/API/Autodesk/customer drawing/deployment outside this slice. |
+
 ## Out Of Scope Flows
 
 - User does not log in.
@@ -77,6 +103,6 @@
 - User does not create new user accounts or send email invitations.
 - User does not enforce real RBAC or edit a role/permission matrix.
 - User does not manage templates beyond selecting a visible modal option.
-- User does not enter the Build module, sheets list, 2D viewer, markup, issue, file, or photo screens.
+- User does not open a 2D viewer, upload/publish sheets, compare versions, create markup, create issues, manage files, or manage photos.
 - User does not upload, view, edit, or delete customer drawings.
 - User does not sync with Autodesk cloud or any external API.

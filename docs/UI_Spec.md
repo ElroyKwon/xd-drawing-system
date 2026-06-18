@@ -165,3 +165,55 @@
 - Empty search result: show stable table shell or compact empty row without mutating state.
 - Server error: Not required because this slice has no backend.
 - Company scope: no company fields, company details, or company management actions are shown; this covers FR-PA-009.
+
+## UI-BS-001 Build Shell And Sheets List
+
+### Screen
+
+| ID | Screen | Source evidence |
+|---|---|---|
+| UI-BS-001 | Build shell with `시트` list for `Study_Project` | ACC #8 `Video Screen1781231464329.png`; ACC #10 `Video Screen1781231492911.png` |
+
+### Layout
+
+- Top Build header shows module label `Build`, project context `Study_Project`, trial/banner affordance, help, and user menu.
+- Left rail shows `홈`, `시트`, `파일`, `이슈`, `양식`, `사진`; bottom items show `구성원`, `브리지`, `설정`.
+- `시트` is selected.
+- Main content title is `시트`.
+- Toolbar contains `내보내기`, search/filter control, list/grid view toggle.
+- Table columns show checkbox, thumbnail/number/title group, version chip, version set, discipline, tag, last updater, and row menu.
+- Footer shows item count and pagination affordance.
+
+### Fields
+
+| Field | Display | Requirement |
+|---|---|---|
+| projectName | `Study_Project` context label | FR-BS-001, FR-BS-002 |
+| sheetThumbnail | small drawing-preview placeholder | FR-BS-004 |
+| number | sheet number such as `A001` | FR-BS-003, FR-BS-004, FR-BS-005 |
+| title | sheet title under number | FR-BS-004, FR-BS-005 |
+| version | compact version chip such as `1` | FR-BS-004 |
+| versionSet | `Addendum 1` | FR-BS-004 |
+| disciplineLabel | `A (건축)`, `E (전기)`, `M (기계)`, `P (배관)` | FR-BS-004, FR-BS-005 |
+| tag | `architectural`, `electrical`, `mechanical`, `plumbing` | FR-BS-004, FR-BS-005 |
+| lastUpdatedBy | local mock updater display | FR-BS-004 |
+
+### Actions
+
+| Action | Result | Requirement | User-flow step |
+|---|---|---|---|
+| Enter Build from `Study_Project` | Opens Build sheets view | FR-BS-001 | UF-BS-001 |
+| Click `시트` rail item | Keeps sheets list selected | FR-BS-002 | UF-BS-002 |
+| Search by number/title/discipline/tag | Filters local mock sheets | FR-BS-005 | UF-BS-003 |
+| Clear search | Restores all local mock sheets | FR-BS-005 | UF-BS-004 |
+| Toggle list/grid | Updates selected view affordance; table remains functional list | FR-BS-006 | UF-BS-005 |
+| Click export/filter/row menu/pagination | No data mutation; local affordance only | FR-BS-007 | UF-BS-006 |
+| Back to project list | Returns to hub project list | FR-BS-001 | UF-BS-007 |
+
+### Build Sheets States
+
+- Empty search result: keep the table shell and show a compact empty row.
+- Loading: not required because data is local mock state.
+- Server error: not required because this slice has no backend.
+- Viewer state: not required; selecting a sheet does not open a 2D viewer in this slice.
+- Responsive: desktop shows full shell/table; narrow widths keep rail usable and table horizontally scrollable without clipped labels.

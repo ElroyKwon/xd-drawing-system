@@ -32,10 +32,28 @@ These tasks define the second product slice before implementation. Company infor
 
 ## Deferred Tasks
 
+## Build Shell And Sheets List Tasks
+
+These tasks define the third product slice before implementation. 2D viewer, upload/publish, customer drawing data, and persistence remain excluded.
+
+| Task ID | Requirement ID | Status | Task | Verification |
+|---|---|---|---|---|
+| T-BS-001 | FR-BS-001 | Done | Add a local Build entry path from `Study_Project` in the project list. | AC-BS-001; TS-BS-001 |
+| T-BS-002 | FR-BS-002 | Done | Render the Build header and left rail with `시트` selected. | AC-BS-002; TS-BS-002 |
+| T-BS-003 | FR-BS-003 | Done | Add local mock sheet rows for `Study_Project`. | AC-BS-003; TS-BS-003 |
+| T-BS-004 | FR-BS-004 | Done | Render the sheet metadata table with thumbnail, number/title, version, version set, discipline, tags, last updater, and row menu. | AC-BS-004; TS-BS-004 |
+| T-BS-005 | FR-BS-005 | Done | Add local search by sheet number, title, discipline, or tag. | AC-BS-005; TS-BS-005 |
+| T-BS-006 | FR-BS-006 | Done | Add list/grid view toggle affordance with list view as the functional view. | AC-BS-006; TS-BS-006 |
+| T-BS-007 | FR-BS-007 | Done | Add export, filter, row menu, and pagination affordances without data mutation. | AC-BS-007; TS-BS-007 |
+| T-BS-008 | FR-BS-008 | Done | Keep viewer/upload/storage/compare/markup/issues out of the slice. | AC-BS-008; TS-BS-008 |
+| T-BS-009 | FR-BS-009 | Done | Keep auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment out of scope. | AC-BS-009; TS-BS-009 |
+
+## Deferred Tasks
+
+- 2D sheet viewer.
+- Sheet upload/publish/version compare.
 - Project Admin role/permission matrix after human approval.
 - Company management after separate scope approval.
 - Project template management screen.
-- Build module shell.
-- Sheets list and 2D viewer.
 - Markup, issue, file, photo workflows.
 - Auth, permissions, API, DB, deployment.

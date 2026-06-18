@@ -89,3 +89,48 @@
 - Result: PASS on 2026-06-17.
 - Reason: seven core docs and UI support docs exist, FR-to-task/acceptance/test mappings are complete, UI actions map to user-flow steps, data model supports the local mock ProjectMemberAccess flow, and risky external integration items remain out of scope.
 - Implementation eligibility: Project Admin local mock slice may proceed to Task 1 only after this document-loop commit.
+
+## Build Shell And Sheets List Gate - 2026-06-18
+
+### Document Existence
+
+- [x] `docs/feature-notes/003-build-shell-sheets-list.md`
+- [x] `docs/PRD.md`
+- [x] `docs/TRD.md`
+- [x] `docs/UI_Spec.md`
+- [x] `docs/Data_Model.md`
+- [x] `docs/Task_List.md`
+- [x] `docs/Acceptance_Criteria.md`
+- [x] `docs/Test_Scenarios.md`
+- [x] `docs/Design_Map.md`
+- [x] `docs/User_Flow.md`
+
+### Build Shell Cross Checks
+
+- [x] FR-BS-001 through FR-BS-009 are represented in PRD, TRD, UI, data, task, acceptance, test, design, and user-flow documents.
+- [x] T-BS-001 through T-BS-009 map to FR-BS-001 through FR-BS-009.
+- [x] AC-BS-001 through AC-BS-009 map to FR-BS-001 through FR-BS-009.
+- [x] TS-BS-001 through TS-BS-009 map to FR-BS-001 through FR-BS-009.
+- [x] Visible Build shell and sheets actions map to `UF-BS-*` user-flow steps.
+- [x] Local `Sheet` metadata supports the sheets list without drawing files.
+- [x] 2D viewer, upload/publish, sheet compare, markup/issues, auth/RBAC, DB/API persistence, Autodesk API, paid SDK, customer drawing data, and deployment remain out of scope.
+
+### Build Shell Requirement Coverage
+
+| Requirement ID | Gate check |
+|---|---|
+| FR-BS-001 | Build entry from `Study_Project` is documented. |
+| FR-BS-002 | Build shell and selected `시트` rail are documented. |
+| FR-BS-003 | Local mock sheets table is documented. |
+| FR-BS-004 | Sheet row metadata fields are documented. |
+| FR-BS-005 | Number/title/discipline/tag search is documented. |
+| FR-BS-006 | List/grid view toggle affordance is documented. |
+| FR-BS-007 | Export/filter/row menu/pagination affordances are documented. |
+| FR-BS-008 | Viewer/upload/storage/compare/markup/issues exclusions are documented. |
+| FR-BS-009 | Auth/DB/API/Autodesk/customer drawing/deployment exclusions are documented. |
+
+### Build Shell Gate Status
+
+- Result: PASS on 2026-06-18.
+- Reason: seven core docs and UI support docs exist, FR-to-task/acceptance/test mappings are complete, UI actions map to user-flow steps, data model supports the local mock Sheet list, and risky external integration items remain out of scope.
+- Implementation eligibility: Build shell and sheets list local mock slice may proceed to implementation without resolving the separate Project Admin Task 6 browser evidence blocker.
