@@ -134,3 +134,52 @@
 - Result: PASS on 2026-06-18.
 - Reason: seven core docs and UI support docs exist, FR-to-task/acceptance/test mappings are complete, UI actions map to user-flow steps, data model supports the local mock Sheet list, and risky external integration items remain out of scope.
 - Implementation eligibility: Build shell and sheets list local mock slice may proceed to implementation without resolving the separate Project Admin Task 6 browser evidence blocker.
+
+## 2D Sheet Viewer First Slice Kickoff - 2026-06-18
+
+### Document Existence
+
+- [x] `docs/feature-notes/004-2d-sheet-viewer-first-slice.md`
+- [x] `docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md`
+- [x] `docs/PRD.md`
+- [x] `docs/TRD.md`
+- [x] `docs/UI_Spec.md`
+- [x] `docs/Data_Model.md`
+- [x] `docs/Task_List.md`
+- [x] `docs/Acceptance_Criteria.md`
+- [x] `docs/Test_Scenarios.md`
+- [x] `docs/Design_Map.md`
+- [x] `docs/User_Flow.md`
+
+### Viewer Slice Cross Checks
+
+- [x] FR-SV-001 through FR-SV-009 are represented in PRD, TRD, UI, data, task, acceptance, test, design, and user-flow documents.
+- [x] T-SV-001 through T-SV-009 map to FR-SV-001 through FR-SV-009.
+- [x] AC-SV-001 through AC-SV-009 map to FR-SV-001 through FR-SV-009.
+- [x] TS-SV-001 through TS-SV-009 map to FR-SV-001 through FR-SV-009.
+- [x] Visible viewer shell actions map to `UF-SV-*` user-flow steps.
+- [x] Local `SheetViewerState` reserves an equipment entity ID / ontology slot without TypeDB, DB/API, or schema work.
+- [x] Real viewer engine, customer drawing files, upload/publish, sheet compare, persisted markup/issues, auth/RBAC, DB/API persistence, TypeDB/schema integration, Autodesk API, paid SDK, CAD editor behavior, and deployment remain out of scope.
+- [x] Project Admin Task 6 remains a separate `BLOCKED_BROWSER_UNAVAILABLE` evidence-path blocker.
+
+### 2D Sheet Viewer Requirement Coverage
+
+| Requirement ID | Gate check |
+|---|---|
+| FR-SV-001 | Viewer shell entry from selected local sheet is documented. |
+| FR-SV-002 | Selected sheet and project context are documented. |
+| FR-SV-003 | Static local sheet render surface is documented. |
+| FR-SV-004 | Right-side viewer tool rail affordances are documented. |
+| FR-SV-005 | Bottom view-control affordances are documented. |
+| FR-SV-006 | Left markup/issues empty panel tabs are documented. |
+| FR-SV-007 | Local sheet navigation context is documented. |
+| FR-SV-008 | Equipment entity ID / ontology data slot is documented as local-only. |
+| FR-SV-009 | Real viewer engine and gated integration exclusions are documented. |
+
+### 2D Sheet Viewer Gate Status
+
+- Result: PASS on 2026-06-18 formal planning gate.
+- Current result: document-loop kickoff passed planning-gate review for the local-only viewer shell/static sheet render slice.
+- Checklist truth: the checked kickoff and traceability items above were verified against the live PRD, TRD, UI, data, task, acceptance, test, design, and user-flow documents during this gate review.
+- Implementation eligibility: the local-only viewer shell/static sheet render slice may proceed to a scoped implementation request with owned files and TDD checks. This PASS does not authorize real viewer engine or external integration work.
+- Human gate: real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, CAD editor behavior, and deployment remain unapproved.

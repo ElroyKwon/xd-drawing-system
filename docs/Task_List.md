@@ -48,9 +48,26 @@ These tasks track the implemented third product slice. 2D viewer, upload/publish
 | T-BS-008 | FR-BS-008 | Done | Keep viewer/upload/storage/compare/markup/issues out of the slice. | AC-BS-008; TS-BS-008 |
 | T-BS-009 | FR-BS-009 | Done | Keep auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment out of scope. | AC-BS-009; TS-BS-009 |
 
+## 2D Sheet Viewer First Slice Tasks
+
+Planning gate PASS recorded 2026-06-18. Implementation may start when the user requests it. Local-only viewer shell/static sheet render only — real viewer engine, TypeDB integration, customer drawings, and deployment remain out of scope for this slice.
+
+| Task ID | Requirement ID | Status | Task | Verification |
+|---|---|---|---|---|
+| T-SV-001 | FR-SV-001 | Gate Passed / Implementation Ready | Add a local entry from a selected Build sheet row into a viewer shell. | AC-SV-001; TS-SV-001 |
+| T-SV-002 | FR-SV-002 | Gate Passed / Implementation Ready | Render selected sheet number/title and `Study_Project` context in the viewer. | AC-SV-002; TS-SV-002 |
+| T-SV-003 | FR-SV-003 | Gate Passed / Implementation Ready | Render a local static sheet surface without real drawing files. | AC-SV-003; TS-SV-003 |
+| T-SV-004 | FR-SV-004 | Gate Passed / Implementation Ready | Add right-side viewer tool rail affordances as local UI state. | AC-SV-004; TS-SV-004 |
+| T-SV-005 | FR-SV-005 | Gate Passed / Implementation Ready | Add bottom view-control affordances without real measurement/compare behavior. | AC-SV-005; TS-SV-005 |
+| T-SV-006 | FR-SV-006 | Gate Passed / Implementation Ready | Add left markup/issues panel tab affordance with empty states. | AC-SV-006; TS-SV-006 |
+| T-SV-007 | FR-SV-007 | Gate Passed / Implementation Ready | Preserve local sheet navigation context, optionally with filmstrip affordance. | AC-SV-007; TS-SV-007 |
+| T-SV-008 | FR-SV-008 | Gate Passed / Implementation Ready | Reserve `equipmentEntityId` / ontology binding as a local data slot only. | AC-SV-008; TS-SV-008 |
+| T-SV-009 | FR-SV-009 | Gate Passed / Implementation Ready | Keep real viewer engine, customer drawings, TypeDB frontend wiring, Autodesk, paid SDK, auth/RBAC, and deployment out of scope. | AC-SV-009; TS-SV-009 |
+
 ## Deferred Tasks
 
-- 2D sheet viewer.
+- 2D sheet viewer implementation until planning gate PASS.
+- Real 2D viewer engine evaluation/adoption until human approval.
 - Sheet upload/publish/version compare.
 - Project Admin role/permission matrix after human approval.
 - Company management after separate scope approval.

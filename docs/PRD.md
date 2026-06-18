@@ -134,6 +134,52 @@ Out of scope:
 | FR-BS-008 | Keep the slice local mock state only; no viewer/upload/storage/compare/markup/issues. | User scope boundary; `HUMAN_GATE.md` |
 | FR-BS-009 | Avoid auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment. | `HUMAN_GATE.md` |
 
+## Selected Fourth Product Slice: 2D Sheet Viewer First Slice
+
+Goal:
+
+- Continue from the Build `시트` list into an ACC #11-style 2D sheet viewer shell.
+- Prove the viewing workflow as local-only UI with a static sheet render before real viewer engine, customer drawing, upload, markup persistence, or issue persistence work.
+- Reserve an equipment entity ID / ontology binding slot in viewer state without connecting to TypeDB, DB/API, or schema work.
+
+Users:
+
+- Primary user: 도면 목록에서 특정 시트를 열어 검토하는 도면관리 사용자.
+- Secondary user: 뷰어 위에 설비/온톨로지 바인딩이 붙을 위치를 검토하는 XD 제품 기획/운영 사용자.
+
+In scope:
+
+- Local entry from a mock sheet row into a viewer shell.
+- Static sheet render area for a selected mock sheet such as `A001`.
+- ACC #11-style right tool rail, bottom view controls, and left markup/issue panel affordance.
+- Local UI state for selected tool, zoom/fit affordance, panel tab, and selected sheet.
+- Empty markup/issues panel states.
+- Viewer data slot for `equipmentEntityId` / ontology binding, with no real integration.
+
+Out of scope:
+
+- Real viewer engine evaluation or adoption.
+- PDF/DWG/DXF parsing, tiled rendering, Canvas/WebGL renderer, Autodesk/APS-backed processing, or paid SDK work.
+- Customer/confidential drawing files.
+- Upload, publish, version compare, file storage, drawing sync.
+- Markup creation/editing/persistence, issue creation/editing/persistence, calibrated measurement.
+- Auth/RBAC, DB/API persistence, TypeDB/schema integration, Autodesk API, deployment.
+- CAD editor scope.
+
+## 2D Sheet Viewer Functional Requirements
+
+| ID | Requirement | Source evidence |
+|---|---|---|
+| FR-SV-001 | Open a viewer shell for a selected local mock sheet from the Build `시트` list. | ACC #10 to #11 flow; `docs/feature-notes/004-2d-sheet-viewer-first-slice.md` |
+| FR-SV-002 | Render selected sheet context with sheet number/title and project context. | ACC #11 title/context pattern |
+| FR-SV-003 | Show a central static sheet render area without loading real drawing files. | ACC #11 central drawing canvas; local-only scope |
+| FR-SV-004 | Render right-side viewer tool rail affordances for select, move, text, shape, pen, measurement, stamp, and color. | ACC #11 viewer toolbar |
+| FR-SV-005 | Render bottom view controls for pan/fit/zoom/fullscreen/compare/measure as local affordances. | ACC #11 bottom controls |
+| FR-SV-006 | Render left markup/issues panel affordance with empty states and tab switching. | ACC #12/#13 markup panel; #16 issues panel |
+| FR-SV-007 | Preserve local sheet navigation context, optionally with filmstrip-style affordance. | ACC #23 filmstrip context; Build sheets list continuity |
+| FR-SV-008 | Reserve `equipmentEntityId` / ontology binding in viewer state as a data slot only. | ACC analysis DKS differentiation notes; user instruction |
+| FR-SV-009 | Keep real viewer engine, customer drawings, upload/publish, markup/issues persistence, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, and deployment out of scope. | `HUMAN_GATE.md`; user instruction |
+
 ## Source Evidence
 
 - `reference/acc-screenshots/ScreenShot Tool -20260612102152.png`
@@ -148,4 +194,11 @@ Out of scope:
 - `reference/acc-screenshots/Video Screen1781231492911.png`
 - `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #8, #10
 - `docs/feature-notes/003-build-shell-sheets-list.md`
+- `reference/acc-screenshots/Video Screen1781231512247.png`
+- `reference/acc-screenshots/Video Screen1781231537335.png`
+- `reference/acc-screenshots/Video Screen1781231557885.png`
+- `reference/acc-screenshots/Video Screen1781231575003.png`
+- `reference/acc-screenshots/Video Screen1781231601337.png`
+- `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #11 through #17
+- `docs/feature-notes/004-2d-sheet-viewer-first-slice.md`
 - `SPEC.md`, `CHECKS.md`, `HUMAN_GATE.md`

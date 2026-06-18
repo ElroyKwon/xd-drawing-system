@@ -129,6 +129,43 @@ Pass/fail checks:
 - Browser console has no errors during open, search, view toggle, and return-to-project-list flows when browser automation is available.
 - Desktop and narrow/mobile widths do not show overlapping text, clipped labels, or broken shell/table layout.
 
+## Manual Checks For 2D Sheet Viewer First Slice
+
+Reference screenshots:
+
+- `reference/acc-screenshots/Video Screen1781231512247.png`
+- `reference/acc-screenshots/Video Screen1781231537335.png`
+- `reference/acc-screenshots/Video Screen1781231557885.png`
+- `reference/acc-screenshots/Video Screen1781231575003.png`
+- `reference/acc-screenshots/Video Screen1781231601337.png`
+- `reference/acc-screenshots/Video Screen1781231624050.png`
+
+Planning checks:
+
+- `FR-SV-001` through `FR-SV-009` appear in `docs/PRD.md`.
+- `FR-SV-001` through `FR-SV-009` appear in `docs/TRD.md`, `docs/UI_Spec.md`, `docs/Data_Model.md`, `docs/Task_List.md`, `docs/Acceptance_Criteria.md`, `docs/Test_Scenarios.md`, `docs/Design_Map.md`, and `docs/User_Flow.md`.
+- `T-SV-001` through `T-SV-009` appear in `docs/Task_List.md`.
+- `AC-SV-001` through `AC-SV-009` appear in `docs/Acceptance_Criteria.md`.
+- `TS-SV-001` through `TS-SV-009` appear in `docs/Test_Scenarios.md`.
+- `UF-SV-*` flow steps appear in `docs/User_Flow.md`.
+- `docs/Data_Model.md` reserves `equipmentEntityIdSlot` or equivalent as local state only.
+- `HUMAN_GATE.md` still gates real viewer engine, customer drawings, DB/API/TypeDB/schema, Autodesk API, paid SDK, CAD editor scope, and deployment.
+- `docs/Planning_Gate_Checklist.md` records formal planning-gate PASS only after the live traceability checks have been run.
+- `docs/Task_List.md` keeps T-SV implementation work as planned/gate-ready, not done.
+
+Future implementation pass/fail checks after planning gate:
+
+- Build sheets list exposes a local action to open a selected mock sheet in the viewer shell.
+- Viewer shell shows `Study_Project`, selected sheet number/title, and a return path to the sheets list.
+- Central sheet area renders a static local sheet representation without loading customer drawings or parsed files.
+- Right tool rail renders select, move, text, shape, pen, measurement, stamp, and color affordances.
+- Bottom controls render pan, fit, zoom, fullscreen, compare, and measure affordances without claiming real engine behavior.
+- Markup and issue panel tabs switch locally and show empty states without creating records.
+- Optional filmstrip/sheet navigation uses local mock sheets only.
+- No real viewer engine, upload/publish, version compare, persisted markup/issues, Autodesk cloud/API, paid SDK, customer drawing, DB/API, auth/RBAC, TypeDB/schema, or deployment action is required.
+- Browser console has no errors during open, tool selection, panel switching, and return-to-sheets flows when browser automation is available.
+- Desktop and narrow/mobile widths do not show overlapping text, clipped labels, or broken viewer controls.
+
 ## Current Evidence Files
 
 - `docs/evidence/initial-setup-desktop.png`

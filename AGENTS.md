@@ -62,7 +62,13 @@
 3. `CHECKS.md` 기준의 검증을 실행하고 결과를 `EVIDENCE.md`에 남긴다. 실행하지 못한 검증은 이유와 남은 증거 요구사항을 적는다.
 4. 브라우저 검증이 필요한 작업은 fresh interaction, console state, screenshot path가 없으면 PASS로 쓰지 않는다.
 5. 남아 있는 blocker, human gate, 다음 세션의 첫 명령과 읽을 파일을 `docs/sessions/NEXT_SESSION.md`에 명시한다.
-6. 사용자가 명시적으로 요청하지 않으면 commit/push하지 않는다.
+6. 글로벌 Obsidian 업무일지 규칙을 반드시 실행한다.
+   - `G:\내 드라이브\_Obsidian\CLAUDE.md`의 `업무일지 자동 기록` 섹션을 확인한다.
+   - `G:\내 드라이브\_Obsidian\지식관리\업무일지\YYYY-MM-DD.md`에 이번 세션 항목을 append한다. 새 파일이면 YAML frontmatter를 포함한다.
+   - 세션 번호는 해당 날짜 파일의 기존 세션 수 + 1로 쓴다.
+   - 업무일지 대상 폴더가 WIKI 제외인지, 관련 `_CONCEPT-MAP.md` 갱신 대상이 있는지 확인하고 필요한 경우 같이 처리한다.
+   - 업무일지를 작성하지 못했으면 완료 보고를 하지 말고, 실패 이유와 남은 조치를 blocker로 보고한다.
+7. 사용자가 명시적으로 요청하지 않으면 commit/push하지 않는다.
 
 완료 보고에는 다음을 포함한다.
 
@@ -72,8 +78,35 @@
 - 실행한 검증과 결과
 - 실패 또는 미실행 검증
 - blocker와 human gate 상태
+- Obsidian 업무일지 기록 여부와 파일 경로
 - 다음 세션이 이어갈 정확한 next action
 
 ## 사람 승인 게이트
 
 `HUMAN_GATE.md`에 있는 항목은 자동으로 넘기지 않는다. 특히 인증, 권한, DB 스키마, 고객 데이터, 삭제, 배포 관련 변경은 먼저 확인한다.
+
+## XD 시스템 방향 — 확정 결정 (2026-06-18)
+
+- **TypeDB 배포 전략 확정**: TypeDB는 엔지니어 PC에 별도 배포하여 운영한다. 엔지니어 PC의 모든 도면을 분석해 이 로컬 TypeDB 인스턴스에 적재하는 것이 목표다.
+- **프론트엔드 연동 설계는 미결**: viewer → TypeDB 연결 설계 및 구현은 별도 게이트 결정이 필요하다. 현재 슬라이스에서는 `equipmentEntityId` 슬롯 예약만 허용된다.
+- **나머지 설계 보완 진행 중**: 상위 아키텍처/보안 설계는 별도로 진행 중이며, 해당 설계가 완료되면 HUMAN_GATE.md 허용 항목이 갱신된다.
+
+## 현재 설계 문서 감사 결과 요약 (2026-06-18)
+
+독립 감사 실행 결과 (세부 내용은 EVIDENCE.md `설계 문서 감사 - 2026-06-18` 섹션 참조):
+
+**전반적 판정**: PASS with 3 Action Items
+
+| 항목 | 상태 |
+|---|---|
+| 목적 및 설계 의도 일치 | PASS |
+| 문서 루프 프로세스 준수 | PASS |
+| Human Gate 관리 | PASS (TypeDB 결정 반영 완료) |
+| Task_List T-SV 상태 불일치 | 수정 완료 (Gate Passed / Implementation Ready) |
+| Project Admin Task 6 브라우저 블로커 해결 경로 | 미정의 (별도 결정 필요) |
+
+**현재 슬라이스 상태**:
+- Phase 1 초기 설정: DONE
+- Phase 2 Project Admin: 코드 DONE, 브라우저 증거 BLOCKED_BROWSER_UNAVAILABLE
+- Phase 3 Build Shell + Sheets: DONE
+- Phase 4 2D Sheet Viewer: Planning Gate PASS, 구현 대기 (사용자 요청 시 시작)

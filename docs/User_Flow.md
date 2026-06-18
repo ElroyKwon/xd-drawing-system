@@ -96,6 +96,34 @@
 | FR-BS-008 | Out-of-scope flow list keeps viewer/upload/storage/compare/markup/issues outside this slice. |
 | FR-BS-009 | Out-of-scope flow list keeps auth/DB/API/Autodesk/customer drawing/deployment outside this slice. |
 
+## 2D Sheet Viewer First Slice Flow
+
+1. `UF-SV-001` User opens a selected local mock sheet from the Build `시트` list.
+2. `UF-SV-002` System shows a viewer shell with project context, sheet number/title, and a static sheet render surface.
+3. `UF-SV-003` User selects a right-rail viewer tool affordance.
+4. System updates selected-tool state locally without creating markup.
+5. `UF-SV-004` User uses bottom pan/fit/zoom/fullscreen/compare/measure controls.
+6. System keeps controls as local affordances and does not claim real engine behavior.
+7. `UF-SV-005` User switches between `마크업` and `이슈` panel tabs.
+8. System shows empty states without creating records.
+9. `UF-SV-006` User changes local sheet navigation context if a filmstrip affordance is implemented.
+10. System changes selected local sheet context without upload/storage/sync.
+11. `UF-SV-007` User returns to the Build `시트` list.
+
+## 2D Sheet Viewer Requirement Mapping
+
+| Requirement ID | User-flow coverage |
+|---|---|
+| FR-SV-001 | UF-SV-001, UF-SV-007 |
+| FR-SV-002 | UF-SV-002 |
+| FR-SV-003 | UF-SV-002 |
+| FR-SV-004 | UF-SV-003 |
+| FR-SV-005 | UF-SV-004 |
+| FR-SV-006 | UF-SV-005 |
+| FR-SV-007 | UF-SV-006 |
+| FR-SV-008 | Out-of-scope flow list keeps ontology binding as a local data slot only. |
+| FR-SV-009 | Out-of-scope flow list keeps real viewer engine, customer drawing, upload/publish, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, and deployment outside this slice. |
+
 ## Out Of Scope Flows
 
 - User does not log in.
@@ -103,6 +131,7 @@
 - User does not create new user accounts or send email invitations.
 - User does not enforce real RBAC or edit a role/permission matrix.
 - User does not manage templates beyond selecting a visible modal option.
-- User does not open a 2D viewer, upload/publish sheets, compare versions, create markup, create issues, manage files, or manage photos.
+- In the Build sheets list slice, user does not open a 2D viewer, upload/publish sheets, compare versions, create markup, create issues, manage files, or manage photos.
+- In the viewer first slice, user may open a local static viewer shell, but does not upload/publish sheets, compare versions, create persisted markup, create persisted issues, parse drawings, or use real viewer-engine behavior.
 - User does not upload, view, edit, or delete customer drawings.
 - User does not sync with Autodesk cloud or any external API.

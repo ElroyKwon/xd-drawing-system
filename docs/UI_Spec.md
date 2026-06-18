@@ -217,3 +217,55 @@
 - Server error: not required because this slice has no backend.
 - Viewer state: not required; selecting a sheet does not open a 2D viewer in this slice.
 - Responsive: desktop shows full shell/table; narrow widths keep rail usable and table horizontally scrollable without clipped labels.
+
+## UI-SV-001 2D Sheet Viewer First Slice
+
+### Screen
+
+| ID | Screen | Source evidence |
+|---|---|---|
+| UI-SV-001 | 2D sheet viewer shell for selected local sheet | ACC #11 `Video Screen1781231512247.png`; ACC #12/#13 markup panel; ACC #16 issues panel |
+
+### Layout
+
+- Viewer opens from the Build `시트` list for a selected local mock sheet.
+- Top context shows project name, sheet number, sheet title, and a return-to-sheets action.
+- Central canvas area shows a static sheet render surface, not a parsed drawing file.
+- Right vertical tool rail shows select, move, text, shape, pen, measurement, stamp, and color affordances.
+- Bottom center controls show pan, fit, zoom out/in, fullscreen, compare, and measure affordances.
+- Left panel can switch between `마크업` and `이슈`; both show empty states in this first slice.
+- Optional bottom filmstrip shows local sheet navigation context without loading external assets.
+
+### Fields
+
+| Field | Display | Requirement |
+|---|---|---|
+| projectName | `Study_Project` context label | FR-SV-001, FR-SV-002 |
+| sheetNumber | selected sheet number such as `A001` | FR-SV-002 |
+| sheetTitle | selected sheet title | FR-SV-002 |
+| staticSheetRender | local static sheet render surface | FR-SV-003 |
+| selectedTool | active right-rail tool state | FR-SV-004 |
+| zoomLevel | local zoom/fit affordance label or state | FR-SV-005 |
+| panelTab | `마크업` or `이슈` | FR-SV-006 |
+| equipmentEntityIdSlot | reserved hidden/local data slot | FR-SV-008 |
+
+### Actions
+
+| Action | Result | Requirement | User-flow step |
+|---|---|---|---|
+| Open selected sheet | Shows viewer shell for that local sheet | FR-SV-001 | UF-SV-001 |
+| Return to sheets list | Returns to Build `시트` list | FR-SV-001 | UF-SV-007 |
+| Select a right-rail tool | Updates selected local affordance only | FR-SV-004 | UF-SV-003 |
+| Use bottom controls | Updates local affordance state only | FR-SV-005 | UF-SV-004 |
+| Switch markup/issues tab | Shows the selected empty panel state | FR-SV-006 | UF-SV-005 |
+| Select sheet from filmstrip | Changes selected local sheet if implemented | FR-SV-007 | UF-SV-006 |
+
+### Viewer States
+
+- Empty markup panel: show no saved markups and a non-persistent prompt to use tools later.
+- Empty issues panel: show no issue pins/list because issue creation is out of scope.
+- Loading: not required because the static sheet render is local.
+- Server error: not required because no backend exists.
+- Engine unavailable: not applicable because no real viewer engine is used.
+- Integration boundary: `FR-SV-009` keeps real viewer engine adoption, customer drawings, upload/publish, persisted markup/issues, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, CAD editor behavior, and deployment outside this UI slice.
+- Responsive: desktop prioritizes full viewer layout; narrow widths keep context, static sheet surface, and essential controls reachable without overlapping text.

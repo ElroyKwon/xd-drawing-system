@@ -148,3 +148,46 @@ Sheet
 | FR-BS-007 | Render inert local affordances for export, filter, row menu, and pagination. |
 | FR-BS-008 | Exclude viewer/upload/storage/compare/markup/issues from code paths. |
 | FR-BS-009 | Keep external integrations and persistence out of scope. |
+
+## 2D Sheet Viewer First Slice Technical Addendum
+
+The first viewer slice is a document-loop kickoff for a future frontend-only implementation. It should use local mock sheet metadata and static sheet render UI. It must not add a real viewer engine, dependency installation, drawing parser, backend persistence, authentication, authorization, database schema, TypeDB integration, Autodesk cloud/API, paid SDK, deployment, or customer drawing data.
+
+### Data Types
+
+```text
+SheetViewerState
+- projectId
+- sheetId
+- selectedTool
+- zoomLevel
+- panelTab: "markup" | "issues"
+- equipmentEntityIdSlot: string | null
+```
+
+### Frontend Handling
+
+- A future `SheetViewerView` can be opened from a selected local `Sheet` row.
+- The central drawing surface is a static local render or placeholder, not a parsed drawing file.
+- Toolbar buttons, bottom controls, and panel tabs are local UI state only.
+- Markup, issue, compare, measurement, and fullscreen controls may be visible affordances but must not persist data or require an engine.
+- `equipmentEntityIdSlot` reserves the future XD ontology binding point without TypeDB, DB/API, or schema work.
+
+### Human-Gated Alternatives
+
+- Real viewer engine evaluation/adoption is a separate gated decision.
+- PDF.js, OpenSeadragon, APS Viewer, ODA, Autodesk-backed processing, paid SDKs, customer drawing ingestion, and DB/API/TypeDB integration require approval before implementation.
+
+### 2D Sheet Viewer Requirement Mapping
+
+| Requirement ID | Technical handling |
+|---|---|
+| FR-SV-001 | Open a future local `SheetViewerView` from selected mock sheet state. |
+| FR-SV-002 | Read selected `Sheet` metadata for title/context labels. |
+| FR-SV-003 | Render a static local sheet surface with no drawing file loading. |
+| FR-SV-004 | Store selected viewer tool as local UI state. |
+| FR-SV-005 | Store zoom/fit control affordance state locally. |
+| FR-SV-006 | Store left panel tab state and render empty markup/issues panels. |
+| FR-SV-007 | Reuse local mock sheet list for navigation context. |
+| FR-SV-008 | Reserve `equipmentEntityIdSlot` only; no ontology integration. |
+| FR-SV-009 | Keep all real viewer, persistence, external integration, customer drawing, and deployment work out of scope. |

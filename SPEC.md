@@ -18,7 +18,8 @@ Current limitations:
 - All product data is local mock state only.
 - Project Admin Task 6 browser evidence remains `BLOCKED_BROWSER_UNAVAILABLE`.
 - Build shell + Sheets list has browser evidence, but that evidence does not close Project Admin Task 6.
-- No DB/API/Auth/RBAC enforcement, Autodesk API, paid SDK, customer drawing data, deployment, 2D viewer, upload/publish, markup, or issues workflow is implemented.
+- ACC #11 `2D sheet viewer` first slice is in document-loop kickoff only; no viewer implementation exists yet.
+- No DB/API/Auth/RBAC enforcement, Autodesk API, paid SDK, customer drawing data, deployment, real 2D viewer engine, upload/publish, markup, or issues workflow is implemented.
 
 ## Project Setup Scope
 
@@ -159,3 +160,41 @@ Done when:
 - The seven core docs and UI support docs include FR-BS-001 through FR-BS-009 traceability.
 - The planning gate records PASS for the local mock Build shell and sheets list slice before implementation starts.
 - Implementation passes `npm test` and `npm run build`; browser evidence remains separately BLOCKED unless fresh browser interaction, console state, and screenshots are captured.
+
+## Selected Fourth Product Slice: 2D Sheet Viewer First Slice
+
+Selected scope:
+
+- ACC #11 `2D sheet viewer` first slice design
+- Local-only viewer shell/static sheet render for a selected mock sheet from `Study_Project`
+
+Default decision:
+
+- Use a local static viewer shell for the first slice.
+- Reserve equipment entity ID / ontology binding as a local viewer data slot only.
+- Do not evaluate, install, or adopt a real viewer engine without human approval.
+
+In scope:
+
+- Local entry from the Build `시트` list into a viewer shell.
+- Selected sheet context with sheet number/title and `Study_Project`.
+- Static sheet render area with no real drawing file.
+- ACC-style right tool rail and bottom view controls as local affordances.
+- Left markup/issues panel tabs with empty states.
+- Optional local sheet navigation context or filmstrip affordance.
+- Nullable `equipmentEntityId` / ontology binding slot in local state.
+
+Out of scope:
+
+- Real viewer engine adoption, dependency installation, PDF/DWG/DXF parsing, Canvas/WebGL/tiled renderer, Autodesk-backed processing, or paid SDK.
+- Customer or confidential drawing files.
+- Sheet upload, publish, version compare, file storage, drawing sync.
+- Persisted markup, issue creation, measurement, calibrated scale, or CAD editor behavior.
+- Auth/RBAC, DB/API persistence, TypeDB/schema integration, Autodesk API, deployment.
+
+Done when:
+
+- `docs/feature-notes/004-2d-sheet-viewer-first-slice.md` links the reference screens, scope, user flow, data model, and verification criteria.
+- The seven core docs and UI support docs include FR-SV-001 through FR-SV-009 traceability.
+- The planning gate records PASS for the local-only viewer shell/static render slice before implementation starts.
+- Project Admin Task 6 remains a separate blocker and is not closed from viewer-slice evidence.

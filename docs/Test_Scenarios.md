@@ -50,6 +50,20 @@ These scenarios define the active checks for the implemented local mock initial 
 | TS-BS-008 | FR-BS-008 | AC-BS-008 | Try the Build sheets slice without opening a viewer or upload flow. | No 2D viewer/upload/storage/compare/markup/issues workflow is required. |
 | TS-BS-009 | FR-BS-009 | AC-BS-009 | Review dependencies and runtime requirements. | No auth, DB, API, Autodesk account, paid SDK, customer drawing, or deployment is required. |
 
+## 2D Sheet Viewer First Slice Scenarios
+
+| Test ID | Requirement ID | Acceptance ID | Scenario | Expected result |
+|---|---|---|---|---|
+| TS-SV-001 | FR-SV-001 | AC-SV-001 | Open a selected local sheet from the Build `시트` list. | Viewer shell renders for that selected sheet without external data. |
+| TS-SV-002 | FR-SV-002 | AC-SV-002 | Inspect viewer header/context. | Project name, sheet number, and sheet title match the selected local sheet. |
+| TS-SV-003 | FR-SV-003 | AC-SV-003 | Inspect central viewer surface. | Static local sheet render is visible and no customer drawing or parsed file is loaded. |
+| TS-SV-004 | FR-SV-004 | AC-SV-004 | Select right-rail viewer tools. | Active affordance changes locally and no markup is persisted. |
+| TS-SV-005 | FR-SV-005 | AC-SV-005 | Use bottom view controls. | Controls remain local affordances and do not claim real measurement/compare behavior. |
+| TS-SV-006 | FR-SV-006 | AC-SV-006 | Switch between markup and issue panel tabs. | Selected empty panel appears without creating markup/issues. |
+| TS-SV-007 | FR-SV-007 | AC-SV-007 | Use local sheet navigation context if implemented. | Selected local sheet context changes without upload/storage/sync. |
+| TS-SV-008 | FR-SV-008 | AC-SV-008 | Review viewer data state. | `equipmentEntityId` / ontology slot is reserved locally only. |
+| TS-SV-009 | FR-SV-009 | AC-SV-009 | Review dependencies and runtime requirements. | No real viewer engine, customer drawing, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, or deployment is required. |
+
 ## Manual Browser Checks
 
 - Compare UI against:
@@ -59,6 +73,9 @@ These scenarios define the active checks for the implemented local mock initial 
   - `reference/acc-screenshots/Video Screen1781227558018.png`
   - `reference/acc-screenshots/Video Screen1781231464329.png`
   - `reference/acc-screenshots/Video Screen1781231492911.png`
+  - `reference/acc-screenshots/Video Screen1781231512247.png`
+  - `reference/acc-screenshots/Video Screen1781231537335.png`
+  - `reference/acc-screenshots/Video Screen1781231601337.png`
 - Check desktop width.
 - Check mobile width.
 - Check Korean label/button fit.

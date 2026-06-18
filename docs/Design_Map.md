@@ -18,6 +18,11 @@
 | `reference/acc-screenshots/Video Screen1781231492911.png` | Sheets list toolbar, columns, sheet row metadata, view toggle, row menu, and pagination. |
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #8/#10 | Build home shell and sheets list reproduction notes. |
 | `docs/feature-notes/003-build-shell-sheets-list.md` | Build shell and sheets list slice boundary and local-only exclusions. |
+| `reference/acc-screenshots/Video Screen1781231512247.png` | ACC #11 viewer shell, right tool rail, bottom view controls, and central drawing area. |
+| `reference/acc-screenshots/Video Screen1781231537335.png` | Viewer markup side panel empty state. |
+| `reference/acc-screenshots/Video Screen1781231601337.png` | Viewer issues panel empty state. |
+| `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #11/#12/#13/#16/#17 | 2D viewer, markup/issues panel, and settings reproduction notes. |
+| `docs/feature-notes/004-2d-sheet-viewer-first-slice.md` | Viewer first-slice boundary, local-only decision, and ontology data-slot reservation. |
 | `HUMAN_GATE.md` | External integration and risky-change boundaries. |
 
 ## Feature To UI Map
@@ -51,6 +56,15 @@
 | FR-BS-007 | Export/filter/row menu/pagination affordances | User sees ACC-like list controls without data mutation. |
 | FR-BS-008 | Local-only sheets list boundary | User does not open viewer/upload/storage/compare/markup/issues. |
 | FR-BS-009 | Integration boundary | User completes the slice without auth/DB/API/Autodesk/customer drawing dependencies. |
+| FR-SV-001 | Viewer shell entry from a sheet row | User opens a selected local sheet. |
+| FR-SV-002 | Viewer header/context | User confirms selected sheet number/title and project context. |
+| FR-SV-003 | Static sheet render surface | User sees a local drawing-like surface without real files. |
+| FR-SV-004 | Right viewer tool rail | User selects local tool affordances. |
+| FR-SV-005 | Bottom view controls | User sees pan/fit/zoom/fullscreen/compare/measure affordances. |
+| FR-SV-006 | Left markup/issues panel | User switches empty panel tabs. |
+| FR-SV-007 | Sheet navigation context | User stays oriented within the local sheet set. |
+| FR-SV-008 | Equipment entity ID data slot | Future XD ontology binding point is reserved without integration. |
+| FR-SV-009 | Viewer integration boundary | User completes the first viewer slice without real engine, customer drawing, DB/API, Autodesk, paid SDK, or deployment. |
 
 ## ACC To XD Adaptation
 
@@ -60,3 +74,4 @@
 - Template selection is represented only as a modal field; template management remains out of scope.
 - Company references in Project Admin are treated as excluded context only; company details and company management are not implemented in the ProjectMemberAccess slice.
 - ACC Build shell and sheets list are reproduced as local UI and metadata only; real drawing files, viewer engines, upload/publish, and Autodesk-backed processing are excluded until a later approved slice.
+- ACC 2D viewer is reproduced first as a local static viewer shell. The first slice reserves room for markup, issues, measurement, compare, and ontology binding but does not implement those workflows or adopt a real viewer engine.

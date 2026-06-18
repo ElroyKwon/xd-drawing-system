@@ -187,3 +187,49 @@ Sheet
 | FR-BS-007 | Toolbar/menu/pagination affordances do not mutate data. |
 | FR-BS-008 | No drawing file or viewer entity is introduced. |
 | FR-BS-009 | Local-only data excludes auth/DB/API/Autodesk/customer drawing scope. |
+
+## 2D Sheet Viewer First Slice Model
+
+The fourth slice reserves local viewer state for a future static viewer shell. It does not introduce drawing files, binary storage, parsed geometry, persisted markup, persisted issues, database schema, TypeDB schema, API contracts, Autodesk objects, or customer drawing data.
+
+### Entity
+
+```text
+SheetViewerState
+- projectId: string
+- sheetId: string
+- selectedTool: "select" | "move" | "text" | "shape" | "pen" | "measure" | "stamp"
+- zoomLevel: string
+- panelTab: "markup" | "issues"
+- equipmentEntityIdSlot: string | null
+```
+
+### CRUD Expectations
+
+| Operation | Required? | Notes |
+|---|---:|---|
+| Create | No | Viewer state is local UI state only. |
+| Read | Yes | Viewer reads selected local `Sheet` metadata and local viewer state. |
+| Update | Local only | Tool, zoom, selected panel, and selected sheet may change in memory. |
+| Delete | No | No drawing, markup, issue, or access record deletion exists in this slice. |
+| Undo | No | No persisted mutation exists. |
+
+### Ontology Slot Boundary
+
+- `equipmentEntityIdSlot` is reserved as a nullable local field only.
+- It does not create TypeDB schema, DB columns, API contracts, ontology writes, or entity-resolution logic.
+- Real ontology binding is a separate human-gated integration slice.
+
+### 2D Sheet Viewer Requirement Mapping
+
+| Requirement ID | Data support |
+|---|---|
+| FR-SV-001 | `sheetId` ties viewer state to a selected local sheet. |
+| FR-SV-002 | Existing `Sheet` metadata supports context labels. |
+| FR-SV-003 | Static render surface has no persisted drawing entity. |
+| FR-SV-004 | `selectedTool` supports right-rail local selection state. |
+| FR-SV-005 | `zoomLevel` supports bottom-control affordance state. |
+| FR-SV-006 | `panelTab` supports markup/issues empty panels. |
+| FR-SV-007 | Existing local `Sheet[]` supports navigation context. |
+| FR-SV-008 | `equipmentEntityIdSlot` reserves future ontology binding. |
+| FR-SV-009 | No external persistence, viewer engine, customer drawing, or integration data is introduced. |

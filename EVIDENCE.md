@@ -1976,3 +1976,891 @@ Remaining risk:
   Project Admin Task 6 remains blocked until a changed page-level browser automation precondition is proven.
   The next viewer slice still needs document-loop setup and the local-only vs real-engine pre-decision.
 ```
+
+## ACC #11 2D Sheet Viewer Document Loop Kickoff - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Mode:
+  ai-loop-orchestrator direct-subagent review plus main-session integration.
+
+Scope:
+  Start the ACC #11 `2D sheet viewer` first slice document-loop.
+  No product implementation.
+  No source, package, reference, docs/evidence, or .ai-loop runtime edits.
+  No Project Admin Task 6 browser validation rerun.
+  No 0009 request created.
+
+Preflight snapshot:
+  git status --short --untracked-files=all
+    PASS; no output.
+
+Prompt expected state vs live state:
+  Branch:
+    master
+  Latest commit:
+    f59d850 docs: refresh post-commit handoff cleanup
+  Working tree:
+    clean at preflight.
+  Result:
+    Expected state matched live state before document edits.
+
+Coordination mode:
+  direct-subagent, read-only assignments, with main-session document integration.
+
+Subagent assignments:
+  Assignment A - current handoff / Task 6 blocker guard:
+    Result: PASS with caveat.
+    Finding: Project Admin Task 6 remains BLOCKED_BROWSER_UNAVAILABLE after 0007/0008.
+    Finding: Build browser evidence is not reused as Project Admin Task 6 evidence.
+    Finding: ACC #11 document-loop can start while Task 6 remains open.
+    Caveat: during this session, new ACC #11 kickoff docs appeared as expected current-session edits.
+
+  Assignment B - ACC #11 2D sheet viewer reference/docs basis:
+    Result: PASS.
+    Finding: ACC #11 is the natural continuation from ACC #10 sheets list.
+    Recommended requirement prefix: FR-SV, with T-SV, AC-SV, TS-SV, and UF-SV mappings.
+    Recommended first slice: local-only viewer shell/static sheet render.
+
+  Assignment C - viewer slice pre-decisions:
+    Result:
+      local-only static viewer shell: PASS for planning, not implementation.
+      real viewer engine evaluation/adoption: HUMAN_GATE_REQUIRED.
+      equipment entity ID / ontology data slot: PASS as reserved local data slot.
+      expanded HUMAN_GATE scope: HUMAN_GATE_REQUIRED.
+
+Documents created:
+  docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+  docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+Documents updated:
+  SPEC.md
+  PLAN.md
+  CHECKS.md
+  HUMAN_GATE.md
+  docs/PRD.md
+  docs/TRD.md
+  docs/UI_Spec.md
+  docs/Data_Model.md
+  docs/Task_List.md
+  docs/Acceptance_Criteria.md
+  docs/Test_Scenarios.md
+  docs/Design_Map.md
+  docs/User_Flow.md
+  docs/Planning_Gate_Checklist.md
+  docs/sessions/NEXT_SESSION.md
+  EVIDENCE.md
+
+ACC #11 pre-decision:
+  Default first slice:
+    local-only viewer shell/static sheet render.
+  Real viewer engine:
+    not authorized; HUMAN_GATE_REQUIRED.
+  Equipment entity / ontology binding:
+    reserve local viewer data slot only.
+  TypeDB/DB/API/schema integration:
+    not authorized; separate gated work.
+
+Product check status vs evidence-path status:
+  Build shell + Sheets list remains PASS based on prior committed evidence.
+  Project Admin Task 6 remains open / BLOCKED_BROWSER_UNAVAILABLE.
+  ACC #11 is document-loop kickoff only; no implementation evidence exists.
+  Build browser evidence was not reused as Project Admin Task 6 evidence.
+
+Progress-doc consistency:
+  PLAN.md records Phase 4 document-loop kickoff and planning gate PENDING.
+  docs/Task_List.md records T-SV-* as Planned / Gate Pending.
+  docs/Planning_Gate_Checklist.md records kickoff readiness, not formal PASS.
+  docs/sessions/NEXT_SESSION.md points the next session to planning gate before implementation.
+
+Verification run during kickoff:
+  rg -n "FR-SV-00[1-9]" docs SPEC.md PLAN.md CHECKS.md HUMAN_GATE.md EVIDENCE.md
+    PASS; FR-SV-001 through FR-SV-009 are represented in the current document set.
+
+  rg -n "T-SV-00[1-9]|AC-SV-00[1-9]|TS-SV-00[1-9]|UF-SV-00[1-9]" docs PLAN.md CHECKS.md
+    PASS; task, acceptance, test, and user-flow mappings are present.
+
+  rg scope-boundary terms for real viewer engine, customer drawing, TypeDB, Autodesk, paid SDK, CAD editor, BLOCKED_BROWSER_UNAVAILABLE, and 0009
+    PASS; matches are explicit exclusions, gates, or carry-forward blocker guards.
+
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence .ai-loop
+    PASS; no output.
+
+Not run:
+  npm test
+  npm run build
+  Browser validation
+
+Reason:
+  This session edited planning/handoff documents only and did not touch src/package/reference/docs/evidence/.ai-loop runtime paths.
+
+Human approval items:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, CAD editor behavior, and deployment remain unapproved.
+
+Next action:
+  Run planning gate for the ACC #11 local-only viewer shell/static sheet render slice.
+  Do not implement until planning gate PASS or explicitly accepted SLICE-ONLY PASS.
+  Keep Project Admin Task 6 open until a changed browser automation precondition is documented and fresh Project Admin browser evidence is captured.
+```
+
+## Session Closeout - ACC #11 Kickoff - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Closeout scope:
+  End the session after ACC #11 2D sheet viewer first slice document-loop kickoff.
+  No new product implementation.
+  No browser validation.
+  No Project Admin Task 6 rerun.
+  No 0009 request created.
+  No commit or push.
+
+Current stage:
+  ACC #11 document-loop kickoff complete.
+  Planning gate remains PENDING.
+  Implementation is not authorized until planning gate PASS or explicitly accepted SLICE-ONLY PASS.
+
+Dirty file classification:
+  Product planning docs:
+    SPEC.md
+    PLAN.md
+    CHECKS.md
+    HUMAN_GATE.md
+    docs/PRD.md
+    docs/TRD.md
+    docs/UI_Spec.md
+    docs/Data_Model.md
+    docs/Task_List.md
+    docs/Acceptance_Criteria.md
+    docs/Test_Scenarios.md
+    docs/Design_Map.md
+    docs/User_Flow.md
+    docs/Planning_Gate_Checklist.md
+    docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+  Handoff/evidence docs:
+    EVIDENCE.md
+    docs/sessions/NEXT_SESSION.md
+
+  Product code/evidence assets:
+    none
+
+  src/package/reference/docs/evidence/.ai-loop runtime:
+    none
+
+Closeout verification:
+  git status --short --untracked-files=all
+    OBSERVED:
+      M CHECKS.md
+      M EVIDENCE.md
+      M HUMAN_GATE.md
+      M PLAN.md
+      M SPEC.md
+      M docs/Acceptance_Criteria.md
+      M docs/Data_Model.md
+      M docs/Design_Map.md
+      M docs/PRD.md
+      M docs/Planning_Gate_Checklist.md
+      M docs/TRD.md
+      M docs/Task_List.md
+      M docs/Test_Scenarios.md
+      M docs/UI_Spec.md
+      M docs/User_Flow.md
+      M docs/sessions/NEXT_SESSION.md
+      ?? docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+      ?? docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+  git diff --check
+    PASS; no output.
+
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence .ai-loop
+    PASS; no output.
+
+  Get-ChildItem .ai-loop/control/inbox
+    PASS; no output, inbox is empty.
+
+Not run:
+  npm test
+  npm run build
+  Browser validation
+
+Reason:
+  Closeout is document-only and no src/package/reference/docs/evidence/.ai-loop runtime paths were changed.
+
+Project Admin Task 6 status:
+  Still open / BLOCKED_BROWSER_UNAVAILABLE.
+  Build browser evidence is not Project Admin Task 6 evidence.
+
+Human approval items:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, CAD editor behavior, and deployment remain unapproved.
+
+Next session entry:
+  Start from docs/sessions/NEXT_SESSION.md.
+  First command: git status --short --untracked-files=all.
+  Next product action: run planning gate for ACC #11 local-only viewer shell/static sheet render.
+```
+
+## ACC #11 2D Sheet Viewer Planning Gate Review - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Mode:
+  ai-loop-orchestrator solo orchestration plus planning-gate review.
+
+Scope:
+  Review the ACC #11 `2D sheet viewer` first slice document-loop kickoff against planning-gate criteria.
+  No product implementation.
+  No commit or push.
+  No Project Admin Task 6 browser validation rerun.
+  No 0009 request created.
+
+Preflight snapshot:
+  Branch:
+    master
+  HEAD:
+    f59d850
+  git status --short --untracked-files=all:
+    M CHECKS.md
+    M EVIDENCE.md
+    M HUMAN_GATE.md
+    M PLAN.md
+    M SPEC.md
+    M docs/Acceptance_Criteria.md
+    M docs/Data_Model.md
+    M docs/Design_Map.md
+    M docs/PRD.md
+    M docs/Planning_Gate_Checklist.md
+    M docs/TRD.md
+    M docs/Task_List.md
+    M docs/Test_Scenarios.md
+    M docs/UI_Spec.md
+    M docs/User_Flow.md
+    M docs/sessions/NEXT_SESSION.md
+    ?? docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    ?? docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+Dirty grouping at preflight:
+  ACC #11 product docs / handoff docs:
+    CHECKS.md
+    EVIDENCE.md
+    HUMAN_GATE.md
+    PLAN.md
+    SPEC.md
+    docs/Acceptance_Criteria.md
+    docs/Data_Model.md
+    docs/Design_Map.md
+    docs/PRD.md
+    docs/Planning_Gate_Checklist.md
+    docs/TRD.md
+    docs/Task_List.md
+    docs/Test_Scenarios.md
+    docs/UI_Spec.md
+    docs/User_Flow.md
+    docs/sessions/NEXT_SESSION.md
+    docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+  Product code/evidence:
+    none
+  Loop/runtime artifacts:
+    none in git status.
+
+Forbidden path checks:
+  git diff --name-only -- src package.json package-lock.json reference docs/ evidence .ai-loop
+    OBSERVED docs output because this command includes the allowed dirty docs/ tree:
+      docs/Acceptance_Criteria.md
+      docs/Data_Model.md
+      docs/Design_Map.md
+      docs/PRD.md
+      docs/Planning_Gate_Checklist.md
+      docs/TRD.md
+      docs/Task_List.md
+      docs/Test_Scenarios.md
+      docs/UI_Spec.md
+      docs/User_Flow.md
+      docs/sessions/NEXT_SESSION.md
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+  git status --short --untracked-files=all -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+  git diff --check
+    PASS; no output.
+
+Planning-gate result:
+  PASS.
+  Missing files: none for the seven core docs or UI support docs.
+  Temporary-slice status: not used; this is a full document-loop gate for the local-only viewer shell/static sheet render slice.
+  Documents used as replacements: none.
+  Feature-to-task gaps: none found for FR-SV-001 through FR-SV-009.
+  Feature-to-acceptance gaps: none found for FR-SV-001 through FR-SV-009.
+  Feature-to-test gaps: none found for FR-SV-001 through FR-SV-009.
+  UI/user-flow gaps: none found for visible viewer shell actions.
+  UI/spec gaps:
+    One traceability gap was found and fixed before final PASS: docs/UI_Spec.md described the integration boundary but did not explicitly tag FR-SV-009.
+    Added an Integration boundary viewer-state line for FR-SV-009.
+    Remaining gaps: none.
+  Data model gaps: none found for local viewer state, selected sheet context, local affordance state, and ontology-slot reservation.
+  Ambiguous completion criteria: none found; AC-SV and TS-SV entries are pass/fail and boundary-aware.
+
+Checklist truth and gate-label consistency:
+  docs/Planning_Gate_Checklist.md now distinguishes document-loop kickoff readiness from formal planning-gate PASS.
+  The checked SV kickoff/traceability items are backed by live document content reviewed in this session.
+  docs/Task_List.md keeps T-SV-001 through T-SV-009 as Planned / Gate Pending, not implementation done.
+  docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md marks only the formal gate run and Task 6 separation as complete; implementation planning remains unchecked.
+  No implementation PASS or browser-evidence PASS was claimed for ACC #11.
+
+FR/T/AC/TS/UF-SV traceability result:
+  FR-SV-001 through FR-SV-009 are present in PRD and mapped in TRD, UI_Spec, Data_Model, Task_List, Acceptance_Criteria, Test_Scenarios, Design_Map, and User_Flow.
+  T-SV-001 through T-SV-009 map one-to-one to FR-SV-001 through FR-SV-009 and reference matching AC-SV and TS-SV IDs.
+  AC-SV-001 through AC-SV-009 map one-to-one to FR-SV-001 through FR-SV-009.
+  TS-SV-001 through TS-SV-009 map one-to-one to FR-SV-001 through FR-SV-009 and AC-SV-001 through AC-SV-009.
+  UF-SV-001 through UF-SV-007 cover the actual viewer shell flow; FR-SV-008 and FR-SV-009 are correctly represented as local data-slot and out-of-scope boundary flow coverage.
+
+HUMAN_GATE result:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, CAD editor behavior, deployment, auth/RBAC, and external persistence remain unapproved.
+  The planning gate only authorizes the local-only viewer shell/static sheet render slice to move toward a scoped implementation request.
+
+Product check status vs evidence-path status:
+  Build shell + Sheets list remains PASS based on prior committed evidence.
+  ACC #11 has planning-gate PASS only; no product implementation or browser evidence exists yet.
+  Project Admin Task 6 remains evidence-path blocked and separate from ACC #11.
+
+Project Admin Task 6 status:
+  Still open / BLOCKED_BROWSER_UNAVAILABLE.
+  No 0009 request was created.
+  Task 6 browser validation was not rerun.
+  Build browser evidence was not reused as Project Admin Task 6 evidence.
+
+Implementation eligibility:
+  Authorized only for the ACC #11 local-only viewer shell/static sheet render slice after a scoped implementation request with owned files and TDD checks.
+  Not authorized for real viewer engine, dependencies, customer drawings, TypeDB/DB/API/schema, Autodesk API, paid SDK, CAD editor behavior, deployment, or Task 6 evidence reuse.
+
+Documents updated during this review:
+  PLAN.md
+  docs/Planning_Gate_Checklist.md
+  docs/UI_Spec.md
+  docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+  docs/sessions/NEXT_SESSION.md
+  EVIDENCE.md
+
+Post-update verification:
+  git status --short --untracked-files=all
+    OBSERVED; dirty tree remains limited to ACC #11 document-loop docs and handoff docs listed in the preflight grouping.
+  git diff --check
+    PASS; no output.
+  git diff --name-only -- src package.json package-lock.json reference docs/ evidence .ai-loop
+    OBSERVED docs output because the broad pathspec includes allowed dirty docs.
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+  FR-SV coverage script for PRD, TRD, UI_Spec, Data_Model, Task_List, Acceptance_Criteria, Test_Scenarios, Design_Map, and User_Flow
+    PASS; all listed documents contain FR-SV-001 through FR-SV-009 after the UI_Spec boundary tag fix.
+  T-SV / AC-SV / TS-SV coverage script
+    PASS; T-SV-001 through T-SV-009, AC-SV-001 through AC-SV-009, and TS-SV-001 through TS-SV-009 are present in their owning documents.
+  UF-SV coverage script
+    PASS; UF-SV-001 through UF-SV-007 are present and FR-SV-008/009 are covered as data-slot and out-of-scope boundary rows.
+  stale current-handoff gate-label search
+    PASS; no current PLAN.md, docs/Planning_Gate_Checklist.md, viewer plan, or NEXT_SESSION.md match for stale PENDING formal gate wording.
+  .ai-loop 0009 search and control inbox listing
+    PASS; no output.
+
+Not run:
+  npm test
+  npm run build
+  Browser validation
+
+Reason:
+  This was a document-only planning-gate review and did not touch source, package, reference, docs/evidence, or .ai-loop runtime paths.
+
+Skill operation notes:
+  Worked well:
+    The Checklist Truth And Gate Labels rule prevented treating kickoff readiness as formal PASS until this review verified live documents.
+    Product checks, evidence-path blocker status, and progress-document status stayed separate.
+  Needs attention:
+    The broad forbidden-path command that includes `docs/` conflicts with the expected ACC #11 dirty docs; use a separate disallowed-path check for source/package/reference/docs/evidence/.ai-loop.
+  Promotion candidate:
+    Clarify in future requests whether `docs/` means all docs or only forbidden docs/evidence paths when the expected dirty state is document-only.
+```
+
+## Session Closeout - ACC #11 Planning Gate Passed - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Closeout scope:
+  End the session after ACC #11 2D sheet viewer first slice formal planning-gate PASS.
+  No product implementation.
+  No browser validation.
+  No Project Admin Task 6 rerun.
+  No 0009 request created.
+  No commit or push.
+
+Current stage:
+  ACC #11 document-loop kickoff and formal planning gate are complete.
+  Planning-gate result: PASS for local-only viewer shell/static sheet render only.
+  Next stage: draft a scoped implementation plan/request with owned files and TDD checks.
+
+Dirty file classification:
+  ACC #11 product planning docs:
+    CHECKS.md
+    HUMAN_GATE.md
+    PLAN.md
+    SPEC.md
+    docs/Acceptance_Criteria.md
+    docs/Data_Model.md
+    docs/Design_Map.md
+    docs/PRD.md
+    docs/Planning_Gate_Checklist.md
+    docs/TRD.md
+    docs/Task_List.md
+    docs/Test_Scenarios.md
+    docs/UI_Spec.md
+    docs/User_Flow.md
+    docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+  Handoff/evidence docs:
+    EVIDENCE.md
+    docs/sessions/NEXT_SESSION.md
+
+  Product code/evidence assets:
+    none
+
+  Loop/runtime artifacts:
+    none in git status.
+
+Verification:
+  git status --short --untracked-files=all
+    OBSERVED:
+      M CHECKS.md
+      M EVIDENCE.md
+      M HUMAN_GATE.md
+      M PLAN.md
+      M SPEC.md
+      M docs/Acceptance_Criteria.md
+      M docs/Data_Model.md
+      M docs/Design_Map.md
+      M docs/PRD.md
+      M docs/Planning_Gate_Checklist.md
+      M docs/TRD.md
+      M docs/Task_List.md
+      M docs/Test_Scenarios.md
+      M docs/UI_Spec.md
+      M docs/User_Flow.md
+      M docs/sessions/NEXT_SESSION.md
+      ?? docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+      ?? docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+  git diff --check
+    PASS; no output.
+
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+
+  npm test
+    PASS; 5 test files passed, 24 tests passed.
+
+  npm run build
+    PASS; tsc && vite build completed.
+    Output assets:
+      dist/index.html
+      dist/assets/index-CMIG4SXn.css
+      dist/assets/index-ZL6kPUJK.js
+
+  FR-SV coverage script for PRD, TRD, UI_Spec, Data_Model, Task_List, Acceptance_Criteria, Test_Scenarios, Design_Map, and User_Flow
+    PASS; all listed documents contain FR-SV-001 through FR-SV-009.
+
+  T-SV / AC-SV / TS-SV coverage script
+    PASS; T-SV-001 through T-SV-009, AC-SV-001 through AC-SV-009, and TS-SV-001 through TS-SV-009 are present in their owning documents.
+
+  UF-SV coverage script
+    PASS; UF-SV-001 through UF-SV-007 are present.
+
+  stale current-handoff gate-label search
+    PASS; no current PLAN.md, docs/Planning_Gate_Checklist.md, viewer plan, or NEXT_SESSION.md stale PENDING/formal-gate-before-PASS wording.
+    Note: an initial rg invocation failed because PowerShell interpreted backticks in the pattern; the search was rerun with a safe quoted pattern and returned no matches.
+
+  .ai-loop 0009 search and control inbox listing
+    PASS; no output.
+
+Not run:
+  Browser validation.
+
+Reason:
+  No ACC #11 product implementation exists yet, so fresh browser interaction, console state, and screenshot evidence are not applicable for this closeout.
+
+Project Admin Task 6 status:
+  Still open / BLOCKED_BROWSER_UNAVAILABLE.
+  Build browser evidence is not Project Admin Task 6 evidence.
+  No 0009 request was created.
+  Task 6 browser validation was not rerun.
+
+Human approval items:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, CAD editor behavior, auth/RBAC, and deployment remain unapproved.
+
+Commit/push:
+  Not performed.
+
+Next session entry:
+  Start from docs/sessions/NEXT_SESSION.md.
+  First command: git status --short --untracked-files=all.
+  Next action: draft a scoped implementation plan/request for ACC #11 local-only viewer shell/static sheet render with owned files and TDD checks.
+```
+
+## ACC #11 Scoped Implementation Request - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Mode:
+  ai-loop-orchestrator solo orchestration.
+
+Scope:
+  Draft the scoped implementation request/plan for ACC #11 `2D sheet viewer` first slice after planning-gate PASS.
+  No product implementation.
+  No test code.
+  No browser validation.
+  No 0009 request.
+  No commit or push.
+
+Current stage:
+  ACC #11 planning-gate PASS is complete.
+  Scoped implementation request is READY for a later TDD implementation session.
+
+Preflight snapshot:
+  git status --short --untracked-files=all
+    OBSERVED:
+      M CHECKS.md
+      M EVIDENCE.md
+      M HUMAN_GATE.md
+      M PLAN.md
+      M SPEC.md
+      M docs/Acceptance_Criteria.md
+      M docs/Data_Model.md
+      M docs/Design_Map.md
+      M docs/PRD.md
+      M docs/Planning_Gate_Checklist.md
+      M docs/TRD.md
+      M docs/Task_List.md
+      M docs/Test_Scenarios.md
+      M docs/UI_Spec.md
+      M docs/User_Flow.md
+      M docs/sessions/NEXT_SESSION.md
+      ?? docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+      ?? docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+
+Dirty grouping at preflight:
+  ACC #11 product docs / handoff docs:
+    CHECKS.md
+    EVIDENCE.md
+    HUMAN_GATE.md
+    PLAN.md
+    SPEC.md
+    docs/Acceptance_Criteria.md
+    docs/Data_Model.md
+    docs/Design_Map.md
+    docs/PRD.md
+    docs/Planning_Gate_Checklist.md
+    docs/TRD.md
+    docs/Task_List.md
+    docs/Test_Scenarios.md
+    docs/UI_Spec.md
+    docs/User_Flow.md
+    docs/sessions/NEXT_SESSION.md
+    docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+  Product code/evidence:
+    none
+  Loop/runtime artifacts:
+    none in git status.
+
+Source read-only review:
+  src/App.tsx
+  src/App.test.tsx
+  src/BuildSheetsView.tsx
+  src/BuildSheetsView.test.tsx
+  src/buildSheetsData.ts
+  src/buildSheetsData.test.ts
+  src/styles.css
+  package.json
+
+Scoped implementation plan path:
+  docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md
+
+Plan contents:
+  Implementation scope:
+    local-only viewer shell/static sheet render.
+    selected mock sheet row entry from Build `시트` list.
+    selected sheet context.
+    static sheet render surface.
+    right tool rail affordances.
+    bottom view controls.
+    left markup/issues empty panel tabs.
+    local SheetViewerState.
+    equipmentEntityId/ontology slot as nullable local data only.
+  Owned files for next implementation:
+    Existing candidates:
+      src/App.tsx
+      src/App.test.tsx
+      src/BuildSheetsView.tsx
+      src/BuildSheetsView.test.tsx
+      src/buildSheetsData.ts
+      src/buildSheetsData.test.ts
+      src/styles.css
+    New candidates:
+      src/SheetViewerView.tsx
+      src/SheetViewerView.test.tsx
+      src/sheetViewerData.ts
+      src/sheetViewerData.test.ts
+  TDD plan:
+    viewer state/data helper tests.
+    Build sheet row -> viewer shell open test.
+    viewer header/context test.
+    static sheet render surface test.
+    right tool rail selected-state test.
+    bottom controls affordance test.
+    markup/issues panel tab switching empty-state test.
+    return-to-sheets test.
+    forbidden scope regression test.
+  Implementation order:
+    helper RED/GREEN.
+    viewer shell RED/GREEN.
+    static surface and boundary RED/GREEN.
+    tool rail RED/GREEN.
+    bottom controls RED/GREEN.
+    panel tabs RED/GREEN.
+    Build row entry RED/GREEN.
+    App view-state wiring RED/GREEN.
+    whole-app verification.
+
+Documents updated in this request:
+  PLAN.md
+  docs/sessions/NEXT_SESSION.md
+  EVIDENCE.md
+  docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md
+
+Forbidden path and pathspec-scope checks:
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+  git diff --name-only -- src package.json package-lock.json reference docs evidence .ai-loop
+    OBSERVED docs output because this broad inventory pathspec includes allowed dirty docs:
+      docs/Acceptance_Criteria.md
+      docs/Data_Model.md
+      docs/Design_Map.md
+      docs/PRD.md
+      docs/Planning_Gate_Checklist.md
+      docs/TRD.md
+      docs/Task_List.md
+      docs/Test_Scenarios.md
+      docs/UI_Spec.md
+      docs/User_Flow.md
+      docs/sessions/NEXT_SESSION.md
+    Scope verdict:
+      not a violation. Use the narrowed forbidden-path check with docs/evidence for scope.
+
+Verification:
+  git diff --check
+    PASS; no output.
+  Get-ChildItem -Recurse -Force -LiteralPath '.ai-loop' | Where-Object { $_.Name -match '0009' }
+    PASS; no output.
+
+Not run:
+  npm test
+  npm run build
+  Browser validation
+
+Reason:
+  This request created documentation and a future implementation request only.
+  No source, package, reference, docs/evidence, evidence, or .ai-loop runtime paths changed.
+
+Project Admin Task 6 status:
+  Still open / BLOCKED_BROWSER_UNAVAILABLE.
+  No 0009 request was created.
+  Task 6 browser validation was not rerun.
+  Build or viewer browser evidence must not be reused as Task 6 evidence.
+
+Human approval items:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, auth/RBAC, CAD editor behavior, and deployment remain unapproved.
+
+Skill operation notes:
+  Worked well:
+    Pathspec Scope Checks kept broad docs inventory separate from forbidden-path scope checks.
+    The request keeps product checks, evidence-path blocker state, and implementation eligibility as separate axes.
+  Needs attention:
+    Future requests should avoid asking for broad `docs/` output to be empty while also allowing docs edits.
+  Promotion candidate:
+    Add a reusable request wording rule: when docs are allowed, call the broad `docs/` command an inventory command and use exact blocked subpaths such as `docs/evidence` for the scope verdict.
+```
+
+## Session Closeout - ACC #11 Scoped Implementation Request Ready - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Codex
+Closeout trigger:
+  User requested session end.
+
+Current stage:
+  ACC #11 `2D sheet viewer` first slice document-loop kickoff is complete.
+  Formal planning gate is PASS for local-only viewer shell/static sheet render.
+  Scoped implementation request/plan is READY at docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md.
+  Product implementation has not started.
+
+Dirty file classification:
+  Project instruction / closeout rule change:
+    AGENTS.md
+
+  ACC #11 product planning docs:
+    CHECKS.md
+    HUMAN_GATE.md
+    PLAN.md
+    SPEC.md
+    docs/Acceptance_Criteria.md
+    docs/Data_Model.md
+    docs/Design_Map.md
+    docs/PRD.md
+    docs/Planning_Gate_Checklist.md
+    docs/TRD.md
+    docs/Task_List.md
+    docs/Test_Scenarios.md
+    docs/UI_Spec.md
+    docs/User_Flow.md
+    docs/feature-notes/004-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md
+    docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md
+
+  Handoff/evidence docs:
+    EVIDENCE.md
+    docs/sessions/NEXT_SESSION.md
+
+  Product code/evidence assets:
+    none
+
+  Loop/runtime artifacts:
+    none in git status.
+
+  Obsidian worklog:
+    G:\내 드라이브\_Obsidian\지식관리\업무일지\2026-06-18.md
+    Added: ### 15:15 | 세션 9
+    Concept map: G:\내 드라이브\_Obsidian\지식관리\업무일지\_CONCEPT-MAP.md does not exist, so no concept-map update was applicable.
+
+Verification:
+  npm test
+    PASS; 5 test files passed, 24 tests passed.
+
+  npm run build
+    PASS; tsc && vite build completed.
+    Output assets:
+      dist/index.html
+      dist/assets/index-CMIG4SXn.css
+      dist/assets/index-ZL6kPUJK.js
+
+  git diff --check
+    PASS; no output.
+
+  git diff --name-only -- src package.json package-lock.json reference docs/evidence evidence .ai-loop
+    PASS; no output.
+
+  Get-ChildItem -Recurse -Force -LiteralPath '.ai-loop' | Where-Object { $_.Name -match '0009' }
+    PASS; no output.
+
+  G:\내 드라이브\_Obsidian\CLAUDE.md 업무일지 자동 기록 rule check
+    PASS; rule section located.
+
+  G:\내 드라이브\_Obsidian\지식관리\업무일지\2026-06-18.md session entry check
+    PASS; ### 15:15 | 세션 9 appended.
+
+Not run:
+  Browser validation.
+
+Reason:
+  This closeout did not implement ACC #11 product code.
+  Fresh browser interaction, console state, and screenshots are not applicable until viewer implementation exists.
+  Project Admin Task 6 browser validation remains blocked and was not rerun.
+
+Project Admin Task 6 status:
+  Still open / BLOCKED_BROWSER_UNAVAILABLE.
+  No 0009 request was created.
+  Task 6 browser validation was not rerun.
+  Build or viewer browser evidence must not be reused as Task 6 evidence.
+
+Human approval items:
+  No human-gated work was performed.
+  Real viewer engine evaluation/adoption, customer drawings, Autodesk-backed processing, paid SDK, DB/API/TypeDB/schema integration, auth/RBAC, CAD editor behavior, and deployment remain unapproved.
+
+Commit/push:
+  Not performed.
+
+Next session entry:
+  Start from docs/sessions/NEXT_SESSION.md.
+  First command: git status --short --untracked-files=all.
+  Next action: read docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md and start ACC #11 local-only viewer shell/static sheet render implementation with TDD only if the user asks to implement.
+```
+
+## 설계 문서 감사 및 세션 종료 - 2026-06-18
+
+```text
+Date: 2026-06-18
+Agent: Claude (Sonnet 4.6)
+Mode: 독립 감사 역할 — 설계 문서 검수 및 세션 종료
+
+Scope:
+  SPEC.md, PLAN.md, CHECKS.md, HUMAN_GATE.md, EVIDENCE.md, AGENTS.md,
+  docs/Planning_Gate_Checklist.md, docs/PRD.md, docs/Task_List.md,
+  docs/sessions/NEXT_SESSION.md 감사
+
+Audit Result: PASS with 3 Action Items
+
+Findings:
+  1. 프로젝트 목적과 설계 의도 일치: PASS
+     - 슬라이스 단위 개발, Human Gate, 문서 선행 원칙이 4개 슬라이스 모두에서 준수됨
+  2. 문서 루프 프로세스 준수: PASS
+     - development-loop-orchestrator → feature-docs-scaffold → planning-gate → 구현 → validator-loop → evidence-report 순서 실행 확인
+  3. Task_List.md T-SV 상태 불일치: 수정 완료
+     - T-SV-001 ~ T-SV-009 상태를 "Planned / Gate Pending" → "Gate Passed / Implementation Ready"로 갱신
+  4. HUMAN_GATE.md TypeDB 방향 반영: 수정 완료
+     - 엔지니어 PC 로컬 TypeDB 배포 + 전체 도면 분석 적재 방향 확정 기록
+     - 프론트엔드 연동 설계는 별도 게이트 항목으로 유지
+  5. AGENTS.md 감사 결과 요약 추가: 완료
+     - 현재 슬라이스 상태 및 XD 시스템 방향 확정 결정을 AGENTS.md에 기록
+  6. Project Admin Task 6 브라우저 블로커 해결 경로: 미정의 (별도 결정 대기)
+     - 사용자가 나머지 설계 보완 진행 중이라고 확인
+     - 0009 생성 금지 원칙 유지
+
+Files changed in this closeout:
+  HUMAN_GATE.md — TypeDB 결정 및 게이트 항목 갱신
+  docs/Task_List.md — T-SV-001~009 상태 수정
+  AGENTS.md — 감사 결과 요약 및 XD 방향 확정 추가
+  docs/sessions/NEXT_SESSION.md — 감사 결과 및 TypeDB 결정 반영
+  EVIDENCE.md — 이 항목
+
+Verification:
+  No new npm test / npm run build executed in this closeout.
+  This is a documentation-only closeout.
+  Basis: no src/, package.json, package-lock.json, reference/, or docs/evidence/ changes were made.
+  The required proof for this pass is no source/package/reference diff.
+
+Current validated baseline carried forward:
+  npm test: PASS, 5 test files / 24 tests passed (from prior Build slice closeout)
+  npm run build: PASS (from prior Build slice closeout)
+  git diff --check: PASS (from prior Build slice closeout)
+
+Human approval items:
+  TypeDB 배포 전략 확정 반영 (사용자 확인 기반).
+  프론트엔드 연동 설계 및 구현은 여전히 별도 게이트 필요.
+  나머지 Human Gate 항목 변경 없음.
+
+Commit/push:
+  Not performed. User did not request commit.
+
+Next session entry:
+  Start from docs/sessions/NEXT_SESSION.md.
+  First command: git status --short --untracked-files=all.
+```

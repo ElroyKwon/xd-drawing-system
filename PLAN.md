@@ -167,6 +167,55 @@ Deferred slices:
 2. Project Admin role/permission matrix after human approval
 3. Company management after separate scope approval
 
+## Phase 4: 2D Sheet Viewer First Slice
+
+Selected slice:
+
+- ACC #11 `2D sheet viewer` first slice design
+- Current project context: `Study_Project`
+
+Document-loop tasks:
+
+- [x] Confirm Project Admin Task 6 blocker is evidence-path only and not a prerequisite for this planning slice.
+- [x] Confirm no `0009` Task 6 rerun is created.
+- [x] Create `docs/feature-notes/004-2d-sheet-viewer-first-slice.md`.
+- [x] Create `docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md`.
+- [x] Update `docs/PRD.md`, `docs/TRD.md`, `docs/UI_Spec.md`, `docs/Data_Model.md`, `docs/Task_List.md`, `docs/Acceptance_Criteria.md`, `docs/Test_Scenarios.md`.
+- [x] Update `docs/Design_Map.md`, `docs/User_Flow.md`, `docs/Planning_Gate_Checklist.md`.
+- [x] Update `SPEC.md`, `PLAN.md`, `CHECKS.md`, `HUMAN_GATE.md`.
+- [x] Run document consistency checks for FR-SV-001 through FR-SV-009 and local-only viewer scope boundaries.
+- [x] Run planning gate for the local-only viewer shell/static sheet render slice.
+
+Planning gate status:
+
+- Result: PASS on 2026-06-18.
+- Basis: seven core documents and UI support documents include FR-SV-001 through FR-SV-009, T-SV-001 through T-SV-009, AC-SV-001 through AC-SV-009, TS-SV-001 through TS-SV-009, and UF-SV mappings; local-only viewer scope and HUMAN_GATE exclusions are explicit.
+- Implementation eligibility: the local-only viewer shell/static sheet render slice may proceed to a scoped implementation request with owned files and TDD checks. Real viewer engine, TypeDB/DB/API/schema, customer drawings, Autodesk API, paid SDK, CAD editor, and deployment remain unauthorized.
+
+Implementation pre-decision:
+
+- Default first slice is `local-only viewer shell/static sheet render`.
+- Real viewer engine evaluation/adoption is a HUMAN_GATE item and is not authorized.
+- Equipment entity ID / ontology binding is reserved as a local viewer data slot only.
+- Real TypeDB, DB/API, schema, Autodesk API, paid SDK, customer drawing, and deployment work remains separate gated scope.
+
+Implementation plan after gate:
+
+- [x] Draft scoped implementation request/plan with owned files and TDD checks in `docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md`.
+- [ ] Add viewer state/data helper tests and local selected-sheet model.
+- [ ] Add viewer shell render tests for context, static sheet surface, tool rail, bottom controls, and panel tabs.
+- [ ] Wire a local path from a Build sheet row to the viewer shell.
+- [ ] Run `npm test` and `npm run build`.
+- [ ] Record viewer evidence separately from the existing Project Admin Task 6 blocker.
+
+Scoped implementation request status:
+
+- Result: READY on 2026-06-18.
+- Scope: local-only viewer shell/static sheet render from a selected local Build sheet row.
+- Owned source candidates are limited to `src/App.tsx`, `src/App.test.tsx`, `src/BuildSheetsView.tsx`, `src/BuildSheetsView.test.tsx`, `src/buildSheetsData.ts`, `src/buildSheetsData.test.ts`, `src/SheetViewerView.tsx`, `src/SheetViewerView.test.tsx`, `src/sheetViewerData.ts`, `src/sheetViewerData.test.ts`, and `src/styles.css`.
+- Verification plan: `npm test`, `npm run build`, `git diff --check`, forbidden-path check excluding `src`, and `.ai-loop` 0009 guard.
+- Browser evidence remains separate from Project Admin Task 6 and must not be reused for that blocker.
+
 ## Operating Rule
 
 Work one feature at a time. Do not build the whole ACC clone in one pass.
@@ -179,13 +228,15 @@ Current stage:
 - AI loop blocker-handling reinforcement is committed.
 - Task 6 blocker handoff is committed.
 - Closeout documentation was refreshed after the commits.
+- ACC #11 2D sheet viewer first slice document-loop kickoff and formal planning gate are complete.
 
 Open work:
 
 - Project Admin Task 6 browser validation remains `BLOCKED_BROWSER_UNAVAILABLE`.
 - Do not create `0009` or rerun the same Task 6 browser validation path without a documented changed browser automation precondition.
-- Recommended next planning slice is ACC #11 `2D sheet viewer` first slice design.
-- Before implementation, decide whether the first viewer slice is a local-only viewer shell/static sheet render or includes real viewer-engine evaluation/adoption.
+- ACC #11 scoped implementation request/plan with owned files and TDD checks is ready at `docs/superpowers/plans/2026-06-18-2d-sheet-viewer-implementation.md`.
+- Next step for ACC #11 is TDD implementation of the local-only viewer shell/static sheet render only if the user asks to implement.
+- The first viewer slice is approved only as local-only viewer shell/static sheet render.
 - Real 2D viewer engine work touches `HUMAN_GATE.md`; do not proceed automatically.
-- Equipment entity ID / ontology binding should be reserved as a viewer data slot first. Real TypeDB, DB/API, or schema integration remains separate gated work.
+- Equipment entity ID / ontology binding is reserved as a viewer data slot first. Real TypeDB, DB/API, or schema integration remains separate gated work.
 - ACC #8 Build home dashboard is a lower-risk alternative, but it is less central than the sheet-list-to-viewer workflow.

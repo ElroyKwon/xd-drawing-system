@@ -40,9 +40,24 @@
 | AC-BS-008 | FR-BS-008 | PASS if the slice does not open a 2D viewer, upload/publish sheets, store files, compare versions, or implement markup/issues. FAIL if any excluded drawing workflow becomes required. |
 | AC-BS-009 | FR-BS-009 | PASS if the slice runs without auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, or deployment. FAIL if any gated dependency is introduced. |
 
+## 2D Sheet Viewer First Slice Criteria
+
+| AC ID | Requirement ID | Pass/fail criterion |
+|---|---|---|
+| AC-SV-001 | FR-SV-001 | PASS if a future implementation can open a viewer shell for a selected local mock sheet from the Build `시트` list. FAIL if it requires upload, routing to an unrelated screen, or external data. |
+| AC-SV-002 | FR-SV-002 | PASS if the viewer shows project context, sheet number, and sheet title for the selected local sheet. FAIL if the context is missing or stale. |
+| AC-SV-003 | FR-SV-003 | PASS if the central surface renders a local static sheet representation without loading customer drawings or parsed files. FAIL if a real drawing file or engine is required. |
+| AC-SV-004 | FR-SV-004 | PASS if right-rail tool buttons render and selected-tool state changes locally. FAIL if tool selection creates persisted markup or requires a real engine. |
+| AC-SV-005 | FR-SV-005 | PASS if bottom controls render as local affordances for pan/fit/zoom/fullscreen/compare/measure. FAIL if they imply completed real measurement, compare, or engine behavior. |
+| AC-SV-006 | FR-SV-006 | PASS if markup and issue panel tabs switch locally and show empty states. FAIL if the first slice creates or persists markup/issues. |
+| AC-SV-007 | FR-SV-007 | PASS if local sheet navigation context is preserved and does not load external assets. FAIL if navigation requires upload/storage/sync. |
+| AC-SV-008 | FR-SV-008 | PASS if `equipmentEntityId` / ontology binding is represented only as a reserved local data slot. FAIL if TypeDB, DB/API, schema, or entity-resolution work is introduced. |
+| AC-SV-009 | FR-SV-009 | PASS if the slice runs without a real viewer engine, customer drawings, upload/publish, markup/issues persistence, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, or deployment. FAIL if any gated dependency becomes required. |
+
 ## Human Approval Criteria
 
 - PASS for planning only if all `HUMAN_GATE.md` risky items remain out of scope.
 - FAIL or stop before implementation if a task introduces auth, permission, DB schema, customer data, Autodesk cloud/API, paid SDK, deletion of reference data, or deployment.
 - FAIL or stop before implementation if Project Admin work expands into company management, real RBAC enforcement, email invitation, DB/API persistence, or access deletion.
 - FAIL or stop before implementation if Build sheets work expands into real drawing files, upload/publish, viewer engine, sheet compare, DB/API persistence, Autodesk API, paid SDK, or deployment.
+- FAIL or stop before implementation if 2D viewer work expands into real viewer engine adoption, customer drawing files, drawing parsing, Autodesk-backed processing, paid SDK, DB/API/TypeDB integration, persisted markup/issues, CAD editor behavior, or deployment.
