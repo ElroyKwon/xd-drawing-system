@@ -2891,6 +2891,9 @@ Pre-DUC clean baseline:
 Prior commit completed in this session:
   a927459 docs: record acc viewer planning handoff
 
+DUC documentation commit:
+  013b491 docs: plan dwg dxf upload conversion management
+
 Local tooling check:
   Test-Path 'C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe'
     True
@@ -3087,6 +3090,7 @@ Human approval items:
 Next session entry:
   Start from docs/sessions/NEXT_SESSION.md.
   First command: git status --short --untracked-files=all.
+  Confirm DUC commit 013b491 exists.
   Then run the formal DUC planning gate and choose one implementation path:
     Option A: ACC #11 local viewer shell first.
     Option B: DUC local conversion-lab management UI first.

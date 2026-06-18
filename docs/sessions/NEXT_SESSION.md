@@ -29,6 +29,7 @@ Current repository state at this handoff:
 
 - Branch: `master`.
 - Latest committed handoff before DUC docs: `a927459 docs: record acc viewer planning handoff`.
+- DUC documentation commit: `013b491 docs: plan dwg dxf upload conversion management`.
 - DUC `DWG/DXF Upload Conversion Management` document scaffold is complete.
 - DUC is a planning slice only. Product implementation has not started.
 - ACC #11 `SV` local-only viewer shell/static render remains a separate implementation-ready slice.
@@ -72,7 +73,7 @@ Autodesk/APS research summary:
 Exact next action:
 
 1. Run `git status --short --untracked-files=all`.
-2. Confirm this DUC closeout commit exists if this session committed it.
+2. Confirm DUC closeout commit `013b491 docs: plan dwg dxf upload conversion management` exists.
 3. Read `docs/feature-notes/005-dwg-dxf-upload-conversion-management.md`.
 4. Read `docs/superpowers/plans/2026-06-18-dwg-dxf-upload-conversion-management.md`.
 5. Run a formal planning gate for DUC before implementation.
