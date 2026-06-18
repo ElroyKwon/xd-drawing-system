@@ -16,8 +16,10 @@ This mode exists for scoped implementation work after the project document loop 
 4. Use TDD for behavior changes when tests are possible: write or update a focused failing test first, then implement the minimum change.
 5. Modify only files inside the request's allowed or owned files list.
 6. Run only the verification commands listed in the request.
-7. Write the final answer in Korean.
-8. Report changed files, commands run, failed checks, and follow-up validation work.
+7. If the request owns progress docs, plan checklists, task-status tables, or handoff files, update them to match completed work before reporting completion.
+8. If an owned progress doc remains open, explain whether it is intentionally static/original or whether handoff cleanup is still needed.
+9. Write the final answer in Korean.
+10. Report changed files, commands run, failed checks, progress-doc consistency, dirty-file grouping, and follow-up validation work.
 
 ## Safety Boundary
 
@@ -34,6 +36,8 @@ Stop and report `BLOCKED` instead of acting if the request lacks owned files or 
 - destructive data changes
 
 Evidence and handoff updates should normally be handled by a follow-up `validation-evidence` request unless the implementation request explicitly allows those files.
+
+Do not claim commit-ready if owned progress checkboxes or task statuses still contradict the implemented/evidenced state. Separate product PASS from handoff cleanup.
 
 ## Request
 

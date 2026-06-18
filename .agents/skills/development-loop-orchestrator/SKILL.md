@@ -18,6 +18,7 @@ Determine the current development-loop stage and route to the next required skil
 2. Planning gate
 3. Implementation
 4. Validation
+4B. Blocker resolution
 5. Evidence report
 6. Handoff / next session
 ```
@@ -66,6 +67,7 @@ Read available files:
 - `docs/Task_List.md`
 - `docs/Acceptance_Criteria.md`
 - `docs/Test_Scenarios.md`
+- `.ai-loop/results/` recent result files when validation or worker-loop state is involved
 
 Then decide:
 
@@ -79,6 +81,8 @@ Then decide:
 | Gate result is `SLICE-ONLY PASS` | 2 | Confirm boundary before implementation |
 | Gate result is full `PASS` or user accepts slice boundary | 3 | Implementation may start |
 | Implementation changed files but checks not recorded | 4 | Run `validator-loop` |
+| Stage 4 validation has the same named evidence-path blocker in two consecutive attempts and no changed precondition | 4B | Draft or run a blocker-resolution request; do not rerun the same validation path |
+| Evidence/handoff says PASS but plan checkboxes, task status, or next-session instructions still show the work open | 5 | Report `handoff cleanup needed`; do not treat as product failure |
 | Verification evidence exists but no closeout | 5 | Run `evidence-report` |
 | Closeout exists and next session is updated | 6 | Stop or ask for next feature |
 
@@ -89,6 +93,11 @@ Then decide:
 - Do not skip validation because the change is small.
 - Do not describe hook automation as complete unless hook scripts/config exist and were tested.
 - Keep the next action to one stage. Do not bundle implementation and validation in the same instruction unless the user explicitly asks and the gate permits it.
+- Keep product checks and evidence-path blockers separate. Passing `npm test` or build commands does not close validation when required browser, console, or screenshot evidence is blocked.
+- If the same named blocker appears in two consecutive validation attempts for the same evidence path, require a changed precondition before another validation rerun. Without that change, route to Stage 4B blocker resolution.
+- After implementation or validation, compare evidence/handoff against owned progress docs: plan checkboxes, task status rows, and next-session instructions. If they disagree, report cleanup separately from product correctness.
+- Before commit-ready guidance, require either aligned progress docs or an explicit note that the plan is an original/static plan that should not be mutated.
+- When dirty files span loop/protocol/skill, blocker handoff, product docs, product code/evidence, and runtime queue/log/result artifacts, group them instead of summarizing one undifferentiated dirty tree.
 
 ## Output
 
@@ -98,6 +107,9 @@ Use this format:
 Development Loop Stage:
 Current evidence:
 Blocking items:
+Evidence-path blocker:
+Progress-doc consistency:
+Dirty-file grouping:
 Recommended next skill:
 Exact next prompt:
 Can implementation start: yes/no/slice-only

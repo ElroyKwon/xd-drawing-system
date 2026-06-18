@@ -50,6 +50,13 @@ Blocked by default:
 
 If validation finds a blocking implementation bug, the worker reports `BLOCKED` and recommends a separate `implementation` request unless the request explicitly authorizes a scoped fix.
 
+Repeated blocker preflight:
+
+- Before rerunning a blocked evidence path, compare recent result files and handoff notes for the same target.
+- If the same named blocker appears in two consecutive attempts and no changed precondition is documented, do not create another same-path validation request.
+- The next request should resolve or change the blocked evidence path first.
+- Automated test/build PASS does not close validation when required browser, console, or screenshot evidence is still blocked.
+
 Prompt: `.ai-loop/prompts/validation-evidence.md`
 
 ### `implementation`
@@ -72,6 +79,26 @@ Blocked by default:
 - Customer or confidential drawing data
 
 Prompt: `.ai-loop/prompts/implementation.md`
+
+### Blocker-resolution requests
+
+`blocker-resolution` is a request purpose, not a runner mode. Use one of the supported modes above based on the allowed work:
+
+- Use `validation-evidence` only for an authorized availability re-test after a changed precondition is documented.
+- Use `implementation` when the request owns loop scripts, prompt files, configuration, or other non-product files needed to restore the evidence path.
+- Keep product `src/` edits blocked unless the request explicitly owns those files for a product fix.
+
+For a repeated browser blocker, the request should name the failed layer, the intended automation path, the proof that the precondition changed, and the Task 6 validation request that should run after the path is restored.
+
+### Progress-doc and dirty-file grouping
+
+Implementation and validation workers must check progress-document consistency before commit-ready or handoff-ready claims:
+
+- Compare evidence/handoff PASS claims with owned plan checkboxes, task status rows, and next-session instructions.
+- If evidence is PASS but progress docs remain open, report `handoff cleanup needed`; do not call it product failure unless implementation or required evidence is missing.
+- If the plan is intentionally an original/static execution plan, say so explicitly instead of silently leaving unchecked tasks.
+- Group dirty files as loop/protocol/skill changes, blocker handoff changes, product docs changes, product code/evidence changes, and runtime queue/log/result artifacts.
+- When shared handoff files contain multiple groups, recommend partial staging or separate commit groups.
 
 Unknown modes fail before worker launch with a clear `Unsupported mode` error.
 
