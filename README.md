@@ -27,19 +27,25 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 기능 백로그 SoT: `docs/Screenshot_Feature_Catalog.md`. ACC 캡처 `스크린샷/` 53장(`fa1872d`로 git 추적)을 화면·기능·구현상태로 정리한 단일 백로그다. "스크린샷에 보이는 기능 전부 구현"이 목표이며, 각 기능은 feature-note → planning-gate → `ai-loop` 메타 프롬프트로 내려보낸다.
 
-직전 세션(2026-06-23) 완료:
-- FR-RL 폐기 + 문서/미참조 PNG 정리(`cf5289d`), 폰트 스택 macOS 대응 + scrollbar-gutter(`ec36a0b`)
-- 좌측 네비 아이콘을 ACC에 맞춰 정비(`815479c`)
-- 스크린샷 53장 git 추적 전환 + 기능 카탈로그 작성(`fa1872d` 외)
+### 외관 완성 ai-loop (다음 세션 바로 실행)
 
-남은 작업 큐 (카탈로그 §우선순위 기준):
+다음 세션은 `ai-loop` 스킬을 장착하고 `docs/appearance-loop/LOOP.md` → `docs/appearance-loop/PROGRESS.md`를 먼저 읽어 **재시작이 아니라 이어받기**로 진행한다. **M1 완료. 다음은 M2(Project Admin/템플릿 상세) 구현** — 메타프롬프트는 freeze v2(`prompts/02-m2-admin.md`, 3-렌즈 객관 검토 반영)까지 끝났으므로 **공동설계가 아니라 곧바로 구현(Phase 3)부터** 시작한다.
 
-1. **2D 시트 뷰어 마크업 도구군** — 카탈로그 가장 큰 비중(25+장). 텍스트·도형·클라우드·다각형 마크업, 속성 패널, 마크업 로그, 측정/교정, 시트 비교, 마크업→이슈 연결. 단, 마크업 영속화·렌더 엔진은 HUMAN_GATE.
-2. **Build 시트 목록** — 버전 세트·공종·태그 테이블, 검색/필터, 행 메뉴(뷰어 진입 전제).
-3. **프로젝트 템플릿 워크플로우** — 생성 2단계 모달, 샘플 갤러리, 템플릿 상세(구성·멤버·회사·알림 매트릭스).
-4. 좌측 네비 추가 충실도(선택): 트리 하위항목, Project Admin `설정` 하단 고정.
-5. DUC planning gate (문서만) — 근거 `docs/feature-notes/005`·`009`.
-6. DWG→웹 렌더 PoC (HUMAN_GATE: 엔진/유료 SDK/Autodesk API 채택 전 정지).
+- ⚠ **구현 착수 전 사용자 게이트**: M2가 큼(5섹션+모드분기+알림 매트릭스 15도구 3단 계층) → 분할(M2a 4섹션+동선 / M2b 알림 매트릭스) vs 단일 유지+단계화를 먼저 확정(`02-m2-admin.md` 말미 §게이트).
+- 목표: 기존 로컬 셸을 카탈로그 구조 수준으로 끌어올려 외관 완성(없는 화면 만들기 아님).
+- Freeze된 결정: ① 충실도=카탈로그 구조 완성(픽셀 일치 비대상) ② 검증=구조 체크리스트+브라우저 스크린샷+test/build ③ 예산=마일스톤마다 체크인.
+- 마일스톤: ~~M1 Hub~~(완료) → **M2 Project Admin+템플릿 상세** → M3 Build 비뷰어 → M4 2D 뷰어(마크업/측정/비교/이슈) → M5 레이아웃 호환+최종 reconcile (`docs/appearance-loop/PLAN.md`).
+- 영속화·실연동·유료 SDK·DWG 렌더·배포는 HUMAN_GATE — affordance만.
+
+직전 세션(2026-06-24) 완료:
+- **M1 Hub 표면 완료**(`f627cd1`): 샘플 템플릿 접기/펴기, 카드 "사용하여 생성"→작성 모달 프리필, 드롭다운 옵션. 검증팀 2렌즈 PASS, build PASS·test 34 PASS.
+- **M2 메타프롬프트 freeze v2**(`prompts/02-m2-admin.md`): 공동설계 3결정 + 캡처/구현/스코프 3-렌즈 객관 검토로 차단 7건 수정(알림 15도구·3단 계층, 진입점 시드, App state 분기, 네비 타입 격리, FR-FS-004 이월 추적 등).
+
+남은 작업 큐:
+
+- **외관(모든 보이는 화면)** → 위 "외관 완성 ai-loop"가 M1~M5로 흡수(뷰어 마크업·시트 목록·템플릿 워크플로우·네비 충실도 포함).
+- 외관 완성 후: DUC planning gate (문서만) — 근거 `docs/feature-notes/005`·`009`.
+- 외관 완성 후: DWG→웹 렌더 PoC (HUMAN_GATE: 엔진/유료 SDK/Autodesk API 채택 전 정지).
 
 ## Start
 
