@@ -2605,6 +2605,23 @@ button {
   font-size: 12px;
 }
 
+.tmpl-card-use {
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tmpl-card-use:hover {
+  background: var(--soft);
+}
+
 .tmpl-viewall {
   display: inline-flex;
   align-items: center;

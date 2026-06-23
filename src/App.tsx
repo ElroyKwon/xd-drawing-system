@@ -180,6 +180,12 @@ export default function App() {
     setNameError(false);
   }
 
+  function openModalWithTemplate(templateName: string) {
+    setForm({ ...emptyForm, templateId: templateName });
+    setNameError(false);
+    setIsModalOpen(true);
+  }
+
   function updateForm<K extends keyof ProjectForm>(key: K, value: ProjectForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     if (key === "name" && typeof value === "string" && value.trim()) {
@@ -300,7 +306,11 @@ export default function App() {
         {activeView === "my-home" ? (
           <MyHomeView onOpenProject={openProject} />
         ) : activeView === "project-templates" ? (
-          <ProjectTemplatesView hubTemplates={hubTemplates} onCreateTemplate={addHubTemplate} />
+          <ProjectTemplatesView
+            hubTemplates={hubTemplates}
+            onCreateTemplate={addHubTemplate}
+            onUseTemplate={openModalWithTemplate}
+          />
         ) : (
           <section className="project-panel" aria-labelledby="project-list-title">
             <div className="toolbar">
@@ -615,12 +625,14 @@ function MyHomeView({ onOpenProject }: MyHomeViewProps) {
 type ProjectTemplatesViewProps = {
   hubTemplates: HubTemplate[];
   onCreateTemplate: (name: string) => void;
+  onUseTemplate: (templateName: string) => void;
 };
 
-function ProjectTemplatesView({ hubTemplates, onCreateTemplate }: ProjectTemplatesViewProps) {
+function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate }: ProjectTemplatesViewProps) {
   const [flowStep, setFlowStep] = useState<"none" | "type" | "name">("none");
   const [templateKind, setTemplateKind] = useState<"blank" | "existing">("blank");
   const [templateName, setTemplateName] = useState("");
+  const [sampleOpen, setSampleOpen] = useState(true);
 
   function startFlow() {
     setTemplateKind("blank");
@@ -641,26 +653,38 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate }: ProjectTemplat
   return (
     <section className="templates-panel" aria-label="프로젝트 템플릿">
       <section className="tmpl-section" aria-labelledby="sample-template-title">
-        <button type="button" className="tmpl-section-head" aria-expanded="true">
-          <ChevronDown size={18} />
+        <button
+          type="button"
+          className="tmpl-section-head"
+          aria-expanded={sampleOpen}
+          onClick={() => setSampleOpen((open) => !open)}
+        >
+          <ChevronDown size={18} className={sampleOpen ? undefined : "rotate-minus-90"} />
           <h3 id="sample-template-title">샘플 템플릿</h3>
         </button>
-        <div className="tmpl-cards">
-          {sampleTemplates.map((template) => (
-            <article className="tmpl-card" key={template.name}>
-              <strong>{template.name}</strong>
-              <span className="tmpl-card-sub">사용자 정의</span>
-              <div className="tmpl-card-chips">
-                <span className="tmpl-chip">{template.access}</span>
-                <span className="tmpl-chip">복사</span>
-              </div>
-            </article>
-          ))}
-        </div>
-        <button type="button" className="tmpl-viewall">
-          <ListFilter size={15} />
-          모두 보기
-        </button>
+        {sampleOpen ? (
+          <>
+            <div className="tmpl-cards">
+              {sampleTemplates.map((template) => (
+                <article className="tmpl-card" key={template.name}>
+                  <strong>{template.name}</strong>
+                  <span className="tmpl-card-sub">사용자 정의</span>
+                  <div className="tmpl-card-chips">
+                    <span className="tmpl-chip">{template.access}</span>
+                    <span className="tmpl-chip">복사</span>
+                  </div>
+                  <button type="button" className="tmpl-card-use" onClick={() => onUseTemplate(template.name)}>
+                    사용하여 생성
+                  </button>
+                </article>
+              ))}
+            </div>
+            <button type="button" className="tmpl-viewall">
+              <ListFilter size={15} />
+              모두 보기
+            </button>
+          </>
+        ) : null}
       </section>
 
       <section className="tmpl-section" aria-labelledby="hub-template-title">
@@ -867,6 +891,11 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
             </span>
             <select name="project-template" value={form.templateId} onChange={(event) => onUpdate("templateId", event.target.value)}>
               <option value="">템플릿 없음 (결정 보류)</option>
+              {sampleTemplates.map((template) => (
+                <option key={template.name} value={template.name}>
+                  {template.name}
+                </option>
+              ))}
             </select>
           </label>
 

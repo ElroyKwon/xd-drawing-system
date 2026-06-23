@@ -55,6 +55,17 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("프로젝트 템플릿 구성원이 아니십니까?")).toBeInTheDocument();
   });
 
+  it("opens the project creation modal prefilled with the chosen sample template", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+    await user.click(screen.getAllByRole("button", { name: "사용하여 생성" })[0]);
+
+    const dialog = screen.getByRole("dialog", { name: "프로젝트 작성" });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("템플릿", { exact: false })).toHaveValue("General Contractor");
+  });
+
   it("runs the two-step template creation flow and lists the new hub template", async () => {
     const { user } = renderApp();
 
@@ -133,7 +144,7 @@ describe("initial setup project list and create modal", () => {
       expect(within(dialog).getByLabelText(label, { exact: false })).toBeInTheDocument();
     });
     expect(within(dialog).getByRole("option", { name: "템플릿 없음 (결정 보류)" })).toBeInTheDocument();
-    expect(within(dialog).queryByRole("option", { name: "General Contractor" })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "General Contractor" })).toBeInTheDocument();
   });
 
   it("blocks empty submit with required-name validation and keeps the list unchanged", async () => {
