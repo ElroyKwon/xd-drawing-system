@@ -1,9 +1,12 @@
 :root {
   color: #172636;
   background: #f6f7f8;
-  font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI",
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-synthesis: none;
   text-rendering: geometricPrecision;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
   --blue: #0078b8;
   --blue-dark: #00679d;
   --ink: #1e2f3f;
@@ -2677,7 +2680,7 @@ button {
   line-height: 1.5;
 }
 
-/* ===== Responsive (FR-RL: 본문 유동 + 그리드 reflow) ===== */
+/* ===== Responsive (본문 유동 + 그리드 reflow) ===== */
 @media (max-width: 1024px) {
   .workspace {
     padding: 10px 24px 36px;
