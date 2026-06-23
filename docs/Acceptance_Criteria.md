@@ -71,7 +71,7 @@
 
 ## Human Approval Criteria
 
-- PASS for planning only if all `HUMAN_GATE.md` risky items remain out of scope.
+- PASS for planning only if all `AGENTS.md` approval-rule risky items remain out of scope.
 - FAIL or stop before implementation if a task introduces auth, permission, DB schema, customer data, Autodesk cloud/API, paid SDK, deletion of reference data, or deployment.
 - FAIL or stop before implementation if Project Admin work expands into company management, real RBAC enforcement, email invitation, DB/API persistence, or access deletion.
 - FAIL or stop before implementation if Build sheets work expands into real drawing files, upload/publish, viewer engine, sheet compare, DB/API persistence, Autodesk API, paid SDK, or deployment.

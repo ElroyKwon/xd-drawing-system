@@ -31,7 +31,7 @@
 ## External Dependencies
 
 - 현재 app baseline은 `package.json`의 Vite, React, TypeScript, Vitest, Testing Library 의존성을 사용한다.
-- 후속 구현 단계에서 paid SDK, Autodesk API, customer drawing 사용이 필요한 경우 `HUMAN_GATE.md` 기준으로 먼저 확인한다.
+- 후속 구현 단계에서 paid SDK, Autodesk API, customer drawing 사용이 필요한 경우 `AGENTS.md` 승인 필요 항목 기준으로 먼저 확인한다.
 - 저장된 screenshot/reference 문서는 읽기 전용 근거로만 사용한다.
 
 ## Explicit Non-Use
@@ -263,3 +263,5 @@ Autodesk's own APS blog demonstrates that Chrome DevTools Network inspection can
 | FR-DUC-008 | Keep issue/memo/markup overlay design as future UI/data slots only. |
 | FR-DUC-009 | Record APS architecture references while keeping credentials/API calls gated. |
 | FR-DUC-010 | Propose JSON traceability/progress output as a future loop artifact, separate from current production data models. |
+| FR-DUC-011 | Maintain an upload format-to-feature matrix as a design reference; see `docs/feature-notes/009-acc-upload-format-feature-matrix.md`. Keep evidence grade explicit (documentation-read, not exercised against a live ACC tenant). |
+| FR-DUC-012 | Model two ingestion paths, not one. Viewer path: `DrawingSourceFile(dwg/dxf) -> ... -> DrawingViewableCandidate -> viewer surface`. Sheet-register path: `SheetSourceFile(pdf) -> paged-sheet split (OCR-equivalent) -> SheetRegisterEntry -> issue/markup/version-compare`. The two paths share neither the source-file entity nor the "sheet" concept and must be designed separately. |

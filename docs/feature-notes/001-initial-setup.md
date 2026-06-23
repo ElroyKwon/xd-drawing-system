@@ -107,6 +107,6 @@ Expected implementation files will be decided when app scaffolding starts.
 
 ## Checks And Evidence
 
-Relevant checks are defined in `CHECKS.md` under `Manual Checks For Initial Setup Slice`.
+Relevant checks are manual UI verification of the initial setup slice.
 
-Evidence should be recorded in `EVIDENCE.md` after implementation and verification. This note itself does not claim implementation completion.
+Verification should be recorded in the active handoff path chosen for the session. This note itself does not claim implementation completion.

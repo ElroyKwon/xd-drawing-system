@@ -20,7 +20,7 @@
 - [x] Visible UI actions map to user-flow steps in `docs/User_Flow.md`.
 - [x] Visible UI fields/actions are represented in `docs/UI_Spec.md`.
 - [x] Data model supports required create/read behavior and explicitly excludes update/delete/undo for this slice.
-- [x] Human approval gates are documented through `HUMAN_GATE.md`, `docs/PRD.md`, `docs/TRD.md`, and `docs/Acceptance_Criteria.md`.
+- [x] Human approval gates are documented through `AGENTS.md`, `docs/PRD.md`, `docs/TRD.md`, and `docs/Acceptance_Criteria.md`.
 
 ## Pre-Implementation Boundary Check
 
@@ -36,14 +36,14 @@
 
 - [x] Initial setup slice was implemented after PASS using Vite + React + TypeScript + Vitest.
 - [x] Implementation remains local mock state only.
-- [x] `npm test` and `npm run build` passing evidence is recorded in `EVIDENCE.md`.
+- [x] `npm test` and `npm run build` passing evidence was recorded in the retired root evidence log.
 - [x] Desktop/mobile browser evidence is recorded under `docs/evidence/`.
 
 ## Gate Status
 
 - Result: PASS on 2026-06-15.
 - Reason: seven core docs exist, UI support docs exist, FR-to-task/acceptance/test mappings are complete, UI actions map to user-flow steps, and risky external integration items remain out of scope.
-- Evidence: recorded in `EVIDENCE.md`.
+- Evidence: recorded in the retired root evidence log.
 
 ## Project Admin Member Access Gate - 2026-06-17
 
@@ -140,7 +140,6 @@
 ### Document Existence
 
 - [x] `docs/feature-notes/004-2d-sheet-viewer-first-slice.md`
-- [x] `docs/superpowers/plans/2026-06-18-2d-sheet-viewer-first-slice.md`
 - [x] `docs/PRD.md`
 - [x] `docs/TRD.md`
 - [x] `docs/UI_Spec.md`
@@ -189,7 +188,6 @@
 ### Document Existence
 
 - [x] `docs/feature-notes/005-dwg-dxf-upload-conversion-management.md`
-- [x] `docs/superpowers/plans/2026-06-18-dwg-dxf-upload-conversion-management.md`
 - [x] `docs/PRD.md`
 - [x] `docs/TRD.md`
 - [x] `docs/UI_Spec.md`

@@ -10,6 +10,9 @@ File naming:
 003-build-shell-sheets.md
 004-2d-sheet-viewer-first-slice.md
 005-dwg-dxf-upload-conversion-management.md
+006-project-navigation-ux-refinement.md
+007-hub-project-build-shell-separation.md
+008-full-acc-visible-surface-shells.md
 ```
 
 Each note should include:

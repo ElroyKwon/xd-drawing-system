@@ -13,7 +13,7 @@
 | `reference/acc-screenshots/Video Screen1781227558018.png` | Full member table view, search/filter/table structure. |
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #2/#3 | Project Admin 구성원 screen inventory and table/inspector patterns. |
 | `docs/feature-notes/002-project-admin-member-access.md` | Project Admin member access slice boundary and validation rules. |
-| `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md` | Approved ProjectMemberAccess design and exclusions. |
+| `docs/feature-notes/002-project-admin-member-access.md` | ProjectMemberAccess design and exclusions. |
 | `reference/acc-screenshots/Video Screen1781231464329.png` | Build shell header, left rail navigation, quick link context, and project-level module framing. |
 | `reference/acc-screenshots/Video Screen1781231492911.png` | Sheets list toolbar, columns, sheet row metadata, view toggle, row menu, and pagination. |
 | `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` #8/#10 | Build home shell and sheets list reproduction notes. |
@@ -27,7 +27,7 @@
 | `reference/old-prototypes/prototype-도면지식관리-mvp/docs/ai-3d-builder/_archive-dxf-pivot-2026-04-22/parity-lab-p062/FINDINGS.md` | Prior DWG to DXF/xref/render limits and A03/A04 investigation path. |
 | Autodesk Platform Services Simple Viewer tutorial | Benchmark upload, translation status, and viewer loading architecture. |
 | Autodesk Platform Services Viewer SDK / Model Derivative docs | Benchmark viewer and derivative-processing capabilities. |
-| `HUMAN_GATE.md` | External integration and risky-change boundaries. |
+| `AGENTS.md` approval rules | External integration and risky-change boundaries. |
 
 ## Feature To UI Map
 

@@ -34,14 +34,14 @@
 | ID | Requirement | Source evidence |
 |---|---|---|
 | FR-IS-001 | 사용자는 허브 레벨 `프로젝트` 탭에서 프로젝트 목록을 볼 수 있어야 한다. 목록에는 유형, 이름, 번호, 기본 액세스, 허브, 작성 날짜 컬럼이 있어야 한다. | ACC #6 `Video Screen1781231401038.png`; `docs/feature-notes/001-initial-setup.md` |
-| FR-IS-002 | 사용자는 프로젝트 이름 또는 번호로 목록을 검색하고, 검색어를 지우면 전체 mock 목록으로 돌아갈 수 있어야 한다. | ACC #6 검색 입력; `CHECKS.md` 초기 설정 수동 검증 |
+| FR-IS-002 | 사용자는 프로젝트 이름 또는 번호로 목록을 검색하고, 검색어를 지우면 전체 mock 목록으로 돌아갈 수 있어야 한다. | ACC #6 검색 입력; manual UI verification |
 | FR-IS-003 | 사용자는 `+ 프로젝트 만들기`를 눌러 프로젝트 목록 위에 중앙 `프로젝트 작성` 모달을 열 수 있어야 한다. | ACC #1 `ScreenShot Tool -20260612102152.png`; ACC #6 create CTA |
 | FR-IS-004 | 프로젝트 작성 모달은 프로젝트 이름, 프로젝트 번호, 프로젝트 유형, 템플릿, 주소, 시간대, 시작일, 종료일, 프로젝트 값, 통화 입력 UI를 제공해야 한다. | ACC #1 분석 섹션; screenshot 직접 확인 |
-| FR-IS-005 | 프로젝트 이름은 필수이며, 비어 있는 상태로 제출하면 validation state를 표시하고 프로젝트를 추가하지 않아야 한다. | ACC #1 필수 별표/모달 폼 패턴; `CHECKS.md` |
+| FR-IS-005 | 프로젝트 이름은 필수이며, 비어 있는 상태로 제출하면 validation state를 표시하고 프로젝트를 추가하지 않아야 한다. | ACC #1 필수 별표/모달 폼 패턴 |
 | FR-IS-006 | 유효한 프로젝트 이름으로 제출하면 로컬 mock 프로젝트가 목록에 1건 추가되고 모달이 닫혀야 한다. | `docs/feature-notes/001-initial-setup.md` create flow |
 | FR-IS-007 | `취소` 또는 닫기 버튼은 모달을 닫되 프로젝트 목록을 변경하지 않아야 한다. | ACC #1 하단 `취소`; no-change flow |
-| FR-IS-008 | 데스크톱과 모바일 폭에서 주요 버튼, 필드, 테이블/목록, 모달 텍스트가 겹치거나 잘리지 않아야 하며, 브라우저 콘솔 에러가 없어야 한다. | `CHECKS.md` UI 수동 검증; frontend guidance |
-| FR-IS-009 | 이 slice의 데이터는 로컬 mock 데이터로만 동작해야 하며 인증, DB, API, Autodesk 계정, paid SDK, 배포를 요구하지 않아야 한다. | `HUMAN_GATE.md`; user instruction |
+| FR-IS-008 | 데스크톱과 모바일 폭에서 주요 버튼, 필드, 테이블/목록, 모달 텍스트가 겹치거나 잘리지 않아야 하며, 브라우저 콘솔 에러가 없어야 한다. | UI manual verification; frontend guidance |
+| FR-IS-009 | 이 slice의 데이터는 로컬 mock 데이터로만 동작해야 하며 인증, DB, API, Autodesk 계정, paid SDK, 배포를 요구하지 않아야 한다. | `AGENTS.md` approval rules; user instruction |
 
 ## Selected Second Product Slice: Project Admin Member Access
 
@@ -81,14 +81,14 @@ Out of scope:
 | ID | Requirement | Source evidence |
 |---|---|---|
 | FR-PA-001 | Render Project Admin member access view for Study_Project. | ACC #2/#3 screenshots; `docs/feature-notes/002-project-admin-member-access.md` |
-| FR-PA-002 | Show only members with ProjectMemberAccess for Study_Project. | `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md` |
+| FR-PA-002 | Show only members with ProjectMemberAccess for Study_Project. | `docs/feature-notes/002-project-admin-member-access.md` |
 | FR-PA-003 | Search project-access members by name or email. | ACC #2/#3 search affordance |
 | FR-PA-004 | Select a member row and show right inspector details. | ACC #2 right inspector pattern |
 | FR-PA-005 | Open add-existing-member modal. | ACC #2 `구성원 추가` action |
 | FR-PA-006 | Block add submit when no member is selected. | Local validation requirement |
 | FR-PA-007 | Block duplicate ProjectMemberAccess for the same project/member. | Product decision: one access record per project/member |
 | FR-PA-008 | Add a valid existing member with selected role to Study_Project. | Local mock member access flow |
-| FR-PA-009 | Keep Project, Member, and ProjectMemberAccess separate; exclude company/auth/DB/API. | User-confirmed scope boundary; `HUMAN_GATE.md` |
+| FR-PA-009 | Keep Project, Member, and ProjectMemberAccess separate; exclude company/auth/DB/API. | User-confirmed scope boundary; `AGENTS.md` approval rules |
 
 ## Selected Third Product Slice: Build Shell And Sheets List
 
@@ -131,8 +131,8 @@ Out of scope:
 | FR-BS-005 | Search sheets by number, title, discipline, or tag and restore all rows when cleared. | ACC #10 search/filter toolbar |
 | FR-BS-006 | Provide list/grid view toggle affordance with list view as the functional view. | ACC #10 view toggle |
 | FR-BS-007 | Provide export, filter, row menu, and pagination as local UI affordances only. | ACC #10 toolbar and footer |
-| FR-BS-008 | Keep the slice local mock state only; no viewer/upload/storage/compare/markup/issues. | User scope boundary; `HUMAN_GATE.md` |
-| FR-BS-009 | Avoid auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment. | `HUMAN_GATE.md` |
+| FR-BS-008 | Keep the slice local mock state only; no viewer/upload/storage/compare/markup/issues. | User scope boundary; `AGENTS.md` approval rules |
+| FR-BS-009 | Avoid auth/RBAC, DB/API, Autodesk API, paid SDK, customer drawing data, and deployment. | `AGENTS.md` approval rules |
 
 ## Selected Fourth Product Slice: 2D Sheet Viewer First Slice
 
@@ -178,7 +178,7 @@ Out of scope:
 | FR-SV-006 | Render left markup/issues panel affordance with empty states and tab switching. | ACC #12/#13 markup panel; #16 issues panel |
 | FR-SV-007 | Preserve local sheet navigation context, optionally with filmstrip-style affordance. | ACC #23 filmstrip context; Build sheets list continuity |
 | FR-SV-008 | Reserve `equipmentEntityId` / ontology binding in viewer state as a data slot only. | ACC analysis DKS differentiation notes; user instruction |
-| FR-SV-009 | Keep real viewer engine, customer drawings, upload/publish, markup/issues persistence, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, and deployment out of scope. | `HUMAN_GATE.md`; user instruction |
+| FR-SV-009 | Keep real viewer engine, customer drawings, upload/publish, markup/issues persistence, DB/API/TypeDB, Autodesk, paid SDK, auth/RBAC, and deployment out of scope. | `AGENTS.md` approval rules; user instruction |
 
 ## Selected Fifth Planning Slice: DWG/DXF Upload Conversion Management
 
@@ -226,6 +226,59 @@ Out of scope:
 | FR-DUC-008 | The design must reserve future issue, memo, and markup overlays above the viewer surface without creating persisted records in this planning slice. | User instruction; ACC viewer/issue reference screenshots |
 | FR-DUC-009 | The design must document official APS upload/translate/viewer architecture as benchmark research while keeping real APS use gated. | APS Simple Viewer, Viewer SDK, Model Derivative docs |
 | FR-DUC-010 | The design must define a JSON traceability/progress artifact proposal for future loop automation, not as a current production data contract. | User reminder about JSON-shaped docs/progress; current Markdown ID traceability |
+| FR-DUC-011 | The design must record an explicit upload format-to-feature matrix (which format unlocks viewing vs sheet-register vs issue/markup), using ACC reference behaviour. | `docs/feature-notes/009-acc-upload-format-feature-matrix.md`; Autodesk DOCS/BUILD/APS docs |
+| FR-DUC-012 | The design must define two distinct ingestion paths mirroring ACC: a DWG-based viewer path (DWG→DXF→scan→viewable, the existing FR-DUC-001..007 chain) and a PDF-based sheet-register path (PDF→paged sheets→sheet register) that is the substrate for issue/markup/version-compare (FR-DUC-008). "Sheet/viewable candidate" (viewer) and "sheet register entry" (collaboration) are different concepts and must not collapse into one. | ACC Files vs Sheets behaviour; user decision 2026-06-23 (viewer=DWG, sheets=PDF) |
+
+## Full ACC Visible Surface Coverage Addendum
+
+Goal:
+
+- Use all locally captured ACC screenshots as a visible product surface checklist.
+- Implement every visible menu as at least a local clickable shell before deeper feature completion.
+- Keep real persistence, auth/RBAC, Autodesk/APS, paid SDK, customer drawings, deployment, and destructive actions gated.
+
+Source coverage:
+
+- `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` maps captured screenshots #1 through #37.
+- `reference/acc-screenshots/` contains the original screenshot images used by that analysis.
+
+Implementation level definitions:
+
+- `Implemented`: local UI behavior exists and is covered by automated/browser evidence.
+- `Visible shell`: menu opens a dedicated screen with representative local content, empty states, and core affordances, but no backend/persistence.
+- `Planned/gated`: visible in PRD and UI as future/gated behavior; implementation requires a separate slice or human gate.
+
+## Full Surface Functional Requirements
+
+| ID | Requirement | Implementation level | Source evidence |
+|---|---|---|---|
+| FR-FS-001 | Hub `My Home` must show assigned-work, project, bookmark, and recent-item dashboard areas. | Visible shell | ACC #4/#5 |
+| FR-FS-002 | Hub `프로젝트 템플릿` must open a dedicated template screen with sample-template cards and Hub template empty state, without deciding XD template scope. | Visible shell / gated | ACC #7; Autodesk template research |
+| FR-FS-003 | Hub `허브 설정` must stay separate from Project Admin settings and show organization-level settings. | Visible shell | Hub/Admin separation decision |
+| FR-FS-004 | Project Admin side navigation items `회사`, `브리지`, `액티비티`, `알림`, `위치`, and `설정` must open distinct project-admin screens. | Visible shell | ACC #2/#3 |
+| FR-FS-005 | Build `홈` must open a project dashboard with progress, quick links, recent activity, and empty task/bridge widgets. | Visible shell | ACC #8/#9 |
+| FR-FS-006 | Build `시트` must keep the existing local sheet table and allow opening a local viewer shell for a selected sheet. | Visible shell | ACC #10/#11 |
+| FR-FS-007 | Viewer shell must show selected sheet context, static drawing surface, left markup/issues panel, right tool rail, bottom controls, and sheet filmstrip. | Visible shell / local-only | ACC #11~#17, #23 |
+| FR-FS-008 | Viewer comparison affordance must show sheet compare and sheet picker concepts without real diff computation. | Visible shell / gated | ACC #18~#22 |
+| FR-FS-009 | Viewer issue affordance must show issue detail fields, comments, activity log, and pin concept without persisted records. | Visible shell / gated | ACC #24~#29 |
+| FR-FS-010 | Viewer markup affordance must show pen/shape/arrow/search concepts without persisted drawing edits. | Visible shell / gated | ACC #30~#32 |
+| FR-FS-011 | Build `파일` must show folder tree, upload/folder actions, file table columns, search/filter, and empty/sample file state. | Visible shell | ACC #33 |
+| FR-FS-012 | Build `이슈` must show issue list toolbar, create issue modal affordance, sample/empty list state, and inspector concept. | Visible shell | ACC #34~#36 |
+| FR-FS-013 | Build `양식` must show a local placeholder screen and remain marked as screenshot coverage gap until source screenshots are captured. | Visible shell / source gap | ACC analysis missing item |
+| FR-FS-014 | Build `사진` must show album/gallery/map tabs, media action affordances, project photo tree, and empty gallery state. | Visible shell | ACC #37 |
+| FR-FS-015 | Build `구성원`, `브리지`, and `설정` management entries must open distinct project-work management screens instead of inert buttons. | Visible shell | ACC #8 rail |
+| FR-FS-016 | Every visible shell must preserve Hub vs Project Admin vs Build project-work level separation. | Implemented | 2026-06-19 shell separation |
+| FR-FS-017 | Any upload, issue deletion, template publishing, real compare, real markup persistence, file storage, auth/RBAC, DB/API, Autodesk/APS, TypeDB, paid SDK, customer drawing, or deployment behavior must remain blocked by approval rules. | Gated | `AGENTS.md` |
+
+## Layout Compatibility (해상도/플랫폼 호환성)
+
+> 2026-06-23 재정의: 해상도/픽셀 기반 반응형 요구사항(구 FR-RL-001~008)과 OS-배율 시각 QA 매트릭스 절차는 폐기했다. 픽셀 단위 반응형/뷰포트 매트릭스를 추적하는 대신 아래 단순 기준만 유지한다.
+
+- **FR-LC-001** — FHD(1920)·4K 등 일반 데스크톱 해상도와 macOS 브라우저(Chrome/Safari)에서 레이아웃이 깨지지 않아야 한다: 가로 클리핑·요소 겹침·폰트 폴백 파손이 없어야 한다. 넓은 데이터 테이블은 셸 레이아웃을 밀어내지 않도록 전용 스크롤 컨테이너 내부에서만 가로 스크롤한다.
+- **FR-LC-002** — 폰트 스택은 macOS(`-apple-system`/`Apple SD Gothic Neo`)와 Windows(`Segoe UI`/`Malgun Gothic`)에서 모두 자연스럽게 분기되어야 한다.
+- **FR-LC-003** — 모바일/태블릿 반응형은 전 기능 완성 후 일괄 처리로 보류한다. 그 전에는 모바일 전용 분기를 새로 추가하지 않는다.
+
+(기존 FR-IS-008·FR-FS 시리즈의 "겹치거나 잘리지 않아야 한다" 조항은 본 호환성 기준과 함께 그대로 유효하다.)
 
 ## Source Evidence
 
@@ -253,4 +306,4 @@ Out of scope:
 - Autodesk Platform Services Simple Viewer tutorial: https://get-started.aps.autodesk.com/tutorials/simple-viewer/
 - Autodesk Platform Services Viewer SDK overview: https://aps.autodesk.com/developer/overview/viewer-sdk
 - Autodesk Platform Services Model Derivative API overview: https://aps.autodesk.com/developer/overview/model-derivative-api
-- `SPEC.md`, `CHECKS.md`, `HUMAN_GATE.md`
+- `AGENTS.md`

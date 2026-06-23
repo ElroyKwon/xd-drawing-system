@@ -58,13 +58,6 @@ Path: `reference/old-prototypes/`
 - 새 앱의 코드 베이스가 아니다.
 - `node_modules`, `.next`, 빌드 산출물은 복사하지 않았다.
 
-### AI Dev Loop
-
-Path: `reference/ai-dev-loop/`
-
-- `AI개발루프-스킬학습`의 팀 공유 스킬 패키지와 프로젝트 루프 템플릿.
-- 프로젝트 루트의 `SPEC.md`, `PLAN.md`, `CHECKS.md`, `EVIDENCE.md`, `HUMAN_GATE.md`는 이 흐름을 `xd-drawing-system`에 맞게 적용한 것이다.
-
 ## Not Copied
 
 - `node_modules`

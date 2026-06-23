@@ -15,7 +15,7 @@ Default assumption:
 - Viewer controls, markup tools, issue toggle, and panel areas are rendered as local UI affordances first.
 - Equipment entity ID / ontology binding is reserved as a viewer data slot only.
 
-Do not proceed automatically with real viewer engine evaluation or adoption. PDF.js, OpenSeadragon, APS Viewer, ODA, Autodesk-backed processing, or any paid/external viewer dependency requires `HUMAN_GATE.md` review first.
+Do not proceed automatically with real viewer engine evaluation or adoption. PDF.js, OpenSeadragon, APS Viewer, ODA, Autodesk-backed processing, or any paid/external viewer dependency requires approval under `AGENTS.md` first.
 
 ```text
 Project
@@ -66,6 +66,6 @@ Document-loop kickoff only in this session:
 - Confirm `FR-SV-001` through `FR-SV-009` are represented in the seven core docs and UI support docs.
 - Confirm real viewer engine, customer drawings, DB/API/TypeDB, Autodesk, paid SDK, and deployment remain gated or out of scope.
 - Confirm Project Admin Task 6 stays open and `BLOCKED_BROWSER_UNAVAILABLE`.
-- Confirm no `src/`, package, reference, `docs/evidence`, or `.ai-loop` runtime files changed.
+- Confirm no unowned `src/`, package, reference, or `docs/evidence` files changed.
 
 Implementation checks are intentionally deferred until after a planning gate.

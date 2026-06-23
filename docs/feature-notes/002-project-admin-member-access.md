@@ -45,7 +45,7 @@ ProjectMemberAccess
 - `reference/acc-screenshots/ScreenShot Tool -20260612102437.png`
 - `reference/acc-screenshots/Video Screen1781227558018.png`
 - `reference/acc-analysis/_ACC-Build-화면분석-재현설계.md` sections `#2` and `#3`
-- `docs/superpowers/specs/2026-06-17-project-admin-member-access-design.md`
+- Current boundary is recorded in this note and the approval rules in `AGENTS.md`.
 
 ## Verification
 

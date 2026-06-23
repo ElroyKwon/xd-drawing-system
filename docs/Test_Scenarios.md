@@ -35,7 +35,7 @@ These scenarios define the active checks for the implemented local mock initial 
 - `npm test` should cover Build shell rendering, selected sheets navigation, sheet metadata rows, search, view toggle affordance, and app entry from `Study_Project`.
 - Future DUC automated checks should cover intake validation, conversion job normalization, DXF scan summary normalization, and JSON traceability artifact generation only after a DUC implementation gate.
 - `npm run build` should pass before the baseline is considered stable.
-- Browser automation or manual browser checks should be recorded in `EVIDENCE.md` with screenshot paths when UI behavior changes.
+- Browser automation or manual browser checks should record screenshot paths when UI behavior changes.
 
 ## Build Shell And Sheets List Scenarios
 

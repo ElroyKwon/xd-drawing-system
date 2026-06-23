@@ -2,88 +2,63 @@
 
 XD 제품군에 포함될 도면관리 시스템 개발 프로젝트.
 
-이 프로젝트는 Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면과 워크플로우를 메뉴 단위로 하나씩 재현하면서 XD 고유의 설비 엔티티 바인딩과 지식 연동을 붙여가는 실험/개발 공간이다.
+Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면과 워크플로우를 메뉴 단위로 재현하고 XD 고유의 설비 엔티티 바인딩과 지식 연동을 붙여가는 실험/개발 공간이다.
 
-## 현재 단계
+## Current State
 
-초기 세팅과 첫 제품 slice들이 완료되어 `master`에 commit되었다.
+- 앱 scaffold는 Vite + React + TypeScript + Vitest 기반이다.
+- 현재 구현은 로컬 mock 데이터와 클라이언트 상태만 사용한다.
+- DB/API/Auth/Autodesk 연동/paid SDK/배포는 없다.
+- project-local custom automation은 폐기했다.
+- 루트 Markdown은 `README.md`, `AGENTS.md`, `CLAUDE.md`만 유지한다.
 
-구현된 slice:
+## Implemented Local Slices
 
 - ACC #6 `프로젝트 목록`
 - ACC #1 `프로젝트 작성 모달`
-- Project Admin `구성원` access view for `Study_Project`
-- Build shell + `시트` 목록 for `Study_Project`
-- ACC #11 2D sheet viewer first slice는 문서/계획 게이트 완료 상태이며 구현 대기 중이다.
-- DWG/DXF Upload Conversion Management는 문서화된 planning slice이며, 다음 세션에서 formal planning gate 후 구현 경로를 선택한다.
+- Hub `My Home`, `프로젝트`, `프로젝트 템플릿` local shells
+- Project Admin local shells
+- Build local shells
+- Local-only 2D sheet viewer shell
 
-Project Admin Task 6의 브라우저 증거 수집은 `BLOCKED_BROWSER_UNAVAILABLE` 상태로 남아 있다. 같은 조건에서 `0009` 검증 요청을 만들거나 Task 6 browser validation을 반복하지 않는다.
+## Next Session
 
-앱 scaffold는 Vite + React + TypeScript + Vitest 기반이며, 현재 구현은 로컬 mock 데이터와 클라이언트 상태만 사용한다. DB/API/Auth/Autodesk 연동/paid SDK/배포는 아직 없다.
+해상도/픽셀 기반 반응형(구 FR-RL) 요구사항은 폐기했다. 레이아웃은 "FHD/4K + macOS 브라우저에서 무파손"(PRD `Layout Compatibility`, FR-LC-001~003)만 유지한다.
 
-다음 Codex 세션은 이 폴더에서 시작한다.
+남은 작업 큐 (글로벌 `ai-loop` 스킬):
+
+1. DUC planning gate (문서만, FR-DUC-011/012 포함) — 근거는 `docs/feature-notes/005`·`009`
+2. DWG→웹 렌더 PoC (HUMAN_GATE: 엔진/유료 SDK/Autodesk API 채택 전 정지)
+
+## Start
 
 ```powershell
 cd "D:\_Project\xd-drawing-system"
 codex
 ```
 
-## 첫 진입 순서
+Read first:
 
 1. `AGENTS.md`
-2. `SPEC.md`
-3. `PLAN.md`
-4. `CHECKS.md`
-5. `HUMAN_GATE.md`
-6. `docs\sessions\NEXT_SESSION.md`
-7. `reference\README.md`
+2. `README.md`
 
-## 핵심 방향
+## References
 
-- 제품명/폴더명: `xd-drawing-system`
-- 제품군: XD 시스템 통합 라인
-- 벤치마크: Autodesk Construction Cloud Build
-- 1차 범위: 초기 설정, 프로젝트/멤버/시트 목록, 2D 시트 뷰어, 마크업, 이슈
-- 다음 핵심 방향: 실제 도면 업로드에 가까워지기 위한 DWG/DXF intake, conversion, scan, viewer relation 설계
-- 제외: DWG 원본 CAD 편집기, 3D BIM, Bridge, 프로덕션 인증/권한
-- 차별점: 핀, 마크업, 이슈를 픽셀 좌표뿐 아니라 설비 엔티티 ID에 바인딩
+- `reference/acc-screenshots/`
+- `reference/acc-analysis/`
+- `reference/dks-design-docs/`
+- `reference/old-prototypes/`
 
-## 참고자료 위치
+Treat `reference/` as read-only source material. Copy or summarize into active working docs only when needed.
 
-```text
-reference/
-├─ acc-screenshots/       ACC Build 스크린샷 원본 39개 파일
-├─ acc-analysis/          ACC 화면 분석 문서
-├─ dks-design-docs/       도면관리 시스템 상세설계, Development_Design legacy
-├─ autodesk-cloud/        Autodesk Cloud / APS 조사
-├─ dks-core-docs/         DKS README, concept map, RFP, 전략 문서
-├─ cheongju-fms/          청주사업장 FMS 고도화 참고자료
-├─ old-prototypes/        이전 도면지식관리 프로토타입 참고자료
-└─ ai-dev-loop/           AI 개발 루프 스킬/템플릿 원본
+## Verification
+
+For product code changes, run at minimum:
+
+```powershell
+npm test
+npm run build
+git diff --check
 ```
 
-## 개발 루프
-
-기능 하나마다 다음 파일을 갱신한다.
-
-- `SPEC.md`: 현재 기능의 목표와 범위
-- `PLAN.md`: 작업 순서
-- `CHECKS.md`: 검증 명령과 수동 확인 시나리오
-- `EVIDENCE.md`: 실행 결과와 증거
-- `HUMAN_GATE.md`: 사람 승인 또는 중단이 필요한 항목
-
-완료로 말하기 전에는 `EVIDENCE.md`에 실제 검증 결과가 있어야 한다.
-
-현재 구현 증거:
-
-- `EVIDENCE.md`의 `Initial Setup Slice Implementation`
-- `EVIDENCE.md`의 `Project Admin Task 6 Validation Evidence Real Run - 2026-06-17`
-- `EVIDENCE.md`의 `Project Admin Task 6 Browser Validation Rerun - 2026-06-17`
-- `EVIDENCE.md`의 `Build Shell And Sheets List Implementation - 2026-06-18`
-- `docs/evidence/initial-setup-desktop.png`
-- `docs/evidence/initial-setup-mobile-list.png`
-- `docs/evidence/initial-setup-mobile-modal.png`
-- `docs/evidence/initial-setup-mobile-modal-bottom.png`
-- `docs/evidence/project-admin-desktop.png` (historical Project Admin artifact only; not fresh Task 6 PASS evidence)
-- `docs/evidence/build-sheets-desktop.jpeg`
-- `docs/evidence/build-sheets-narrow.jpeg`
+For UI work, also verify browser behavior, console state, and screenshot evidence when relevant.

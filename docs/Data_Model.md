@@ -291,6 +291,45 @@ DrawingViewableCandidate
 - linkedSheetId: string | null
 ```
 
+### Sheet-Register Path Entities (PDF, FR-DUC-012)
+
+Per the 2026-06-23 decision (viewer=DWG, sheets=PDF), the sheet-register/collaboration
+path is modelled separately from the DWG→DXF viewer path above. It does not share the
+`DrawingSourceFile` entity or the "viewable candidate" concept. This is a future local
+data shape only — no DB/API/TypeDB schema, no real OCR, no persisted markup/issue records.
+
+```text
+SheetSourceFile
+- id: string
+- sourceName: string
+- extension: "pdf"
+- sourcePathLabel: string
+- sizeBytes: number
+- pageCount: number | null
+- intakeStatus: "candidate" | "validated" | "blocked"
+
+PagedSheet
+- id: string
+- sheetSourceFileId: string
+- pageIndex: number
+- detectedSheetNumber: string | null
+- detectedSheetTitle: string | null
+- extractionStatus: "pending" | "extracted" | "needs-review"
+
+SheetRegisterEntry
+- id: string
+- pagedSheetId: string
+- sheetNumber: string
+- sheetTitle: string
+- versionLabel: string
+- supersedesEntryId: string | null
+- issueMarkupReserved: true
+```
+
+`SheetRegisterEntry` is the unit that future Issues/Markups/version-compare (FR-DUC-008)
+attach to; `supersedesEntryId` reserves version-compare. No markup/issue records are
+persisted in this slice.
+
 ### JSON Traceability Artifact Proposal
 
 The current canonical planning docs remain Markdown with stable IDs. A future loop artifact may additionally emit a structured JSON summary for automation:
@@ -328,3 +367,5 @@ This is a proposed progress/traceability artifact only. It is not a production D
 | FR-DUC-008 | Future overlays remain out of this data model; no persisted markup/issue/memo entities are added. |
 | FR-DUC-009 | APS source object/URN fields are intentionally absent until HUMAN_GATE. |
 | FR-DUC-010 | JSON artifact proposal mirrors IDs but does not replace Markdown docs or create production schema. |
+| FR-DUC-011 | Format-to-feature matrix lives in `docs/feature-notes/009-acc-upload-format-feature-matrix.md`; no data entity needed. |
+| FR-DUC-012 | `SheetSourceFile` / `PagedSheet` / `SheetRegisterEntry` model the PDF sheet-register path, kept distinct from `DrawingSourceFile` / `DrawingViewableCandidate` (viewer path). |
