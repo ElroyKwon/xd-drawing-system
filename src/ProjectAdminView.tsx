@@ -11,8 +11,16 @@ import {
   type ProjectMemberAccess
 } from "./projectAdminData";
 
+type ProjectAdminProject = {
+  id: string;
+  name: string;
+};
+
 type ProjectAdminViewProps = {
   onBackToProjects: () => void;
+  project?: ProjectAdminProject;
+  accessRecords?: ProjectMemberAccess[];
+  onAccessRecordsChange?: (records: ProjectMemberAccess[]) => void;
 };
 
 type AddMemberForm = {
@@ -20,22 +28,43 @@ type AddMemberForm = {
   role: ProjectMemberAccess["role"];
 };
 
+const adminSections = ["구성원", "회사", "브리지", "액티비티", "알림", "위치", "설정"] as const;
+
+type AdminSection = (typeof adminSections)[number];
+
 const emptyAddMemberForm: AddMemberForm = {
   memberId: "",
   role: "뷰어"
 };
 
-export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewProps) {
-  const [accessRecords, setAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
+export default function ProjectAdminView({
+  project = selectedProject,
+  accessRecords,
+  onAccessRecordsChange,
+  onBackToProjects
+}: ProjectAdminViewProps) {
+  const [localAccessRecords, setLocalAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("member-owner");
+  const [activeSection, setActiveSection] = useState<AdminSection>("구성원");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddMemberForm>(emptyAddMemberForm);
   const [addError, setAddError] = useState("");
+  const effectiveAccessRecords = accessRecords ?? localAccessRecords;
+
+  function updateAccessRecords(updater: (records: ProjectMemberAccess[]) => ProjectMemberAccess[]) {
+    const nextRecords = updater(effectiveAccessRecords);
+    if (onAccessRecordsChange) {
+      onAccessRecordsChange(nextRecords);
+      return;
+    }
+
+    setLocalAccessRecords(nextRecords);
+  }
 
   const accessRows = useMemo(() => {
-    return buildProjectAccessRows(selectedProject.id, initialMembers, accessRecords);
-  }, [accessRecords]);
+    return buildProjectAccessRows(project.id, initialMembers, effectiveAccessRecords);
+  }, [effectiveAccessRecords, project.id]);
 
   const filteredRows = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -70,20 +99,20 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
       return;
     }
 
-    if (memberHasProjectAccess(selectedProject.id, addForm.memberId, accessRecords)) {
+    if (memberHasProjectAccess(project.id, addForm.memberId, effectiveAccessRecords)) {
       setAddError("이미 이 프로젝트에 추가된 구성원입니다.");
       return;
     }
 
     const nextAccess: ProjectMemberAccess = {
-      projectId: selectedProject.id,
+      projectId: project.id,
       memberId: addForm.memberId,
       role: addForm.role,
       status: "활성",
       addedAt: "방금 전"
     };
 
-    setAccessRecords((current) => [...current, nextAccess]);
+    updateAccessRecords((current) => [...current, nextAccess]);
     setSelectedMemberId(addForm.memberId);
     closeAddModal();
   }
@@ -95,8 +124,13 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
           <Settings size={18} aria-hidden="true" />
           <span>Project Admin</span>
         </div>
-        {["구성원", "회사", "브리지", "액티비티", "알림", "위치", "설정"].map((item) => (
-          <button key={item} type="button" aria-current={item === "구성원" ? "page" : undefined}>
+        {adminSections.map((item) => (
+          <button
+            key={item}
+            type="button"
+            aria-current={item === activeSection ? "page" : undefined}
+            onClick={() => setActiveSection(item)}
+          >
             <Users size={17} aria-hidden="true" />
             <span>{item}</span>
           </button>
@@ -105,79 +139,88 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
 
       <section className="admin-main">
         <header className="admin-topline">
-          <button className="ghost-action" type="button" onClick={onBackToProjects}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>프로젝트 목록</span>
-          </button>
-          <strong>{selectedProject.name}</strong>
+          <div className="project-context-stack">
+            <button className="ghost-action" type="button" onClick={onBackToProjects}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              <span>프로젝트 목록</span>
+            </button>
+            <span className="level-kicker">Project 레벨</span>
+            <strong>{project.name}</strong>
+          </div>
+          <span className="settings-scope-chip">프로젝트 관리</span>
         </header>
 
-        <section className="admin-panel" aria-label="Project Admin 구성원 목록">
-          <div className="admin-heading">
-            <h1 id="member-access-title">구성원</h1>
-            <button className="primary-action" type="button" onClick={openAddModal}>
-              구성원 추가
-            </button>
-          </div>
+        {activeSection === "구성원" ? (
+          <section className="admin-panel" aria-label="Project Admin 구성원 목록">
+            <div className="admin-heading">
+              <h1 id="member-access-title">구성원</h1>
+              <button className="primary-action" type="button" onClick={openAddModal}>
+                구성원 추가
+              </button>
+            </div>
 
-          <div className="admin-tools">
-            <button className="secondary-action admin-export" type="button">
-              <Download size={16} aria-hidden="true" />
-              <span>내보내기</span>
-            </button>
-            <label className="search-field admin-search">
-              <Search size={18} aria-hidden="true" />
-              <input
-                aria-label="구성원 검색"
-                placeholder="이름 또는 이메일로 구성원 검색..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
-            <button className="icon-button" type="button" aria-label="필터">
-              <Filter size={18} />
-            </button>
-          </div>
+            <div className="admin-tools">
+              <button className="secondary-action admin-export" type="button">
+                <Download size={16} aria-hidden="true" />
+                <span>내보내기</span>
+              </button>
+              <label className="search-field admin-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  aria-label="구성원 검색"
+                  name="project-member-search"
+                  placeholder="이름 또는 이메일로 구성원 검색..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+              <button className="icon-button" type="button" aria-label="필터">
+                <Filter size={18} />
+              </button>
+            </div>
 
-          <div className="table-scroll admin-table-scroll">
-            <table className="project-table admin-member-table">
-              <thead>
-                <tr>
-                  <th scope="col">이름</th>
-                  <th scope="col">이메일</th>
-                  <th scope="col">전화</th>
-                  <th scope="col">상태</th>
-                  <th scope="col">역할</th>
-                  <th scope="col">추가된 일시</th>
-                  <th scope="col" aria-label="설정">
-                    <Settings size={18} />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((row) => (
-                  <tr
-                    key={row.memberId}
-                    data-testid="project-access-row"
-                    className={row.memberId === selectedRow?.memberId ? "selected-row" : undefined}
-                    onClick={() => setSelectedMemberId(row.memberId)}
-                  >
-                    <td>{row.name}</td>
-                    <td>{row.email}</td>
-                    <td>{row.phone}</td>
-                    <td>{row.status}</td>
-                    <td>{row.role}</td>
-                    <td>{row.addedAt}</td>
-                    <td />
+            <div className="table-scroll admin-table-scroll">
+              <table className="project-table admin-member-table">
+                <thead>
+                  <tr>
+                    <th scope="col">이름</th>
+                    <th scope="col">이메일</th>
+                    <th scope="col">전화</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">역할</th>
+                    <th scope="col">추가된 일시</th>
+                    <th scope="col" aria-label="설정">
+                      <Settings size={18} />
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {filteredRows.map((row) => (
+                    <tr
+                      key={row.memberId}
+                      data-testid="project-access-row"
+                      className={row.memberId === selectedRow?.memberId ? "selected-row" : undefined}
+                      onClick={() => setSelectedMemberId(row.memberId)}
+                    >
+                      <td>{row.name}</td>
+                      <td>{row.email}</td>
+                      <td>{row.phone}</td>
+                      <td>{row.status}</td>
+                      <td>{row.role}</td>
+                      <td>{row.addedAt}</td>
+                      <td />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : (
+          <ProjectAdminSectionPanel activeSection={activeSection} />
+        )}
       </section>
 
-      <MemberInspector row={selectedRow} />
+      {activeSection === "구성원" ? <MemberInspector row={selectedRow} /> : <AdminSectionInspector activeSection={activeSection} />}
 
       {isAddModalOpen ? (
         <AddMemberModal
@@ -189,6 +232,63 @@ export default function ProjectAdminView({ onBackToProjects }: ProjectAdminViewP
         />
       ) : null}
     </main>
+  );
+}
+
+function ProjectAdminSectionPanel({ activeSection }: { activeSection: Exclude<AdminSection, "구성원"> }) {
+  const sectionCopy: Record<Exclude<AdminSection, "구성원">, { lead: string; rows: string[] }> = {
+    회사: {
+      lead: "프로젝트 회사 관리",
+      rows: ["Delta Engineers", "Crystal Clear Glazing", "Forma Sample Contractor"]
+    },
+    브리지: {
+      lead: "프로젝트 브리지",
+      rows: ["수신 컨텐츠 없음", "송신 컨텐츠 없음", "공유 패키지 대기"]
+    },
+    액티비티: {
+      lead: "최근 Project Admin 활동",
+      rows: ["구성원 권한 확인", "프로젝트 설정 검토", "Build 기본 앱 확인"]
+    },
+    알림: {
+      lead: "프로젝트 알림 설정",
+      rows: ["구성원 변경", "시트 게시", "이슈 할당"]
+    },
+    위치: {
+      lead: "프로젝트 위치",
+      rows: ["주소 미지정", "시간대: 서울", "위치 계층 결정 보류"]
+    },
+    설정: {
+      lead: "Project 설정",
+      rows: ["프로젝트 이름", "기본 앱", "권한 정책"]
+    }
+  };
+  const copy = sectionCopy[activeSection];
+
+  return (
+    <section className="admin-panel admin-section-shell" aria-labelledby={`project-admin-${activeSection}`}>
+      <div className="admin-heading">
+        <h1 id={`project-admin-${activeSection}`}>{activeSection}</h1>
+      </div>
+      <p>{copy.lead}</p>
+      <div className="section-list">
+        {copy.rows.map((row) => (
+          <div className="section-list-row" key={row}>
+            <span>{row}</span>
+            <strong>로컬 shell</strong>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminSectionInspector({ activeSection }: { activeSection: Exclude<AdminSection, "구성원"> }) {
+  return (
+    <aside className="admin-inspector" role="complementary" aria-label={`${activeSection} 상세`}>
+      <h2>{activeSection} 상세</h2>
+      <p>Project Admin 범위의 {activeSection} 화면입니다.</p>
+      <span className="status-pill">Project 레벨</span>
+    </aside>
   );
 }
 
@@ -212,7 +312,7 @@ function MemberInspector({ row }: { row: ProjectAccessRow | undefined }) {
       <span className="status-pill">{row.status}</span>
       <div className="field select-field">
         <span>역할</span>
-        <select aria-label="현재 역할" value={row.role} disabled>
+        <select aria-label="현재 역할" name="current-member-role" value={row.role} disabled>
           {memberRoles.map((role) => (
             <option key={role}>{role}</option>
           ))}
@@ -249,7 +349,7 @@ function AddMemberModal({ form, error, onClose, onSubmit, onUpdate }: AddMemberM
         <div className="modal-body">
           <label className="field select-field">
             <span>구성원</span>
-            <select value={form.memberId} onChange={(event) => onUpdate({ ...form, memberId: event.target.value })}>
+            <select name="member-id" value={form.memberId} onChange={(event) => onUpdate({ ...form, memberId: event.target.value })}>
               <option value="">구성원 선택</option>
               {initialMembers.map((member) => (
                 <option key={member.id} value={member.id}>
@@ -260,7 +360,7 @@ function AddMemberModal({ form, error, onClose, onSubmit, onUpdate }: AddMemberM
           </label>
           <label className="field select-field">
             <span>역할</span>
-            <select value={form.role} onChange={(event) => onUpdate({ ...form, role: event.target.value as ProjectMemberAccess["role"] })}>
+            <select name="member-role" value={form.role} onChange={(event) => onUpdate({ ...form, role: event.target.value as ProjectMemberAccess["role"] })}>
               {memberRoles.map((role) => (
                 <option key={role}>{role}</option>
               ))}

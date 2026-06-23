@@ -19,6 +19,7 @@ describe("initial setup project list and create modal", () => {
     renderApp();
 
     expect(screen.getByRole("tab", { name: "프로젝트", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "My Home", selected: false })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 만들기" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("이름 또는 번호로 프로젝트 검색...")).toHaveAttribute("name", "project-search");
 
@@ -26,9 +27,51 @@ describe("initial setup project list and create modal", () => {
       expect(screen.getByRole("columnheader", { name: column })).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Study_Project")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Study_Project 프로젝트 열기" })).toBeInTheDocument();
     expect(screen.getByText("Construction : Sample Project - Seaport Civic Center")).toBeInTheDocument();
     expect(screen.getByText("2개 중 1-2개 표시 중")).toBeInTheDocument();
+  });
+
+  it("renders only the three ACC hub tabs without a Hub settings tab", () => {
+    renderApp();
+
+    expect(screen.getByRole("tab", { name: "My Home" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "프로젝트 템플릿" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "허브 설정" })).not.toBeInTheDocument();
+  });
+
+  it("opens the Hub-level project template screen with sample templates and hub template empty state", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+
+    expect(screen.getByRole("tab", { name: "프로젝트 템플릿", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "샘플 템플릿" })).toBeInTheDocument();
+    expect(screen.getByText("General Contractor")).toBeInTheDocument();
+    expect(screen.getByText("Owner Operator")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "허브 템플릿" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "프로젝트 템플릿 작성" })).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 템플릿 구성원이 아니십니까?")).toBeInTheDocument();
+  });
+
+  it("runs the two-step template creation flow and lists the new hub template", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+    await user.click(screen.getByRole("button", { name: "프로젝트 템플릿 작성" }));
+
+    const typeDialog = screen.getByRole("dialog", { name: "템플릿 작성" });
+    expect(within(typeDialog).getByText("빈 템플릿 작성")).toBeInTheDocument();
+    await user.click(within(typeDialog).getByRole("button", { name: "다음" }));
+
+    const nameDialog = screen.getByRole("dialog", { name: "템플릿 작성" });
+    await user.type(within(nameDialog).getByLabelText("템플릿 이름"), "test1");
+    await user.click(within(nameDialog).getByRole("button", { name: "템플릿 작성" }));
+
+    expect(screen.queryByRole("dialog", { name: "템플릿 작성" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("template-row")).toBeInTheDocument();
+    expect(screen.getByText("test1")).toBeInTheDocument();
   });
 
   it("filters projects by name or number and restores the full list when cleared", async () => {
@@ -41,12 +84,29 @@ describe("initial setup project list and create modal", () => {
     expect(screen.queryByText("Study_Project")).not.toBeInTheDocument();
 
     await user.clear(search);
-    await user.type(search, "A-001");
+    await user.type(search, "Study");
     expect(projectRows()).toHaveLength(1);
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
 
     await user.clear(search);
     expect(projectRows()).toHaveLength(2);
+  });
+
+  it("shows My Home with the four ACC dashboard widgets and an actionable recent item", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("tab", { name: "My Home" }));
+
+    expect(screen.getByRole("tab", { name: "My Home", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "나에게 할당됨" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "책갈피" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "최근에 본 항목" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "A001 열기" }));
+
+    expect(screen.getByText("Project Admin")).toBeInTheDocument();
+    expect(screen.getByText("Study_Project")).toBeInTheDocument();
   });
 
   it("opens a centered project creation modal with ACC fields", async () => {
@@ -72,6 +132,8 @@ describe("initial setup project list and create modal", () => {
     ].forEach((label) => {
       expect(within(dialog).getByLabelText(label, { exact: false })).toBeInTheDocument();
     });
+    expect(within(dialog).getByRole("option", { name: "템플릿 없음 (결정 보류)" })).toBeInTheDocument();
+    expect(within(dialog).queryByRole("option", { name: "General Contractor" })).not.toBeInTheDocument();
   });
 
   it("blocks empty submit with required-name validation and keeps the list unchanged", async () => {
@@ -85,7 +147,7 @@ describe("initial setup project list and create modal", () => {
     expect(projectRows()).toHaveLength(2);
   });
 
-  it("adds exactly one local mock project on valid submit and makes it searchable", async () => {
+  it("adds exactly one local mock project, opens its own Project Admin, and makes it searchable", async () => {
     const { user } = renderApp();
 
     await user.click(screen.getByRole("button", { name: "프로젝트 만들기" }));
@@ -94,12 +156,18 @@ describe("initial setup project list and create modal", () => {
     await user.click(screen.getByRole("button", { name: "프로젝트 작성" }));
 
     expect(screen.queryByRole("dialog", { name: "프로젝트 작성" })).not.toBeInTheDocument();
-    expect(projectRows()).toHaveLength(3);
+    expect(screen.getByText("Project Admin")).toBeInTheDocument();
     expect(screen.getByText("XD Pilot Project")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
+    expect(screen.getAllByTestId("project-access-row")).toHaveLength(1);
+    expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
+    expect(screen.queryByText("도면 검토자")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "프로젝트 목록" }));
 
     await user.type(screen.getByPlaceholderText("이름 또는 번호로 프로젝트 검색..."), "XD-900");
     expect(projectRows()).toHaveLength(1);
-    expect(screen.getByText("XD Pilot Project")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "XD Pilot Project 프로젝트 열기" })).toBeInTheDocument();
   });
 
   it("closes by cancel or close without mutating the project list", async () => {
@@ -121,12 +189,15 @@ describe("initial setup project list and create modal", () => {
   it("opens Project Admin member access for Study_Project from the project list", async () => {
     const { user } = renderApp();
 
-    await user.click(screen.getByRole("button", { name: "Study_Project Project Admin 열기" }));
+    await user.click(screen.getByRole("button", { name: "Study_Project 프로젝트 열기" }));
 
     expect(screen.getByText("Project Admin")).toBeInTheDocument();
+    expect(screen.getByText("Project 레벨")).toBeInTheDocument();
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
     expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Hub Admin")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "프로젝트" })).not.toBeInTheDocument();
   });
 
   it("opens Build sheets for Study_Project from the project list", async () => {
@@ -135,9 +206,29 @@ describe("initial setup project list and create modal", () => {
     await user.click(screen.getByRole("button", { name: "Study_Project Build 열기" }));
 
     expect(screen.getByText("Build")).toBeInTheDocument();
+    expect(screen.getByText("Project 작업 레벨")).toBeInTheDocument();
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "시트" })).toBeInTheDocument();
     expect(screen.getByText("A001")).toBeInTheDocument();
     expect(screen.getByText("6 중 1-6 표시")).toBeInTheDocument();
+    expect(screen.queryByText("Hub Admin")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "프로젝트" })).not.toBeInTheDocument();
+  });
+
+  it("opens Build for a newly created project as an independent empty project space", async () => {
+    const { user } = renderApp();
+
+    await user.click(screen.getByRole("button", { name: "프로젝트 만들기" }));
+    await user.type(screen.getByLabelText("프로젝트 이름", { exact: false }), "Empty Build Project");
+    await user.type(screen.getByLabelText("프로젝트 번호", { exact: false }), "EB-001");
+    await user.click(screen.getByRole("button", { name: "프로젝트 작성" }));
+    await user.click(screen.getByRole("button", { name: "프로젝트 목록" }));
+
+    await user.click(screen.getByRole("button", { name: "Empty Build Project Build 열기" }));
+
+    expect(screen.getByText("Build")).toBeInTheDocument();
+    expect(screen.getByText("Empty Build Project")).toBeInTheDocument();
+    expect(screen.getByText("아직 등록된 시트가 없습니다.")).toBeInTheDocument();
+    expect(screen.queryByText("A001")).not.toBeInTheDocument();
   });
 });

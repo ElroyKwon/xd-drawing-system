@@ -1,21 +1,25 @@
 import {
+  Bookmark,
   CalendarDays,
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
   CircleHelp,
+  FileText,
   Filter,
   Hammer,
   ListFilter,
+  MapPin,
+  Pencil,
   Plus,
   Search,
   Settings,
-  SlidersHorizontal,
   X
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import BuildSheetsView from "./BuildSheetsView";
 import ProjectAdminView from "./ProjectAdminView";
+import { initialProjectAccess, type ProjectMemberAccess } from "./projectAdminData";
 
 type Project = {
   id: string;
@@ -50,12 +54,17 @@ type ProjectForm = {
   currency: string;
 };
 
+type HubTemplate = {
+  id: string;
+  name: string;
+};
+
 const initialProjects: Project[] = [
   {
     id: "project-study",
     typeIcon: "project",
     name: "Study_Project",
-    number: "A-001",
+    number: "",
     projectType: "지정되지 않음",
     templateId: "none",
     address: "",
@@ -67,13 +76,13 @@ const initialProjects: Project[] = [
     currency: "USD",
     defaultAccess: "Build",
     hub: "TEST-",
-    createdAt: "오늘 오전 10:24"
+    createdAt: "2026년 6월 12일"
   },
   {
     id: "project-seaport",
     typeIcon: "project",
     name: "Construction : Sample Project - Seaport Civic Center",
-    number: "C-204",
+    number: "",
     projectType: "건설",
     templateId: "owner",
     address: "300 Mission Street",
@@ -85,7 +94,7 @@ const initialProjects: Project[] = [
     currency: "USD",
     defaultAccess: "Build",
     hub: "TEST-",
-    createdAt: "오늘 오전 10:20"
+    createdAt: "2026년 6월 12일"
   }
 ];
 
@@ -103,17 +112,47 @@ const emptyForm: ProjectForm = {
   currency: "USD"
 };
 
+type RecentItem = {
+  id: string;
+  name: string;
+  openedAt: string;
+  projectName: string;
+  hub: string;
+};
+
+const recentItems: RecentItem[] = [
+  { id: "r-a102", name: "A102", openedAt: "2026년 6월 12일 오전 11:40", projectName: "Construction : Sample Project", hub: "TEST-" },
+  { id: "r-m101", name: "M101", openedAt: "2026년 6월 12일 오전 11:36", projectName: "Construction : Sample Project", hub: "TEST-" },
+  { id: "r-a101", name: "A101", openedAt: "2026년 6월 12일 오전 11:36", projectName: "Construction : Sample Project", hub: "TEST-" },
+  { id: "r-a103", name: "A103", openedAt: "2026년 6월 12일 오전 11:35", projectName: "Construction : Sample Project", hub: "TEST-" },
+  { id: "r-a001", name: "A001", openedAt: "2026년 6월 12일 오전 11:35", projectName: "Construction : Sample Project", hub: "TEST-" }
+];
+
+const sampleTemplates = [
+  { name: "General Contractor", access: "일반 액세스" },
+  { name: "Public Service Owners", access: "소유자" },
+  { name: "Investment Owners", access: "소유자" },
+  { name: "Owner Operator", access: "소유자" }
+];
+
 function formatCreatedAt() {
   return "방금 전";
 }
 
 export default function App() {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [projectAccessRecords, setProjectAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
+  const [hubTemplates, setHubTemplates] = useState<HubTemplate[]>([]);
   const [query, setQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<ProjectForm>(emptyForm);
   const [nameError, setNameError] = useState(false);
-  const [activeView, setActiveView] = useState<"projects" | "project-admin" | "build-sheets">("projects");
+  const [activeView, setActiveView] = useState<
+    "my-home" | "projects" | "project-templates" | "project-admin" | "build-sheets"
+  >("projects");
+  const [selectedProjectId, setSelectedProjectId] = useState(initialProjects[0].id);
+
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
 
   const filteredProjects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -157,8 +196,9 @@ export default function App() {
       return;
     }
 
+    const projectId = `project-${Date.now()}`;
     const createdProject: Project = {
-      id: `project-${Date.now()}`,
+      id: projectId,
       typeIcon: "project",
       name: projectName,
       number: form.number.trim(),
@@ -177,7 +217,33 @@ export default function App() {
     };
 
     setProjects((current) => [createdProject, ...current]);
+    setProjectAccessRecords((current) => [
+      ...current,
+      {
+        projectId,
+        memberId: "member-owner",
+        role: "관리자",
+        status: "활성",
+        addedAt: "방금 전"
+      }
+    ]);
+    setSelectedProjectId(projectId);
     closeModal();
+    setActiveView("project-admin");
+  }
+
+  function openProject(projectId: string) {
+    setSelectedProjectId(projectId);
+    setActiveView("project-admin");
+  }
+
+  function openBuild(projectId: string) {
+    setSelectedProjectId(projectId);
+    setActiveView("build-sheets");
+  }
+
+  function addHubTemplate(name: string) {
+    setHubTemplates((current) => [...current, { id: `template-${Date.now()}`, name }]);
   }
 
   const visibleCountLabel =
@@ -186,166 +252,175 @@ export default function App() {
       : `${projects.length}개 중 1-${filteredProjects.length}개 표시 중`;
 
   if (activeView === "project-admin") {
-    return <ProjectAdminView onBackToProjects={() => setActiveView("projects")} />;
+    return (
+      <ProjectAdminView
+        project={selectedProject}
+        accessRecords={projectAccessRecords}
+        onAccessRecordsChange={setProjectAccessRecords}
+        onBackToProjects={() => setActiveView("projects")}
+      />
+    );
   }
 
   if (activeView === "build-sheets") {
-    return <BuildSheetsView onBackToProjects={() => setActiveView("projects")} />;
+    return <BuildSheetsView project={selectedProject} onBackToProjects={() => setActiveView("projects")} />;
   }
 
   return (
     <main className="app-shell">
-      <TopBar />
+      <BrandBar />
 
       <section className="workspace">
-        <div className="hub-label">
-          <span className="hub-icon" aria-hidden="true">
-            <Settings size={17} />
-          </span>
-          <span>Hub Admin</span>
-        </div>
+        <HubAdminBar />
 
         <div className="hero-row">
           <div>
-            <h1>계획 님, 환영합니다.</h1>
+            <h1>개혁 님, 환영합니다.</h1>
             <p>오늘 무엇을 하시겠습니까?</p>
           </div>
-          <div className="trial-chip">XD Drawing System</div>
         </div>
 
         <nav className="tabs" aria-label="허브 메뉴">
-          <button type="button" role="tab" aria-selected="false">
+          <button type="button" role="tab" aria-selected={activeView === "my-home"} onClick={() => setActiveView("my-home")}>
             My Home
           </button>
-          <button type="button" role="tab" aria-selected="true">
+          <button type="button" role="tab" aria-selected={activeView === "projects"} onClick={() => setActiveView("projects")}>
             프로젝트
           </button>
-          <button type="button" role="tab" aria-selected="false">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "project-templates"}
+            onClick={() => setActiveView("project-templates")}
+          >
             프로젝트 템플릿
           </button>
         </nav>
 
-        <section className="project-panel" aria-labelledby="project-list-title">
-          <div className="toolbar">
-            <button className="primary-action" type="button" onClick={openModal}>
-              <Plus size={17} />
-              <span>프로젝트 만들기</span>
-            </button>
-
-            <div className="table-tools" aria-label="목록 도구">
-              <label className="search-field">
-                <Search size={18} aria-hidden="true" />
-                <input
-                  aria-label="프로젝트 검색"
-                  name="project-search"
-                  placeholder="이름 또는 번호로 프로젝트 검색..."
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              <button className="icon-button" type="button" aria-label="필터">
-                <Filter size={20} />
+        {activeView === "my-home" ? (
+          <MyHomeView onOpenProject={openProject} />
+        ) : activeView === "project-templates" ? (
+          <ProjectTemplatesView hubTemplates={hubTemplates} onCreateTemplate={addHubTemplate} />
+        ) : (
+          <section className="project-panel" aria-labelledby="project-list-title">
+            <div className="toolbar">
+              <button className="primary-action" type="button" onClick={openModal}>
+                <Plus size={17} />
+                <span>프로젝트 만들기</span>
               </button>
-            </div>
-          </div>
 
-          <div className="table-scroll" role="region" aria-labelledby="project-list-title" tabIndex={0}>
-            <h2 id="project-list-title" className="visually-hidden">
-              프로젝트 목록
-            </h2>
-            <table className="project-table">
-              <thead>
-                <tr>
-                  <th scope="col">유형</th>
-                  <th scope="col">이름</th>
-                  <th scope="col">번호</th>
-                  <th scope="col">기본 액세스</th>
-                  <th scope="col">허브</th>
-                  <th scope="col">작성 날짜</th>
-                  <th scope="col" aria-label="정렬">
-                    <ListFilter size={17} aria-hidden="true" />
-                  </th>
-                  <th scope="col" aria-label="설정">
-                    <button className="table-icon" type="button" aria-label="컬럼 설정">
-                      <Settings size={18} />
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProjects.map((project) => (
-                  <tr key={project.id} data-testid="project-row">
-                    <td>
-                      <span className="type-mark" aria-label="프로젝트 유형">
-                        <span className="type-slope" />
-                      </span>
-                    </td>
-                    <td>
-                      <div className="name-cell">
-                        <span>{project.name}</span>
-                        {project.address ? <small>{project.address}</small> : null}
-                        {project.id === "project-study" ? (
-                          <button
-                            className="inline-link-action"
-                            type="button"
-                            aria-label={`${project.name} Project Admin 열기`}
-                            onClick={() => setActiveView("project-admin")}
-                          >
-                            Project Admin
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td>{project.number || "-"}</td>
-                    <td>
-                      <button
-                        className="access-button"
-                        type="button"
-                        aria-label={project.id === "project-study" ? `${project.name} Build 열기` : `${project.name} 기본 액세스`}
-                        onClick={project.id === "project-study" ? () => setActiveView("build-sheets") : undefined}
-                      >
-                        <span className="access-icon">
-                          <Hammer size={18} />
-                        </span>
-                        <span>{project.defaultAccess}</span>
-                        <ChevronDown size={15} />
-                      </button>
-                    </td>
-                    <td>{project.hub}</td>
-                    <td>{project.createdAt}</td>
-                    <td />
-                    <td />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {filteredProjects.length === 0 ? (
-              <div className="empty-state" role="status">
-                검색 결과가 없습니다.
+              <div className="table-tools" aria-label="목록 도구">
+                <label className="search-field">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    aria-label="프로젝트 검색"
+                    name="project-search"
+                    placeholder="이름 또는 번호로 프로젝트 검색..."
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </label>
+                <button className="icon-button" type="button" aria-label="필터">
+                  <Filter size={20} />
+                </button>
               </div>
-            ) : null}
-          </div>
-
-          <div className="pagination" aria-label="페이지네이션">
-            <span>{visibleCountLabel}</span>
-            <div className="pager-buttons">
-              <button type="button" aria-label="첫 페이지">
-                <ChevronsLeft size={16} />
-              </button>
-              <button type="button" aria-label="이전 페이지">
-                <ChevronDown className="rotate-90" size={16} />
-              </button>
-              <span>1/1</span>
-              <button type="button" aria-label="다음 페이지">
-                <ChevronDown className="rotate-minus-90" size={16} />
-              </button>
-              <button type="button" aria-label="마지막 페이지">
-                <ChevronsRight size={16} />
-              </button>
             </div>
-          </div>
-        </section>
+
+            <div className="table-scroll" role="region" aria-labelledby="project-list-title" tabIndex={0}>
+              <h2 id="project-list-title" className="visually-hidden">
+                프로젝트 목록
+              </h2>
+              <table className="project-table">
+                <thead>
+                  <tr>
+                    <th scope="col">유형</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">번호</th>
+                    <th scope="col">기본 액세스</th>
+                    <th scope="col">허브</th>
+                    <th scope="col">작성 날짜</th>
+                    <th scope="col" aria-label="정렬">
+                      <ListFilter size={17} aria-hidden="true" />
+                    </th>
+                    <th scope="col" aria-label="설정">
+                      <button className="table-icon" type="button" aria-label="컬럼 설정">
+                        <Settings size={18} />
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProjects.map((project) => (
+                    <tr key={project.id} data-testid="project-row">
+                      <td>
+                        <span className="type-mark" aria-label="프로젝트 유형">
+                          <Hammer size={16} aria-hidden="true" />
+                        </span>
+                      </td>
+                      <td>
+                        <div className="name-cell">
+                          <button
+                            className="project-name-button"
+                            type="button"
+                            aria-label={`${project.name} 프로젝트 열기`}
+                            onClick={() => openProject(project.id)}
+                          >
+                            {project.name}
+                          </button>
+                          {project.address ? <small>{project.address}</small> : null}
+                        </div>
+                      </td>
+                      <td>{project.number || ""}</td>
+                      <td>
+                        <button
+                          className="access-button"
+                          type="button"
+                          aria-label={`${project.name} Build 열기`}
+                          onClick={() => openBuild(project.id)}
+                        >
+                          <span className="access-icon">
+                            <Hammer size={16} />
+                          </span>
+                          <span>{project.defaultAccess}</span>
+                          <ChevronDown size={15} />
+                        </button>
+                      </td>
+                      <td>{project.hub}</td>
+                      <td>{project.createdAt}</td>
+                      <td />
+                      <td />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {filteredProjects.length === 0 ? (
+                <div className="empty-state" role="status">
+                  검색 결과가 없습니다.
+                </div>
+              ) : null}
+            </div>
+
+            <div className="pagination" aria-label="페이지네이션">
+              <span>{visibleCountLabel}</span>
+              <div className="pager-buttons">
+                <button type="button" aria-label="첫 페이지">
+                  <ChevronsLeft size={16} />
+                </button>
+                <button type="button" aria-label="이전 페이지">
+                  <ChevronDown className="rotate-90" size={16} />
+                </button>
+                <span>1/1</span>
+                <button type="button" aria-label="다음 페이지">
+                  <ChevronDown className="rotate-minus-90" size={16} />
+                </button>
+                <button type="button" aria-label="마지막 페이지">
+                  <ChevronsRight size={16} />
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
       </section>
 
       {isModalOpen ? (
@@ -361,12 +436,38 @@ export default function App() {
   );
 }
 
-function TopBar() {
+function BrandBar() {
   return (
-    <header className="topbar">
+    <header className="brand-bar">
       <div className="brand">
         <span className="brand-mark">XD</span>
         <span>Drawing System</span>
+      </div>
+
+      <div className="brand-tools">
+        <span className="trial-text">평가판 - XD Build Essentials이(가) 23일 남음</span>
+        <button type="button" className="buy-button">
+          지금 구입
+        </button>
+        <button type="button" className="round-button" aria-label="도움말">
+          <CircleHelp size={18} />
+        </button>
+        <button type="button" className="avatar" aria-label="사용자 메뉴">
+          개혁 <ChevronDown size={14} />
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function HubAdminBar() {
+  return (
+    <div className="hub-admin-bar">
+      <div className="hub-label">
+        <span className="hub-icon" aria-hidden="true">
+          <Settings size={16} />
+        </span>
+        <span>Hub Admin</span>
       </div>
 
       <div className="product-strip" aria-label="관련 제품">
@@ -374,17 +475,329 @@ function TopBar() {
         <span className="product-pill">xD-HUB</span>
         <span className="product-pill">xD-Works</span>
         <span className="product-pill">xD-ACS</span>
+        <span className="product-pill">xD-Cost</span>
+        <span className="product-pill">xD-Specs</span>
+      </div>
+    </div>
+  );
+}
+
+type MyHomeViewProps = {
+  onOpenProject: (projectId: string) => void;
+};
+
+function MyHomeView({ onOpenProject }: MyHomeViewProps) {
+  const [showTour, setShowTour] = useState(true);
+
+  return (
+    <section className="my-home" aria-label="My Home">
+      {showTour ? (
+        <div className="tour-banner" role="note">
+          <div className="tour-text">
+            <strong>Take the tour to explore My Home</strong>
+            <p>새로운 개인화 대시보드에서 모든 XD 프로젝트를 한 곳에서 살펴보세요.</p>
+            <div className="tour-actions">
+              <button type="button" className="tour-primary">
+                Take the tour
+              </button>
+              <button type="button" className="link-button">
+                Learn more
+              </button>
+            </div>
+          </div>
+          <button type="button" className="tour-close" aria-label="배너 닫기" onClick={() => setShowTour(false)}>
+            <X size={18} />
+          </button>
+        </div>
+      ) : null}
+
+      <div className="my-home-toolbar">
+        <button type="button" className="customize-link">
+          <Pencil size={14} />
+          <span>사용자화</span>
+        </button>
       </div>
 
-      <div className="account-tools">
-        <button type="button" className="round-button" aria-label="도움말">
-          <CircleHelp size={18} />
-        </button>
-        <button type="button" className="avatar" aria-label="사용자 메뉴">
-          개이
-        </button>
+      <div className="my-home-grid">
+        <section className="home-widget" aria-labelledby="assigned-title">
+          <header className="widget-head">
+            <h3 id="assigned-title">나에게 할당됨</h3>
+          </header>
+          <div className="assign-chips" role="group" aria-label="할당 필터">
+            <button type="button" className="assign-chip is-active">나에게 할당됨</button>
+            <button type="button" className="assign-chip">내 회사에 할당됨</button>
+            <button type="button" className="assign-chip">내 액션에 지정됨</button>
+          </div>
+          <div className="widget-empty">
+            <div className="empty-illustration" aria-hidden="true">
+              <FileText size={34} />
+            </div>
+            <strong>No assignments found</strong>
+            <p>나에게 항목이 할당되면 여기에 표시됩니다. 필터를 적용했다면 지워 보세요.</p>
+            <button type="button" className="link-button">필터 지우기</button>
+          </div>
+        </section>
+
+        <section className="home-widget" aria-labelledby="my-projects-title">
+          <header className="widget-head">
+            <h3 id="my-projects-title">내 프로젝트</h3>
+          </header>
+          <div className="map-placeholder" role="img" aria-label="내 프로젝트 위치 지도">
+            <span className="map-pin">
+              <MapPin size={26} />
+            </span>
+          </div>
+        </section>
+
+        <section className="home-widget" aria-labelledby="bookmarks-title">
+          <header className="widget-head">
+            <h3 id="bookmarks-title">책갈피</h3>
+            <button type="button" className="widget-head-action" aria-label="책갈피 편집">
+              <Pencil size={14} />
+            </button>
+          </header>
+          <div className="widget-empty">
+            <div className="empty-illustration" aria-hidden="true">
+              <Bookmark size={32} />
+            </div>
+            <strong>아직 북마크가 없습니다</strong>
+            <button type="button" className="link-button">북마크 추가하기</button>
+            <p>사용하여 북마크를 추가하면 이 사이트의 빠른 액세스에 표시됩니다.</p>
+          </div>
+        </section>
+
+        <section className="home-widget" aria-labelledby="recent-items-title">
+          <header className="widget-head">
+            <h3 id="recent-items-title">최근에 본 항목</h3>
+          </header>
+          <div className="recent-scroll">
+            <table className="recent-table">
+              <thead>
+                <tr>
+                  <th scope="col">이름</th>
+                  <th scope="col">마지막으로 연 날짜</th>
+                  <th scope="col">프로젝트 이름</th>
+                  <th scope="col">허브 이름</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <button
+                        type="button"
+                        className="recent-name"
+                        aria-label={`${item.name} 열기`}
+                        onClick={() => onOpenProject("project-study")}
+                      >
+                        <FileText size={15} aria-hidden="true" />
+                        {item.name}
+                      </button>
+                    </td>
+                    <td>{item.openedAt}</td>
+                    <td>{item.projectName}</td>
+                    <td>{item.hub}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="recent-footer">
+            <span>{recentItems.length}개 중 1~{recentItems.length}개 표시 중</span>
+            <span className="recent-pager">1/1</span>
+          </div>
+        </section>
       </div>
-    </header>
+    </section>
+  );
+}
+
+type ProjectTemplatesViewProps = {
+  hubTemplates: HubTemplate[];
+  onCreateTemplate: (name: string) => void;
+};
+
+function ProjectTemplatesView({ hubTemplates, onCreateTemplate }: ProjectTemplatesViewProps) {
+  const [flowStep, setFlowStep] = useState<"none" | "type" | "name">("none");
+  const [templateKind, setTemplateKind] = useState<"blank" | "existing">("blank");
+  const [templateName, setTemplateName] = useState("");
+
+  function startFlow() {
+    setTemplateKind("blank");
+    setTemplateName("");
+    setFlowStep("type");
+  }
+
+  function submitTemplate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = templateName.trim();
+    if (!name) {
+      return;
+    }
+    onCreateTemplate(name);
+    setFlowStep("none");
+  }
+
+  return (
+    <section className="templates-panel" aria-label="프로젝트 템플릿">
+      <section className="tmpl-section" aria-labelledby="sample-template-title">
+        <button type="button" className="tmpl-section-head" aria-expanded="true">
+          <ChevronDown size={18} />
+          <h3 id="sample-template-title">샘플 템플릿</h3>
+        </button>
+        <div className="tmpl-cards">
+          {sampleTemplates.map((template) => (
+            <article className="tmpl-card" key={template.name}>
+              <strong>{template.name}</strong>
+              <span className="tmpl-card-sub">사용자 정의</span>
+              <div className="tmpl-card-chips">
+                <span className="tmpl-chip">{template.access}</span>
+                <span className="tmpl-chip">복사</span>
+              </div>
+            </article>
+          ))}
+        </div>
+        <button type="button" className="tmpl-viewall">
+          <ListFilter size={15} />
+          모두 보기
+        </button>
+      </section>
+
+      <section className="tmpl-section" aria-labelledby="hub-template-title">
+        <h3 id="hub-template-title" className="tmpl-section-title">허브 템플릿</h3>
+
+        <div className="toolbar">
+          <button type="button" className="primary-action" onClick={startFlow}>
+            <Plus size={17} />
+            <span>프로젝트 템플릿 작성</span>
+          </button>
+          <div className="table-tools">
+            <label className="search-field">
+              <Search size={18} aria-hidden="true" />
+              <input aria-label="템플릿 검색" name="template-search" placeholder="이름으로 템플릿 검색..." />
+            </label>
+            <button className="icon-button" type="button" aria-label="필터">
+              <Filter size={20} />
+            </button>
+          </div>
+        </div>
+
+        {hubTemplates.length === 0 ? (
+          <div className="tmpl-empty">
+            <div className="empty-illustration" aria-hidden="true">
+              <FileText size={40} />
+            </div>
+            <strong>프로젝트 템플릿 구성원이 아니십니까?</strong>
+            <p>
+              허브 관리자에게 문의하여 템플릿에 액세스하거나 직접 작성한 프로젝트 템플릿이 여기에 표시됩니다.
+            </p>
+          </div>
+        ) : (
+          <div className="table-scroll">
+            <table className="project-table">
+              <thead>
+                <tr>
+                  <th scope="col">이름</th>
+                  <th scope="col">액세스</th>
+                  <th scope="col">작성 날짜</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hubTemplates.map((template) => (
+                  <tr key={template.id} data-testid="template-row">
+                    <td>{template.name}</td>
+                    <td>소유자</td>
+                    <td>방금 전</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {flowStep === "type" ? (
+        <div className="modal-backdrop">
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-type-title">
+            <header className="modal-header">
+              <h2 id="tmpl-type-title">템플릿 작성</h2>
+              <button className="modal-close" type="button" aria-label="닫기" onClick={() => setFlowStep("none")}>
+                <X size={20} />
+              </button>
+            </header>
+            <div className="modal-body">
+              <label className="radio-row">
+                <input
+                  type="radio"
+                  name="template-kind"
+                  checked={templateKind === "blank"}
+                  onChange={() => setTemplateKind("blank")}
+                />
+                <span>
+                  <strong>빈 템플릿 작성</strong>
+                  <small>기존 프로젝트에서 템플릿 작성을 선택한 프로젝트의 설정과 구성이 템플릿에 복사되지 않습니다.</small>
+                </span>
+              </label>
+              <label className="radio-row">
+                <input
+                  type="radio"
+                  name="template-kind"
+                  checked={templateKind === "existing"}
+                  onChange={() => setTemplateKind("existing")}
+                />
+                <span>
+                  <strong>기존 프로젝트에서 템플릿 작성</strong>
+                  <small>선택한 프로젝트의 설정과 구성이 새 템플릿으로 복사됩니다.</small>
+                </span>
+              </label>
+            </div>
+            <footer className="modal-footer">
+              <button type="button" className="secondary-action" onClick={() => setFlowStep("none")}>
+                취소
+              </button>
+              <button type="button" className="primary-action" onClick={() => setFlowStep("name")}>
+                다음
+              </button>
+            </footer>
+          </div>
+        </div>
+      ) : null}
+
+      {flowStep === "name" ? (
+        <div className="modal-backdrop">
+          <form className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-name-title" onSubmit={submitTemplate}>
+            <header className="modal-header">
+              <h2 id="tmpl-name-title">템플릿 작성</h2>
+              <button className="modal-close" type="button" aria-label="닫기" onClick={() => setFlowStep("none")}>
+                <X size={20} />
+              </button>
+            </header>
+            <div className="modal-body">
+              <label className="field">
+                <span>
+                  템플릿 이름 <b aria-hidden="true">*</b>
+                </span>
+                <input
+                  name="template-name"
+                  aria-label="템플릿 이름"
+                  value={templateName}
+                  onChange={(event) => setTemplateName(event.target.value)}
+                  autoFocus
+                />
+              </label>
+            </div>
+            <footer className="modal-footer">
+              <button type="button" className="secondary-action" onClick={() => setFlowStep("none")}>
+                취소
+              </button>
+              <button type="submit" className="primary-action">
+                템플릿 작성
+              </button>
+            </footer>
+          </form>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -413,6 +826,8 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
               프로젝트 이름 <b aria-hidden="true">*</b>
             </span>
             <input
+              name="project-name"
+              placeholder="프로젝트 이름 입력"
               value={form.name}
               onChange={(event) => onUpdate("name", event.target.value)}
               aria-invalid={nameError}
@@ -429,6 +844,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
           <label className="field">
             <span>프로젝트 번호</span>
             <input
+              name="project-number"
               placeholder="프로젝트 번호 입력"
               value={form.number}
               onChange={(event) => onUpdate("number", event.target.value)}
@@ -437,7 +853,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
 
           <label className="field select-field">
             <span>프로젝트 유형</span>
-            <select value={form.projectType} onChange={(event) => onUpdate("projectType", event.target.value)}>
+            <select name="project-type" value={form.projectType} onChange={(event) => onUpdate("projectType", event.target.value)}>
               <option>지정되지 않음</option>
               <option>건설</option>
               <option>리노베이션</option>
@@ -449,11 +865,8 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
             <span>
               템플릿 <CircleHelp size={13} aria-hidden="true" />
             </span>
-            <select value={form.templateId} onChange={(event) => onUpdate("templateId", event.target.value)}>
-              <option value="">프로젝트 템플릿 선택</option>
-              <option value="general">General Contractor</option>
-              <option value="owner">Owner Operator</option>
-              <option value="public">Public Service Owners</option>
+            <select name="project-template" value={form.templateId} onChange={(event) => onUpdate("templateId", event.target.value)}>
+              <option value="">템플릿 없음 (결정 보류)</option>
             </select>
           </label>
 
@@ -465,6 +878,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
               </button>
             </span>
             <input
+              name="project-address"
               placeholder="위치 입력"
               value={form.address}
               onChange={(event) => onUpdate("address", event.target.value)}
@@ -475,7 +889,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
             <span>
               시간대 <CircleHelp size={13} aria-hidden="true" />
             </span>
-            <select value={form.timezone} onChange={(event) => onUpdate("timezone", event.target.value)}>
+            <select name="project-timezone" value={form.timezone} onChange={(event) => onUpdate("timezone", event.target.value)}>
               <option>서울</option>
               <option>UTC</option>
               <option>Los Angeles</option>
@@ -490,6 +904,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
               <span className="input-with-icon">
                 <CalendarDays size={16} aria-hidden="true" />
                 <input
+                  name="project-start-date"
                   placeholder="YYYY/MM/DD"
                   value={form.startDate}
                   onChange={(event) => onUpdate("startDate", event.target.value)}
@@ -504,6 +919,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
               <span className="input-with-icon">
                 <CalendarDays size={16} aria-hidden="true" />
                 <input
+                  name="project-end-date"
                   placeholder="YYYY/MM/DD"
                   value={form.endDate}
                   onChange={(event) => onUpdate("endDate", event.target.value)}
@@ -516,6 +932,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
             <label className="field">
               <span>프로젝트 값</span>
               <input
+                name="project-value"
                 placeholder="값 입력"
                 inputMode="decimal"
                 value={form.projectValue}
@@ -525,7 +942,7 @@ function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: Pr
 
             <label className="field select-field">
               <span>통화</span>
-              <select value={form.currency} onChange={(event) => onUpdate("currency", event.target.value)}>
+              <select name="project-currency" value={form.currency} onChange={(event) => onUpdate("currency", event.target.value)}>
                 <option>USD</option>
                 <option>KRW</option>
                 <option>JPY</option>

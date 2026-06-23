@@ -19,7 +19,9 @@ describe("BuildSheetsView", () => {
     renderBuildSheets();
 
     expect(screen.getByText("Build")).toBeInTheDocument();
+    expect(screen.getByText("Project 작업 레벨")).toBeInTheDocument();
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 작업")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "시트" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "시트" })).toHaveAttribute("aria-label", "시트");
     expect(screen.getByRole("button", { name: "구성원" })).toHaveAttribute("aria-label", "구성원");
@@ -69,6 +71,81 @@ describe("BuildSheetsView", () => {
     await user.click(screen.getByRole("button", { name: "목록 보기" }));
     expect(screen.getByRole("button", { name: "목록 보기" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("격자 보기는 다음 slice에서 확장됩니다. 현재는 목록으로 시트 메타데이터를 검토합니다.")).not.toBeInTheDocument();
+  });
+
+  it("opens Build home, files, forms, photos, and management section shells", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "홈" }));
+    expect(screen.getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("heading", { name: "Build 홈" })).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 진행률")).toBeInTheDocument();
+    expect(screen.getByText("빠른 링크")).toBeInTheDocument();
+    expect(screen.getByText("최근 작업")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "파일" }));
+    expect(screen.getByRole("heading", { name: "파일" })).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 파일")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "파일 업로드" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "양식" }));
+    expect(screen.getByRole("heading", { name: "양식" })).toBeInTheDocument();
+    expect(screen.getByText("스크린샷 근거 보강 필요")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "사진" }));
+    expect(screen.getByRole("heading", { name: "사진" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "앨범", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "갤러리" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "맵" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "미디어 추가" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "구성원" }));
+    expect(screen.getByRole("heading", { name: "Build 구성원" })).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 작업 구성원")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "브리지" }));
+    expect(screen.getByRole("heading", { name: "Build 브리지" })).toBeInTheDocument();
+    expect(screen.getByText("전송된 항목 없음")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "설정" }));
+    expect(screen.getByRole("heading", { name: "Build 설정" })).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 작업 설정")).toBeInTheDocument();
+  });
+
+  it("opens issues and shows the create issue modal affordance", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "이슈" }));
+
+    expect(screen.getByRole("heading", { name: "이슈" })).toBeInTheDocument();
+    expect(screen.getByText("삭제된 이슈")).toBeInTheDocument();
+    expect(screen.getByText("이슈 인스펙터")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "이슈 작성" }));
+
+    expect(screen.getByRole("dialog", { name: "이슈 작성" })).toBeInTheDocument();
+    expect(screen.getByLabelText("제목")).toBeInTheDocument();
+    expect(screen.getByLabelText("유형")).toBeInTheDocument();
+    expect(screen.getByLabelText("담당자")).toBeInTheDocument();
+  });
+
+  it("opens a local viewer shell from a selected sheet row", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "A001 열기" }));
+
+    expect(screen.getByRole("heading", { name: "A001" })).toBeInTheDocument();
+    expect(screen.getByText("ARCHITECTURAL- GRAPHIC SYMBOLS& ABBREVIATIONS")).toBeInTheDocument();
+    expect(screen.getByText("정적 시트 렌더")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "마크업", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "이슈" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "시트 비교" })).toBeInTheDocument();
+    expect(screen.getByText("필름스트립")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "시트 목록" }));
+
+    expect(screen.getByRole("heading", { name: "시트" })).toBeInTheDocument();
+    expect(sheetRows()).toHaveLength(6);
   });
 
   it("names sheet selection checkboxes for browser form-field checks", () => {

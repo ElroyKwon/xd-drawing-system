@@ -19,7 +19,9 @@ describe("ProjectAdminView", () => {
     renderProjectAdmin();
 
     expect(screen.getByText("Project Admin")).toBeInTheDocument();
+    expect(screen.getByText("Project 레벨")).toBeInTheDocument();
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 관리")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "구성원" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "구성원 추가" })).toBeInTheDocument();
@@ -33,6 +35,27 @@ describe("ProjectAdminView", () => {
     expect(within(accessRows()[0]).getByText("개혁 이")).toBeInTheDocument();
     expect(screen.getByText("도면 검토자")).toBeInTheDocument();
     expect(screen.queryByText("현장 담당자")).not.toBeInTheDocument();
+  });
+
+  it("opens distinct Project Admin section shells from the left rail", async () => {
+    const { user } = renderProjectAdmin();
+
+    const expectedSections = [
+      ["회사", "프로젝트 회사 관리"],
+      ["브리지", "프로젝트 브리지"],
+      ["액티비티", "최근 Project Admin 활동"],
+      ["알림", "프로젝트 알림 설정"],
+      ["위치", "프로젝트 위치"],
+      ["설정", "Project 설정"]
+    ] as const;
+
+    for (const [sectionName, sectionText] of expectedSections) {
+      await user.click(screen.getByRole("button", { name: sectionName }));
+
+      expect(screen.getByRole("button", { name: sectionName })).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("heading", { name: sectionName })).toBeInTheDocument();
+      expect(screen.getByText(sectionText)).toBeInTheDocument();
+    }
   });
 
   it("shows the selected member in the right inspector", () => {
