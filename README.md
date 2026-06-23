@@ -25,15 +25,21 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 해상도/픽셀 기반 반응형(구 FR-RL) 요구사항은 폐기했다. 레이아웃은 "FHD/4K + macOS 브라우저에서 무파손"(PRD `Layout Compatibility`, FR-LC-001~003)만 유지한다.
 
+기능 백로그 SoT: `docs/Screenshot_Feature_Catalog.md`. ACC 캡처 `스크린샷/` 53장(`fa1872d`로 git 추적)을 화면·기능·구현상태로 정리한 단일 백로그다. "스크린샷에 보이는 기능 전부 구현"이 목표이며, 각 기능은 feature-note → planning-gate → `ai-loop` 메타 프롬프트로 내려보낸다.
+
 직전 세션(2026-06-23) 완료:
 - FR-RL 폐기 + 문서/미참조 PNG 정리(`cf5289d`), 폰트 스택 macOS 대응 + scrollbar-gutter(`ec36a0b`)
-- 좌측 네비 아이콘을 ACC에 맞춰 정비(`815479c`) — Project Admin 사이드바·Build 레일 항목별 고유 아이콘(유사 오픈 아이콘 lucide)
+- 좌측 네비 아이콘을 ACC에 맞춰 정비(`815479c`)
+- 스크린샷 53장 git 추적 전환 + 기능 카탈로그 작성(`fa1872d` 외)
 
-남은 작업 큐 (글로벌 `ai-loop` 스킬):
+남은 작업 큐 (카탈로그 §우선순위 기준):
 
-1. 좌측 네비 추가 충실도(선택): 트리 하위항목(시트→마크업/이슈/시트비교, 파일→폴더 트리), Project Admin `설정` 하단 고정, 필요 시 정확한 Autodesk 아이콘 자산 채택
-2. DUC planning gate (문서만, FR-DUC-011/012 포함) — 근거는 `docs/feature-notes/005`·`009`
-3. DWG→웹 렌더 PoC (HUMAN_GATE: 엔진/유료 SDK/Autodesk API 채택 전 정지)
+1. **2D 시트 뷰어 마크업 도구군** — 카탈로그 가장 큰 비중(25+장). 텍스트·도형·클라우드·다각형 마크업, 속성 패널, 마크업 로그, 측정/교정, 시트 비교, 마크업→이슈 연결. 단, 마크업 영속화·렌더 엔진은 HUMAN_GATE.
+2. **Build 시트 목록** — 버전 세트·공종·태그 테이블, 검색/필터, 행 메뉴(뷰어 진입 전제).
+3. **프로젝트 템플릿 워크플로우** — 생성 2단계 모달, 샘플 갤러리, 템플릿 상세(구성·멤버·회사·알림 매트릭스).
+4. 좌측 네비 추가 충실도(선택): 트리 하위항목, Project Admin `설정` 하단 고정.
+5. DUC planning gate (문서만) — 근거 `docs/feature-notes/005`·`009`.
+6. DWG→웹 렌더 PoC (HUMAN_GATE: 엔진/유료 SDK/Autodesk API 채택 전 정지).
 
 ## Start
 
