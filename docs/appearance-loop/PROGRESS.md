@@ -2,17 +2,17 @@
 
 > 매 재진입 시 `LOOP.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-24, 세션 11 — M2 구현 완료)
+## 현재 상태 (2026-06-24, 세션 12 — M3 구현 완료)
 
-- **단계**: **M2 Project Admin 템플릿 상세 완료**(검증 2렌즈 차단0, build PASS, test 39 PASS). 체크인 정지(예산 규칙).
-- **다음 행동(다음 세션 진입점)**: `ai-loop` 장착 → `LOOP.md`·이 파일 읽기 → **M3 Build 비뷰어 표면**의 메타프롬프트 공동설계(Phase 2.5)부터. M3는 아직 메타프롬프트 미작성 → 초안→AskUserQuestion 공동설계→freeze 후 구현.
-  - 게이트 해소됨: M2 작업량 분할 = **단일 M2 + 알림 매트릭스 단계화**(사용자 확정, `02-m2-admin.md` §게이트).
-  - M2 구현 결과: `App.tsx`(activeView `"template-admin"` 분기·`seedHubTemplates`·`selectedTemplateId`·행 클릭→`openTemplateAdmin`), `ProjectAdminView.tsx`(얇은 래퍼 `mode` 분기 → 일반 `ProjectMemberAdminView`/템플릿 `TemplateAdminView`+5섹션+`NotificationMatrix` 3단 계층), `projectAdminData.ts`(템플릿 시드 `templateMembers`·`templateCompanies`·`notificationGroups`), `styles.css`(`.template-admin`·`.notify-*`·`.publish-toggle` 등). 회귀 테스트 5건 추가.
+- **단계**: **M3 Build 비뷰어 표면 완료**(검증 2렌즈 차단0, build PASS, test 43 PASS, 1920/2560 오버플로 0, 콘솔 0). 체크인 정지(예산 규칙).
+- **다음 행동(다음 세션 진입점)**: `ai-loop` 장착 → `LOOP.md`·이 파일 읽기 → **M4 2D 뷰어 + 마크업/측정/비교/이슈**의 메타프롬프트 공동설계(Phase 2.5)부터. M4는 아직 메타프롬프트 미작성 → 초안→AskUserQuestion 공동설계→freeze 후 구현(M1~M3처럼 곧바로 구현 아님).
+  - M3 4결정(`03-m3-build.md` 공동설계): ①범위=캡처 강한 3개(홈·시트·파일) 집중 + 나머지 6 이월 ②상호작용=구조 우선 계승 ③분석차트=빈상태 골격+정적 축/범례 ④코드구조=화면별 파일 분할.
+  - M3 구현 결과: `src/build/` 신규 8뷰 파일(`BuildHomeView`[개요/종합 탭]·`SheetsListView`[행메뉴 팝오버]·`FilesView`[Welcome배너·11폴더트리·11컬럼·업로드모달]·`IssuesView`·`FormsView`·`PhotosView`·`BuildManagementView`·`SheetViewerShell`) + `nav.ts` + `buildFilesData.ts`(11폴더 시드). `BuildSheetsView.tsx`는 rail+topbar+라우팅 셸(143줄)로 축소. `styles.css`에 `home-*`·`row-menu-*`·`files-welcome`·`upload-*` 추가, `.files-table` min-width 1320. 회귀 테스트 4건 추가.
 
 ## Done-When 이월 추적 (Phase 6.5 reconcile 오판 방지)
 
-- **FR-FS-004 일부 후속 이월**: LOOP Done-When의 "Project Admin 측면 네비(회사·브리지·액티비티·알림·위치·설정) 각각 구분 화면" 중 **브리지·액티비티·위치·설정** + **일반 모드의 회사·알림 화면**은 ACC 캡처 부재로 M2에서 다루지 않고 **후속(캡처 확보 시) 이월**. 근거=Co-design 결정 1(추정 구현 금지)·사용자 명시 승인(템플릿 상세 우선).
-- M2가 커버: **템플릿 모드**의 회사·알림(매트릭스) + 구성·템플릿 구성원·프로젝트 구성원.
+- **FR-FS-004 일부 후속 이월(M2)**: "Project Admin 측면 네비(회사·브리지·액티비티·알림·위치·설정) 각각 구분 화면" 중 **브리지·액티비티·위치·설정** + **일반 모드의 회사·알림 화면**은 ACC 캡처 부재로 후속 이월. M2가 커버: **템플릿 모드**의 회사·알림(매트릭스) + 구성·템플릿/프로젝트 구성원.
+- **FR-FS-012/013/014/015 후속 이월(M3)**: Build 레벨 **이슈·양식·사진·구성원·브리지·설정**의 distinct 화면화는 **Build 레벨 독립 캡처 부재로 후속 이월**(§H 175657은 뷰어 안 이슈 연계=M4 성격). 근거=M3 결정 1(추정 구현 금지)·M2 선례. 현 셸/placeholder는 분할 이동만(무회귀). M3가 커버: **FR-FS-005(홈)·006(시트)·011(파일)**=MET.
 - → M5 신선한 비평가는 위 이월분을 "누락(UNMET)"이 아니라 "의도된 이월(HUMAN_GATE 승인)"으로 판정할 것.
 
 ### M1 결과 요약 (2026-06-24)
@@ -34,14 +34,14 @@
 
 - [x] M1 Hub 표면 (2026-06-24 — 검증 PASS, 체크인 정지)
 - [x] M2 Project Admin + 템플릿 상세 (2026-06-24 — 2렌즈 검증 차단0, 체크인 정지)
-- [ ] M3 Build 비뷰어 표면
+- [x] M3 Build 비뷰어 표면 (2026-06-24 — 2렌즈 검증 차단0, 체크인 정지)
 - [ ] M4 2D 뷰어 + 마크업/측정/비교/이슈
 - [ ] M5 횡단 레이아웃 호환 + 최종 reconcile
 
 ## 프로세스 완결성 (Done-When과 별도 추적)
 
-- [x] 각 마일스톤 메타프롬프트를 `prompts/`에 freeze했는가 (M1·M2 freeze 완료; M3~M5 미작성)
-- [x] 각 마일스톤 별도 검증팀(2~4 렌즈) 돌렸는가 (M1=2렌즈, M2=2렌즈; M3~M5 예정)
+- [x] 각 마일스톤 메타프롬프트를 `prompts/`에 freeze했는가 (M1·M2·M3 freeze 완료; M4~M5 미작성)
+- [x] 각 마일스톤 별도 검증팀(2~4 렌즈) 돌렸는가 (M1=2렌즈, M2=2렌즈, M3=2렌즈; M4~M5 예정)
 - [ ] 최종 Phase 6.5 reconcile(신선한 비평가)을 돌렸는가 (M5 최종에서 LOOP Done-When 전 항목 reconcile 예정 — 아직 미실시)
 
 ## 검증 로그
@@ -49,4 +49,5 @@
 - **M1 (2026-06-24)**: `npm run build` PASS · `npm test` 34 PASS(기존 33 + A4 프리필 회귀 1). 검증팀 2렌즈 — 구조 비평가 차단0/조건부통과, 브라우저 렌더 검증자 전 항목 PASS(콘솔 에러 0, 와이드폭 오버플로 0). 상세 `EVIDENCE.md` §M1.
 - **M2 메타프롬프트 검토 (2026-06-24)**: freeze 전 3렌즈 객관 검토(캡처 충실도·구현 가능성·스코프/게이트). 차단 7건 적발·수정 → freeze v2. 주요: 알림 도구 13→15(자료전송 누락)·"필요한 작업 알림" 3단 계층 오기·주파수 "즉시" 누락·진입점 시드 부재·App state/네비 타입 격리 미명시·FR-FS-004 NARROWING 추적 부재. (구현은 다음 세션.)
 - **M2 구현 (2026-06-24, 세션 11)**: `npm run build` PASS · `npm test` **39 PASS**(34→시드 반영 기존 2건 정정 + M2 회귀 5건). 검증팀 2 독립 렌즈(구조/엣지·레이아웃/비기능) 모두 **차단 0**. acceptance A1~A9·A7-bis·B1~B4·C1·D1·D2 전부 MET. C1 2560 device 등급 실측 보강(M1 부채 해소: 1920=1906==1906, 2560=2546==2546, 매트릭스 최대 전개 오버플로 0). 상세 `EVIDENCE.md` §M2.
-- 기준선: M2 종료 시점 39 PASS·build PASS.
+- **M3 구현 (2026-06-24, 세션 12)**: `npm run build` PASS · `npm test` **43 PASS**(기준선 39 + M3 회귀 4건: 홈 개요/종합 탭전환·종합 6분석카드·시트 행메뉴 팝오버·파일 업로드 모달). 검증팀 2 독립 렌즈(렌즈1=구조 비평가 정적, 렌즈2=브라우저 렌더/레이아웃) 모두 **차단 0**. acceptance A1~A8·B1~B4·C1·D1·D2 전부 MET. C1 1920/2560 device 실측(파일 11컬럼 -15/-16·홈/시트 -16, 넓은 표는 `.table-scroll` 내부 격리). 콘솔 0. 이동 5화면 마크업 바이트 동일(분할 무회귀). 상세 `EVIDENCE.md` §M3.
+- 기준선: M3 종료 시점 **43 PASS**·build PASS.

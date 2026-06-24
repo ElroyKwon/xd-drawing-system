@@ -29,16 +29,17 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 ### 외관 완성 ai-loop (다음 세션 바로 실행)
 
-다음 세션은 `ai-loop` 스킬을 장착하고 `docs/appearance-loop/LOOP.md` → `docs/appearance-loop/PROGRESS.md`를 먼저 읽어 **재시작이 아니라 이어받기**로 진행한다. **M1·M2 완료. 다음은 M3(Build 비뷰어 표면)** — 메타프롬프트가 아직 없으므로 **초안 → `AskUserQuestion` 공동설계 → freeze(Phase 2.5)부터** 시작한 뒤 구현한다.
+다음 세션은 `ai-loop` 스킬을 장착하고 `docs/appearance-loop/LOOP.md` → `docs/appearance-loop/PROGRESS.md`를 먼저 읽어 **재시작이 아니라 이어받기**로 진행한다. **M1·M2·M3 완료. 다음은 M4(2D 뷰어 + 마크업/측정/비교/이슈)** — 메타프롬프트가 아직 없으므로 **초안 → `AskUserQuestion` 공동설계 → freeze(Phase 2.5)부터** 시작한 뒤 구현한다(곧바로 구현 아님).
 
 - 목표: 기존 로컬 셸을 카탈로그 구조 수준으로 끌어올려 외관 완성(없는 화면 만들기 아님).
 - Freeze된 결정: ① 충실도=카탈로그 구조 완성(픽셀 일치 비대상) ② 검증=구조 체크리스트+브라우저 스크린샷+test/build ③ 예산=마일스톤마다 체크인.
-- 마일스톤: ~~M1 Hub~~(완료) → ~~M2 Project Admin+템플릿 상세~~(완료) → **M3 Build 비뷰어** → M4 2D 뷰어(마크업/측정/비교/이슈) → M5 레이아웃 호환+최종 reconcile (`docs/appearance-loop/PLAN.md`).
+- 마일스톤: ~~M1 Hub~~(완료) → ~~M2 Project Admin+템플릿 상세~~(완료) → ~~M3 Build 비뷰어~~(완료) → **M4 2D 뷰어(마크업/측정/비교/이슈)** → M5 레이아웃 호환+최종 reconcile (`docs/appearance-loop/PLAN.md`).
 - 영속화·실연동·유료 SDK·DWG 렌더·배포는 HUMAN_GATE — affordance만.
 
 직전 세션(2026-06-24) 완료:
 - **M1 Hub 표면 완료**(`f627cd1`): 샘플 템플릿 접기/펴기, 카드 "사용하여 생성"→작성 모달 프리필, 드롭다운 옵션. 검증팀 2렌즈 PASS, build PASS·test 34 PASS.
-- **M2 Project Admin 템플릿 상세 완료**: 진입동선(시드 행 클릭)+모드분기(`template-admin`)+측면 네비 2그룹+5섹션(구성·템플릿/프로젝트 구성원·회사·알림)+알림 매트릭스 3단 계층(기타 15도구·필요한 작업 9도구·자료전송·주파수 4종). 게이트=단일 M2+매트릭스 단계화(확정). 2 독립 렌즈 검증 차단0, build PASS·test 39 PASS, C1 2560 device 실측 보강. 상세 `EVIDENCE.md` §M2.
+- **M2 Project Admin 템플릿 상세 완료**(`8c55fe6`): 진입동선+모드분기(`template-admin`)+측면 네비 2그룹+5섹션+알림 매트릭스 3단 계층. 2 독립 렌즈 검증 차단0, build PASS·test 39 PASS, C1 2560 device 실측. 상세 `EVIDENCE.md` §M2.
+- **M3 Build 비뷰어 표면 완료**: 4결정 공동설계(범위=홈·시트·파일 집중+나머지 6 이월 / 구조 우선 / 분석차트 빈상태 골격 / 화면별 파일 분할). `src/build/` 8뷰 분할 + 홈(개요/종합 탭)·시트(행메뉴 팝오버)·파일(Welcome배너·11폴더트리·11컬럼·업로드모달) 보강. 2 독립 렌즈 차단0, build PASS·test 43 PASS, 1920/2560 오버플로 0·콘솔 0. FR-FS-012/013/014/015(이슈·양식·사진·구성원·브리지·설정)는 캡처 부재로 의도적 이월. 상세 `EVIDENCE.md` §M3.
 
 남은 작업 큐:
 

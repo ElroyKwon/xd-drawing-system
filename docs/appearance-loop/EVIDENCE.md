@@ -74,3 +74,38 @@
 ### 비차단 학습점 (제품 결함 아님)
 - 검증 오케스트레이션: 두 검증자가 chrome-devtools 단일 서버의 전역 selected-page를 공유 → page-select race. 둘 다 페이지 마커(`window.__LENS1B__`/`window.__lens`) 검증으로 잘못된 페이지 결과를 폐기해 우회. 향후 다중 브라우저 검증자는 `isolatedContext` + 마커를 표준화하거나 순차 실행 권장.
 - 기존 부채(M1에서 식별, 여전히 미수정·차단 아님): A2 접기 헤더 button>h3 중첩, A3 "복사" 칩, A4 templateId 문자열. M2 범위 밖(surgical) — 별도 정리 후보.
+
+## §M3 — Build 비뷰어 표면 (2026-06-24, 세션 12)
+
+메타프롬프트: `prompts/03-m3-build.md` (freeze v1). 4결정 AskUserQuestion 공동설계: ①범위=캡처 강한 3개(홈·시트·파일) 집중+나머지 6 이월 ②상호작용=M1·M2 계승(구조 우선) ③분석차트=빈상태 골격+정적 축/범례 ④코드구조=화면별 파일 분할. 검증팀 2렌즈(렌즈1=구조 비평가 정적 채점, 렌즈2=브라우저 렌더/레이아웃). 렌즈2는 chrome-devtools 프로파일 락으로 1차 BLOCKED → 점유 크롬 프로세스(CommandLine `*chrome-devtools-mcp*` 필터) 종료 후 **메인 에이전트가 직접 단독 실측**으로 완수.
+
+### Acceptance checklist 판정 (frozen 메타프롬프트 §Acceptance)
+
+| 항목 | 판정 | 증거등급 | 근거(두 렌즈 종합) |
+|---|---|---|---|
+| A1 홈 개요/종합 탭 분리+전환 | MET | emulated | 브라우저: 인사 헤딩 + 개요(selected)/종합 탭, 클릭 시 `HomeOverview`↔`HomeAnalytics` 전환. 회귀 테스트 PASS. |
+| A2 홈 개요 6요소 | MET | emulated | region: 진행률(1%·1,000일·2029-03-12 목표+온보딩)·빠른링크(시트6·구성원1+버튼)·현장날씨·작업상태(2행+화살표)·브리지·최근작업. |
+| A3 홈 종합 6카드+범례 | MET | emulated | region 6개(이슈평균·기한초과이슈·작성일별상태(범례 진행중/완료/답변됨/보류/거부)·양식평균·기한초과양식·매일완료). 빈상태 4 + 막대차트 축/범례 2. |
+| A4 시트 행메뉴 팝오버+8컬럼 무회귀 | MET | emulated | 케밥 클릭→`menu "A001 작업"`(내보내기·공유) `aria-expanded` 토글, 재클릭 닫힘. 기존 8컬럼·검색·토글·페이저·`sheet-row` 유지. |
+| A5 파일 Welcome+11폴더+11컬럼+업로드버튼 | MET | emulated | 브라우저: Welcome 배너(+닫기) + 폴더트리 11(Bids~Supported files)+PDFs + 11컬럼 헤더 + 11폴더 행 + "11개 항목 표시 중". |
+| A6 파일 업로드 모달 | MET | emulated | `dialog "파일 업로드"`(탭 "컴퓨터에서"+드롭존+완료), 닫기로 닫힘. |
+| A7 코드 분할+이동 화면 마크업 무변경 | MET | static | `src/build/*` 8뷰 파일 분리, `BuildSheetsView.tsx` 셸(143줄)로 축소. 렌즈1이 이동 5화면(Issues/Forms/Photos/Management/SheetViewerShell)을 HEAD 원본과 **바이트 단위 동일** 대조. |
+| A8 이월 6화면 무회귀 | MET | emulated+static | 이슈·양식·사진·구성원·브리지·설정 진입 동작·placeholder 동일. 기존 9화면 진입 테스트 무수정 PASS. |
+| B1 `npm run build` 성공 | MET | device | tsc+vite build 성공(로컬, 287.71kB). |
+| B2 `npm test` 전부 PASS | MET | device | **43 PASS**(기준선 39 + 신규 4: 탭전환·6분석카드·행메뉴 팝오버·업로드 모달). 분할 무회귀는 기존 9화면 진입 테스트 무수정 PASS로 보증. |
+| B3 콘솔 에러 0 | MET | emulated | 홈 탭전환·시트 행메뉴·파일 폴더/모달 전 과정 `list_console_messages` error/warn 0. |
+| B4 HUMAN_GATE 미침범 | MET | static | 업로드 submit=`onClose`만(실 업로드 없음), 검색 input 정적(value/onChange 없음), 진행률·날씨 하드코딩, 내보내기/공유/행메뉴 item onClick 없음. 살아있는 state=탭전환·폴더선택·모달·행메뉴 팝오버·배너닫기뿐. |
+| C1 1920·2560 가로 오버플로 0 | **MET (device)** | device | 직접 실측 `documentElement.scrollWidth - innerWidth`: 파일(11컬럼) 1920=-15·2560=-16, 홈 2560=-16, 시트 2560=-16. 넓은 표는 `.table-scroll`(overflow-x:auto) 내부 격리. |
+| D1 9화면 왕복+홈 탭 왕복 | MET | emulated | 홈↔시트↔파일 네비 + 개요↔종합 탭 왕복, 컨텍스트 누수 0. |
+| D2 모달·팝오버 열고닫기+엣지 | MET | emulated | 업로드 모달·행메뉴 팝오버 열고닫기, 빈/정적 입력 무파손. |
+
+### 차단 결함
+없음 (구조 비평가 차단 0 + 브라우저 직접 실측 전 항목 PASS).
+
+### Done-When 이월 (Phase 6.5 최종 reconcile 입력 — M5)
+- **FR-FS-005(Build 홈)·FR-FS-006(시트)·FR-FS-011(파일)** → M3가 커버, **MET**(브라우저 실측).
+- **FR-FS-012(이슈)·FR-FS-013(양식)·FR-FS-014(사진)·FR-FS-015(구성원·브리지·설정)** → **Build 레벨 독립 캡처 부재로 의도적 후속 이월**(frozen 메타프롬프트 결정 1 + §Out of scope, M2 "추정 구현 금지" 원칙 일관). 현 셸/placeholder는 분할 이동만, 무회귀. → M5 신선한 비평가는 이를 UNMET이 아니라 "의도된 이월"로 판정할 것.
+
+### 비차단 학습점 (제품 결함 아님)
+- 검증 오케스트레이션: chrome-devtools 프로파일 **락** 충돌(isolatedContext로도 우회 불가 — MCP 서버 기동 레벨). 해결=점유 크롬 프로세스를 `CommandLine -like *chrome-devtools-mcp*` 필터로 종료 후 단독 실행. 다중 브라우저 검증자는 검증자별 `userDataDir` 분리 또는 순차 실행 필요.
+- 미세 스멜(렌즈1, 차단 아님): 미정의 CSS 클래스 4개 no-op(`files-page`·`build-home-page`·`home-progress-card`·`files-table-scroll` — 동반 클래스가 레이아웃 구동), `legend-${indexOf}` O(n²) 미세 비효율. 후속 정리 후보.

@@ -78,14 +78,15 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "홈" }));
     expect(screen.getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("heading", { name: "Build 홈" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "개혁 님, 환영합니다." })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
     expect(screen.getByText("프로젝트 진행률")).toBeInTheDocument();
     expect(screen.getByText("빠른 링크")).toBeInTheDocument();
     expect(screen.getByText("최근 작업")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "파일" }));
     expect(screen.getByRole("heading", { name: "파일" })).toBeInTheDocument();
-    expect(screen.getByText("프로젝트 파일")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to Files")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "파일 업로드" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "양식" }));
@@ -154,5 +155,69 @@ describe("BuildSheetsView", () => {
     expect(screen.getByRole("textbox", { name: "시트 검색" })).toHaveAttribute("name", "sheet-search");
     expect(screen.getByRole("checkbox", { name: "모든 시트 선택" })).toHaveAttribute("name", "all-sheets");
     expect(screen.getByRole("checkbox", { name: "A001 선택" })).toHaveAttribute("name", "sheet-a001");
+  });
+
+  it("switches the Build home overview and analytics tabs", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "홈" }));
+    expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
+    expect(screen.getByText("현장 날씨")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "종합" }));
+    expect(screen.getByRole("tab", { name: "종합", selected: true })).toBeInTheDocument();
+    expect(screen.getByText("이슈를 완료하는 데 걸리는 평균 시간")).toBeInTheDocument();
+    expect(screen.queryByText("현장 날씨")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "개요" }));
+    expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
+    expect(screen.getByText("현장 날씨")).toBeInTheDocument();
+  });
+
+  it("renders the six analytics cards on the Build home 종합 tab", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "홈" }));
+    await user.click(screen.getByRole("tab", { name: "종합" }));
+
+    [
+      "이슈를 완료하는 데 걸리는 평균 시간",
+      "표시할 기한이 지난 이슈",
+      "작성 날짜별 이슈 상태",
+      "양식을 완료하는 데 걸리는 평균 시간",
+      "표시할 기한이 지난 양식",
+      "매일 완료하는 양식"
+    ].forEach((title) => {
+      expect(screen.getByRole("region", { name: title })).toBeInTheDocument();
+    });
+  });
+
+  it("toggles the sheet row export/share menu popover", async () => {
+    const { user } = renderBuildSheets();
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "A001 메뉴" }));
+    const menu = screen.getByRole("menu", { name: "A001 작업" });
+    expect(within(menu).getByRole("menuitem", { name: "내보내기" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "공유" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "A001 메뉴" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("opens and closes the file upload modal affordance", async () => {
+    const { user } = renderBuildSheets();
+
+    await user.click(screen.getByRole("button", { name: "파일" }));
+    expect(screen.queryByRole("dialog", { name: "파일 업로드" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "파일 업로드" }));
+    const dialog = screen.getByRole("dialog", { name: "파일 업로드" });
+    expect(within(dialog).getByText("여기로 파일을 끌어 놓거나 파일을 선택하십시오.")).toBeInTheDocument();
+    expect(within(dialog).getByRole("tab", { name: "컴퓨터에서" })).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog", { name: "파일 업로드" })).not.toBeInTheDocument();
   });
 });
