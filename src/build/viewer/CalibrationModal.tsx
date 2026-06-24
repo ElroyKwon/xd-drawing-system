@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useRef } from "react";
+import { useModalDismiss } from "../../hooks/useModalDismiss";
 
 export default function CalibrationModal({
   onClose,
@@ -8,19 +9,14 @@ export default function CalibrationModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalDismiss(onClose, dialogRef);
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="calibration-modal"
         role="dialog"
         aria-modal="true"

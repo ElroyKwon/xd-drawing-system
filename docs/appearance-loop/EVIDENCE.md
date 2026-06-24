@@ -150,3 +150,85 @@
 ### Done-When 이월 (Phase 6.5 최종 reconcile 입력 — M5)
 - **FR-FS-007(마크업)·008(측정/축척)·009(비교)·010(이슈 연계)** → M4가 커버, **MET**(브라우저 실측, affordance 수준). 실 드로잉/diff연산/영속화는 LOOP Human gates 대상으로 의도적 affordance 한정.
 - C1 2560 정확 실측은 OS 창 한계로 미실시(2048까지 device) — M5에서 재확인.
+
+## §M5 — 횡단 레이아웃 호환(FR-LC) + a11y 부채 정리 (2026-06-25, 세션 14)
+
+메타프롬프트: `prompts/05-m5-layout-reconcile.md` (freeze v1). 3결정 AskUserQuestion 공동설계: ①범위=검증+발견된 파손 수정+알려진 a11y 부채 정리 ②C1 2560=헤드리스 Chrome 실제 2560 창 측정(device급) ③이월분=신선한 비평가 판정에 일임. 변경: 신규 `src/hooks/useModalDismiss.ts`(ESC·포커스 트랩·트리거 복귀 공통 훅), A2 접기 헤더 accordion 교정(`App.tsx`+`styles.css`), 모달 9개에 훅 적용(App 3·ProjectAdmin 2·Issues 1·Files 1·viewer 2 — viewer 2는 인라인 ESC를 훅으로 대체). 회귀 테스트 3건.
+
+### FR-LC 측정 (헤드리스 Chrome 실제 창, device급)
+
+zero-dep CDP 하네스(Node v24 내장 WebSocket, `Emulation.setDeviceMetricsOverride` 미사용 = 실제 `--window-size` 창). M1~M4 전 화면 + 모달 열린 상태 측정. 셸 가로 오버플로 = `documentElement.scrollWidth - clientWidth`(넓은 표/매트릭스는 전용 스크롤 컨테이너 내부 제외). `clippedOutsideScrollers` = 스크롤 컨테이너 밖에서 뷰포트 우측을 넘는 요소 수.
+
+| 화면 | 1920 overflow | 2560 overflow | 클리핑(밖) |
+|---|---|---|---|
+| my-home | -15 | -15 | 0 |
+| templates(샘플 펼침) | -15 | -15 | 0 |
+| admin-members | -15 | -15 | 0 |
+| admin-notify-matrix(템플릿 알림) | -15 | -15 | 0 |
+| build-home | -15 | -15 | 0 |
+| build-sheets | -15 | -15 | 0 |
+| build-files(11컬럼) | 0 | -15 | 0 |
+| build-files-upload(모달) | 0 | -15 | 0 |
+| viewer-base | -15 | -15 | 0 |
+| viewer-aside(4열 측정패널) | -15 | -15 | 0 |
+
+- **전 화면 1920·2560 셸 가로 오버플로 ≤ 0, 스크롤 컨테이너 밖 클리핑 0.** (build-files 1920=0은 11컬럼 표의 `.files-table` 전용 스크롤 컨테이너가 셸을 밀어내지 않고 0에 수렴 — 음수 아님이나 오버플로 아님.)
+- **C1 2560 누적 부채 device급 해소**: M1·M3·M4가 OS 창 한계로 2048까지만 측정했던 부채를, 헤드리스 실제 2560 창에서 전 화면 overflow=-15로 확인. (M2는 매트릭스 최대 전개를 device 2546으로 이미 측정.)
+- **육안 겹침 0**: admin-notify-matrix·build-files(11컬럼)·viewer-aside(4열) 2560 스크린샷 직접 확인 — 클리핑·겹침 없음(스크린샷은 scratchpad/shots/).
+
+### FR-LC 폰트 (정적)
+- `styles.css:4-5` `font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`. mac(Latin: -apple-system/BlinkMacSystemFont, 한글: Apple SD Gothic Neo) + Windows(Segoe UI/Malgun Gothic) 모두 선언·폴백. FR-LC-002 MET(static — 실 mac 부재). mac 전용 신규 분기 미추가(FR-LC-003 준수).
+
+### a11y 부채 정리 판정 (frozen 메타프롬프트 §Acceptance)
+
+| 항목 | 판정 | 증거등급 | 근거 |
+|---|---|---|---|
+| A1 헤드리스 2560 측정 하네스 동작 | MET | device | CDP 하네스가 10화면×2폭 overflow 출력(위 표). |
+| A2 셸 1920·2560 오버플로 ≤0 | MET | device | 위 표 전 화면 ≤0, 넓은 표는 전용 스크롤 내부. |
+| A3 겹침·클리핑 0 | MET | device | `clippedOutsideScrollers`=0 전 화면 + 3대 스트레스 화면 스크린샷 육안. |
+| A4 macOS 폰트 스택 선언 | MET | static | `styles.css:4-5` mac+win 선언, mac 전용 분기 미추가. |
+| B1 접기 헤더 accordion(heading 중첩 제거) | MET | device+emulated | `App.tsx` `<h3><button aria-expanded><span>샘플 템플릿</span></button></h3>`. 브라우저 aria-expanded true→false 토글 실측, 회귀 테스트(button∈heading, heading∉button). 시각 외관 불변(span 17/700 + h3 margin:0). |
+| B2 모달 9개 ESC+포커스 트랩 공통 훅 | MET | device+emulated | `useModalDismiss`(ESC·열릴때 dialog 내부 포커스[autoFocus 존중]·Tab 순환·닫힐때 트리거 복귀). 9개 모달 적용. 브라우저: 프로젝트작성·템플릿작성·시트비교 ESC 닫힘 실측. 회귀 테스트: ESC 닫힘+트리거 복귀, 열릴때 dialog 포커스. viewer 2개 인라인 ESC→훅 대체(중복 제거). |
+| B3 A3/A4 처리 명시 | MET | static | A3(복사 칩·"사용자 정의" 서브텍스트)·A4(templateId 이름 문자열)=ACC 캡처 대조 없이는 제거 위험/시맨틱 리팩터 위험 → 메타프롬프트대로 **수용 부채**로 기록(능동 리팩터 없음). 아래 참조. |
+| C1 `npm run build` 성공 | MET | device | tsc+vite build 성공(305.24kB). |
+| C2 `npm test` 전부 PASS | MET | device | **52 PASS**(기준선 49 + 신규 3: accordion·모달 ESC+복귀·포커스 진입). 기존 49 무수정 PASS(무회귀). |
+| C3 콘솔 0·diff-check·게이트 미침범 | MET | device | 헤드리스 모달 상호작용 중 콘솔 error/warn 0. `git diff --check` clean. 영속화/실연동/SDK/배포 도입 없음. |
+| D1 전 화면 user flow 1920·2560 | MET | device+emulated | 측정 하네스가 전 화면 네비(탭·rail·시트열기·모달)를 navFail 0으로 통과 = 진입/전환 동작. 회귀 테스트가 탭/모달 왕복 커버. 레벨 분리 유지(기존 테스트). |
+
+### 비차단 수용 부채 (능동 리팩터 안 함 — surgical)
+- **A3** 샘플 카드 "복사" 칩 / "사용자 정의" 서브텍스트: ACC 샘플 템플릿 카드 원본 캡처가 없어 카탈로그 외인지 단정 불가 → 제거 시 의도 콘텐츠 손실 위험. 메타프롬프트 "애매하면 수용 부채" 조항대로 보존·기록.
+- **A4** `templateId`에 템플릿 이름 문자열 사용: 프리필 로직(`openModalWithTemplate`)이 의존 → 시맨틱 ID 리팩터는 회귀 위험. 메타프롬프트 out-of-scope 명시대로 수용.
+- **ARIA 미세**(M4 §비차단 이월 계승): tablist roving·`tabpanel` 연결 등은 기존 탭 구현과 일관 — 별도 정리 후보.
+
+### 차단 결함
+- 없음(0). FR-LC 측정 전 화면 ≤0 → 수정할 레이아웃 파손 없음(파손 0이라 Part B 코드 변경 없음). a11y 정리는 회귀 0(52 PASS).
+
+### M5 검증팀 (2 독립 렌즈 + Phase 6.5)
+- **렌즈1 = 적대적 접근성 검증자**(구현 미참여): M5 변경분(훅 9개 적용·인라인 ESC 제거·accordion) 정적분석 + `npm test`/`build` 재실행. **차단 0 / 비차단 4**. 독립 실측 52 PASS·build 성공. dialog 9 = 훅 9 일치(누락 모달 0), 잔존 인라인 ESC 0, accordion 시맨틱 PASS, autoFocus 존중 PASS.
+  - 비차단 4건(모두 현 모달 구성에서 미트리거 잠재 결함): B-1 0-포커서블 모달의 트랩 누수(현 9개 모두 포커서블 보유→미발생), **B-2 트리거 언마운트 시 포커스 body 유실 → 수정**(`isConnected` 가드 추가, 52 PASS 유지), B-3 모달 내 `<select>`에서 ESC가 드롭다운 대신 모달 닫음(외관 앱에서 ESC=모달닫기로 수용), B-4 중첩 모달 동시 ESC(현 중첩 없음→미발생, 향후 중첩 도입 시 차단 승격).
+- **렌즈2 = 완결성 비평가(Phase 6.5, 구현 미참여)**: 아래 §최종 reconcile.
+
+### 최종 Phase 6.5 reconcile (신선한 비평가 — LOOP product Done-When 전 항목)
+
+비평가에게 PROGRESS의 "의도된 이월" 사전 메모를 **입력하지 않고**(결정 3), LOOP.md Done-When + EVIDENCE + 실제 소스/스크린샷만 주어 독립 판정. **DONE 차단(NARROWED/UNMET) 0개.**
+
+| Done-When | 판정 | 증거등급 |
+|---|---|---|
+| FR-FS-001 My Home | MET | emulated |
+| FR-FS-002 프로젝트 템플릿 | MET | emulated |
+| FR-FS-004 Project Admin 측면 네비 6화면 각각 구분 | MET | emulated |
+| 템플릿 상세 셸(+알림 매트릭스) | MET | emulated |
+| FR-FS-005 Build 홈 | MET | emulated |
+| FR-FS-006 Build 시트 | MET | emulated |
+| FR-FS-007~010 2D 뷰어 | MET | emulated |
+| FR-FS-011 Build 파일 | MET | emulated |
+| FR-FS-012 Build 이슈 | MET | static |
+| FR-FS-013 Build 양식(placeholder 명시) | MET | static |
+| FR-FS-014 Build 사진 | MET | static |
+| FR-FS-015 Build 구성원·브리지·설정 | MET | static+emulated |
+| FR-FS-016 레벨 분리 | MET | emulated |
+| FR-LC-001 FHD/4K 무파손 | MET | device |
+| FR-LC-002 폰트 분기 | MET (static) | static |
+| FR-LC-003 모바일 보류 | MET | static |
+
+- **중요 정정**: 비평가가 코드를 직접 보고, EVIDENCE §M2/§M3가 "의도된 후속 이월(미구현)"로 사전 기재했던 **FR-FS-004 일반모드 6화면 + FR-FS-012/014/015**가 실제로는 `ProjectAdminSectionPanel`/`AdminSectionInspector`/`IssuesView`/`PhotosView`/`BuildManagementView`에 **distinct 화면(제목+대표 콘텐츠+빈상태+core affordance)으로 이미 구현**돼 있음을 확인 → PRD "Visible shell" 바 충족 → **MET 판정**. 즉 이월로 적혔던 항목들이 실제 코드에선 충족돼 있었음(사전 메모가 과보수적이었음). → NARROWED/UNMET 0 → HUMAN_GATE 불필요.

@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useRef } from "react";
 import type { Sheet } from "../../buildSheetsData";
+import { useModalDismiss } from "../../hooks/useModalDismiss";
 
 export default function CompareModal({
   currentSheet,
@@ -18,20 +19,14 @@ export default function CompareModal({
   onCompare: () => void;
 }) {
   const otherSheets = sheets.filter((sheet) => sheet.id !== currentSheet.id);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalDismiss(onClose, dialogRef);
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="compare-modal"
         role="dialog"
         aria-modal="true"

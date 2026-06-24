@@ -1,5 +1,6 @@
 import { Plus, Search, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useModalDismiss } from "../hooks/useModalDismiss";
 
 export default function IssuesView() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -51,6 +52,9 @@ export default function IssuesView() {
 }
 
 function IssueCreateModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useModalDismiss(onClose, dialogRef);
+
   function submitIssue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onClose();
@@ -58,7 +62,7 @@ function IssueCreateModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-backdrop">
-      <form className="project-modal member-modal" role="dialog" aria-modal="true" aria-labelledby="issue-create-title" onSubmit={submitIssue}>
+      <form ref={dialogRef} tabIndex={-1} className="project-modal member-modal" role="dialog" aria-modal="true" aria-labelledby="issue-create-title" onSubmit={submitIssue}>
         <header className="modal-header">
           <h2 id="issue-create-title">이슈 작성</h2>
           <button className="modal-close" type="button" aria-label="닫기" onClick={onClose}>

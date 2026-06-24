@@ -327,3 +327,45 @@ describe("template detail (Project Admin template mode)", () => {
     expect(screen.queryByText("템플릿 관리")).not.toBeInTheDocument();
   });
 });
+
+describe("M5 a11y 부채 정리 (접기 헤더 + 모달 해제 동작)", () => {
+  it("renders the sample-template collapse header as a heading wrapping the toggle (no heading nested in a button) and toggles aria-expanded", async () => {
+    const { user } = renderApp();
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+
+    const heading = screen.getByRole("heading", { name: "샘플 템플릿" });
+    const toggle = screen.getByRole("button", { name: "샘플 템플릿" });
+    // accordion 패턴: button이 heading 안에 있고, button 안에는 heading이 없어야 한다
+    expect(heading).toContainElement(toggle);
+    expect(within(toggle).queryByRole("heading")).toBeNull();
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("General Contractor")).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("General Contractor")).not.toBeInTheDocument();
+  });
+
+  it("closes a modal on Escape and restores focus to the trigger", async () => {
+    const { user } = renderApp();
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+
+    const trigger = screen.getByRole("button", { name: "프로젝트 템플릿 작성" });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog", { name: "템플릿 작성" })).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "템플릿 작성" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("moves focus into the dialog when a modal opens", async () => {
+    const { user } = renderApp();
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+    await user.click(screen.getByRole("button", { name: "프로젝트 템플릿 작성" }));
+
+    const typeDialog = screen.getByRole("dialog", { name: "템플릿 작성" });
+    expect(typeDialog).toContainElement(document.activeElement as HTMLElement);
+  });
+});

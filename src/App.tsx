@@ -16,9 +16,10 @@ import {
   Settings,
   X
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import BuildSheetsView from "./BuildSheetsView";
 import ProjectAdminView from "./ProjectAdminView";
+import { useModalDismiss } from "./hooks/useModalDismiss";
 import { initialProjectAccess, type ProjectMemberAccess } from "./projectAdminData";
 
 type Project = {
@@ -656,6 +657,10 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate, o
   const [templateKind, setTemplateKind] = useState<"blank" | "existing">("blank");
   const [templateName, setTemplateName] = useState("");
   const [sampleOpen, setSampleOpen] = useState(true);
+  const typeModalRef = useRef<HTMLDivElement>(null);
+  const nameModalRef = useRef<HTMLFormElement>(null);
+  useModalDismiss(() => setFlowStep("none"), typeModalRef, flowStep === "type");
+  useModalDismiss(() => setFlowStep("none"), nameModalRef, flowStep === "name");
 
   function startFlow() {
     setTemplateKind("blank");
@@ -676,15 +681,17 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate, o
   return (
     <section className="templates-panel" aria-label="프로젝트 템플릿">
       <section className="tmpl-section" aria-labelledby="sample-template-title">
-        <button
-          type="button"
-          className="tmpl-section-head"
-          aria-expanded={sampleOpen}
-          onClick={() => setSampleOpen((open) => !open)}
-        >
-          <ChevronDown size={18} className={sampleOpen ? undefined : "rotate-minus-90"} />
-          <h3 id="sample-template-title">샘플 템플릿</h3>
-        </button>
+        <h3 id="sample-template-title" className="tmpl-section-heading">
+          <button
+            type="button"
+            className="tmpl-section-head"
+            aria-expanded={sampleOpen}
+            onClick={() => setSampleOpen((open) => !open)}
+          >
+            <ChevronDown size={18} className={sampleOpen ? undefined : "rotate-minus-90"} />
+            <span>샘플 템플릿</span>
+          </button>
+        </h3>
         {sampleOpen ? (
           <>
             <div className="tmpl-cards">
@@ -774,7 +781,7 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate, o
 
       {flowStep === "type" ? (
         <div className="modal-backdrop">
-          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-type-title">
+          <div ref={typeModalRef} tabIndex={-1} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-type-title">
             <header className="modal-header">
               <h2 id="tmpl-type-title">템플릿 작성</h2>
               <button className="modal-close" type="button" aria-label="닫기" onClick={() => setFlowStep("none")}>
@@ -821,7 +828,7 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate, o
 
       {flowStep === "name" ? (
         <div className="modal-backdrop">
-          <form className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-name-title" onSubmit={submitTemplate}>
+          <form ref={nameModalRef} tabIndex={-1} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="tmpl-name-title" onSubmit={submitTemplate}>
             <header className="modal-header">
               <h2 id="tmpl-name-title">템플릿 작성</h2>
               <button className="modal-close" type="button" aria-label="닫기" onClick={() => setFlowStep("none")}>
@@ -866,9 +873,11 @@ type ProjectCreateModalProps = {
 };
 
 function ProjectCreateModal({ form, nameError, onClose, onSubmit, onUpdate }: ProjectCreateModalProps) {
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useModalDismiss(onClose, dialogRef);
   return (
     <div className="modal-backdrop">
-      <form className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-create-title" onSubmit={onSubmit}>
+      <form ref={dialogRef} tabIndex={-1} className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-create-title" onSubmit={onSubmit}>
         <header className="modal-header">
           <h2 id="project-create-title">프로젝트 작성</h2>
           <button className="modal-close" type="button" aria-label="닫기" onClick={onClose}>

@@ -4,7 +4,7 @@
 
 ```powershell
 cd "D:\_Project\xd-drawing-system"
-npm test            # Vitest — 현 기준선 49 PASS (M4 완료 시점, 2026-06-24). 직전 M3=43, M2=39, M1=34.
+npm test            # Vitest — 현 기준선 52 PASS (M5 완료 시점, 2026-06-25). 직전 M4=49, M3=43, M2=39, M1=34.
 npm run build       # tsc + vite build
 git diff --check    # 공백 오류 없음
 ```

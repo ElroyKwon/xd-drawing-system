@@ -3407,7 +3407,11 @@ button {
   color: #1f3345;
 }
 
-.tmpl-section-head h3,
+.tmpl-section-heading {
+  margin: 0;
+}
+
+.tmpl-section-head span,
 .tmpl-section-title {
   margin: 0;
   font-size: 17px;

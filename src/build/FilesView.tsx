@@ -1,6 +1,7 @@
 import { ChevronDown, Download, Filter, Folder, Maximize2, MonitorUp, MoreVertical, Search, Upload, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { fileFolders } from "./buildFilesData";
+import { useModalDismiss } from "../hooks/useModalDismiss";
 
 export default function FilesView() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -156,6 +157,9 @@ export default function FilesView() {
 }
 
 function FileUploadModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useModalDismiss(onClose, dialogRef);
+
   function submitUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onClose();
@@ -163,7 +167,7 @@ function FileUploadModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-backdrop">
-      <form className="project-modal file-upload-modal" role="dialog" aria-modal="true" aria-labelledby="file-upload-title" onSubmit={submitUpload}>
+      <form ref={dialogRef} tabIndex={-1} className="project-modal file-upload-modal" role="dialog" aria-modal="true" aria-labelledby="file-upload-title" onSubmit={submitUpload}>
         <header className="modal-header">
           <h2 id="file-upload-title">파일 업로드</h2>
           <div className="modal-header-actions">

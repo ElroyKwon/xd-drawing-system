@@ -22,7 +22,8 @@ import {
   X,
   type LucideIcon
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useModalDismiss } from "./hooks/useModalDismiss";
 import {
   buildProjectAccessRows,
   initialMembers,
@@ -380,9 +381,13 @@ type AddMemberModalProps = {
 };
 
 function AddMemberModal({ form, error, onClose, onSubmit, onUpdate }: AddMemberModalProps) {
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useModalDismiss(onClose, dialogRef);
   return (
     <div className="modal-backdrop">
       <form
+        ref={dialogRef}
+        tabIndex={-1}
         className="project-modal member-modal"
         role="dialog"
         aria-modal="true"
@@ -914,9 +919,11 @@ function PermissionCell() {
 }
 
 function TemplateAddModal({ title, onClose }: { title: string; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalDismiss(onClose, dialogRef);
   return (
     <div className="modal-backdrop">
-      <div className="project-modal member-modal" role="dialog" aria-modal="true" aria-labelledby="template-add-title">
+      <div ref={dialogRef} tabIndex={-1} className="project-modal member-modal" role="dialog" aria-modal="true" aria-labelledby="template-add-title">
         <header className="modal-header">
           <h2 id="template-add-title">{title}</h2>
           <button className="modal-close" type="button" aria-label="닫기" onClick={onClose}>

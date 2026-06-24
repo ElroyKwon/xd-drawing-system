@@ -2,12 +2,20 @@
 
 > 매 재진입 시 `LOOP.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-24, 세션 13 — M4 구현 완료)
+## 현재 상태 (2026-06-25, 세션 14 — M5 완료 = 루프 DONE)
 
-- **단계**: **M4 2D 뷰어 표면 완료**(검증 3렌즈: 구조 차단0 / 접근성·엣지 차단5 적발→전부 수정 / 브라우저 직접 실측 PASS. build PASS, test 49 PASS, 1920·2048 오버플로 음수, 콘솔 0). 체크인 정지(예산 규칙).
-- **다음 행동(다음 세션 진입점)**: `ai-loop` 장착 → `LOOP.md`·이 파일 읽기 → **M5 횡단 레이아웃 호환 + 최종 reconcile**. M5는 ①M1~M4 신규 화면 전체를 1920·2560·macOS 폰트 분기에서 무파손 재확인(특히 **C1 2560 정확 실측** — M1·M3·M4 모두 OS 창 한계로 2048까지만 device 실측, 2560은 정적 근거) ②신선한 비평가가 LOOP Done-When 전 항목 MET/NARROWED/UNMET+증거등급 reconcile. M5 메타프롬프트 미작성 → 공동설계→freeze부터.
-- **M4 4결정(`04-m4-viewer.md` 공동설계)**: ①범위=§E·F·G·H 4영역 전부 한 사이클(affordance 깊이) — §F·G·H는 캡처 존재라 추정금지 원칙 무관, FR-FS-007~010 본 M4가 커버 ②마크업 캔버스=충실한 정적 외관(이미 그려진 모습, 드로잉 없음 — 휘발성 인터랙티브 드로잉은 비대상 명시) ③측정/비교/이슈=풀 affordance(교정 패널+확인모달 / A·B 비교모달+정적 diff 오버레이 / 이슈 검색및추가 3카테고리) ④코드구조=`src/build/viewer/` 하위 컴포넌트 분할.
-- **M4 구현 결과**: `src/build/viewer/` 신규 9컴포넌트(`MarkupToolRail`·`MarkupCanvas`·`MarkupPropertyPanel`·`MarkupListPanel`·`IssueAddPanel`·`MeasurePanel`·`CalibrationModal`·`CompareModal`·`CompareOverlay`) + `viewerData.ts`(데모 마크업5·이슈핀2·카테고리3·측정값2 시드). `SheetViewerShell.tsx`는 헤더+`viewer-grid`+상태 오케스트레이션 셸로 재작성(좌3탭·우측 보조 슬롯·툴레일10·하단 뷰컨트롤). `styles.css`에 "M4 2D 뷰어" 섹션 추가(데모 마크업·viewer-aside·markup-list·measure·compare-overlay 등), `viewer-panel-tabs` 3열화. 회귀 테스트 6건 추가.
+- **단계**: **M5 횡단 레이아웃 호환(FR-LC) + 최종 reconcile 완료. 외관 완성 루프 product Done-When 전 항목 MET → DONE.** 체크인 정지(예산 규칙). build PASS · **test 52 PASS** · 콘솔 0 · diff-check clean · HUMAN_GATE 0건.
+- **M5 3결정(`05-m5-layout-reconcile.md` 공동설계)**: ①범위=검증+발견된 파손 수정+알려진 a11y 부채 정리 ②C1 2560=헤드리스 Chrome 실제 2560 창 측정(device급) ③이월분=신선한 비평가 판정에 일임.
+- **M5 구현 결과**:
+  - **FR-LC 재검증(파손 0)**: zero-dep CDP 하네스(Node v24 내장 WebSocket, 실제 `--window-size` 창)로 M1~M4 전 10화면 1920·2560 측정 → 셸 가로 오버플로 ≤0(대부분 -15), 스크롤 컨테이너 밖 클리핑 0. **C1 2560 누적 부채 device급 해소**(실제 2560 창). 3대 스트레스 화면(알림 매트릭스·11컬럼 파일·4열 뷰어) 스크린샷 육안 겹침 0. 폰트 스택 mac/win 분기 static 확인. **파손 0이라 레이아웃 코드 미변경(surgical).**
+  - **a11y 부채 정리**: 신규 `src/hooks/useModalDismiss.ts`(ESC·포커스 트랩·트리거 복귀 공통 훅, autoFocus 존중, `isConnected` 가드) → 모달 9개 적용(App 3·ProjectAdmin 2·Issues 1·Files 1·viewer 2; viewer는 인라인 ESC를 훅으로 대체). A2 접기 헤더 accordion 교정(`<h3><button><span>`)+`styles.css`. A3/A4는 수용 부채 기록(능동 리팩터 회피).
+  - **검증 2 독립 렌즈**: 적대적 a11y 검증자(차단0/비차단4, B-2만 수정) + Phase 6.5 완결성 비평가(아래).
+  - **회귀 테스트 3건**(accordion·모달 ESC+트리거복귀·포커스 dialog 진입). 49→52 PASS.
+- **Phase 6.5 reconcile 결과**: 신선한 비평가(구현 미참여, PROGRESS 사전 메모 비입력)가 LOOP product Done-When 16항목 전부 **MET**(NARROWED/UNMET 0). **정정 발견**: §M2/§M3가 "의도된 이월(미구현)"로 적었던 FR-FS-004 일반모드 6화면·FR-FS-012/014/015가 실제 코드엔 distinct 화면으로 이미 구현돼 있어 MET(사전 메모가 과보수적이었음). HUMAN_GATE 불필요.
+
+### M4 결과 요약 (2026-06-24, 세션 13)
+- **M4 4결정(`04-m4-viewer.md`)**: ①범위=§E·F·G·H 4영역 전부 한 사이클(affordance 깊이), FR-FS-007~010 본 M4가 커버 ②마크업 캔버스=충실한 정적 외관(드로잉 없음) ③측정/비교/이슈=풀 affordance ④코드구조=`src/build/viewer/` 하위 분할.
+- **M4 구현**: `src/build/viewer/` 신규 9컴포넌트 + `viewerData.ts`. `SheetViewerShell.tsx` 재작성(좌3탭·우측 보조·툴레일10·하단 뷰컨트롤). `styles.css` "M4 2D 뷰어" 섹션. 회귀 6건. 3렌즈 검증(접근성 차단5 적발→수정), 49 PASS.
 
 ### M3 결과 요약 (2026-06-24, 세션 12)
 - M3 4결정(`03-m3-build.md`): ①범위=캡처 강한 3개(홈·시트·파일) 집중 + 나머지 6 이월 ②상호작용=구조 우선 계승 ③분석차트=빈상태 골격+정적 축/범례 ④코드구조=화면별 파일 분할.
@@ -42,13 +50,13 @@
 - [x] M2 Project Admin + 템플릿 상세 (2026-06-24 — 2렌즈 검증 차단0, 체크인 정지)
 - [x] M3 Build 비뷰어 표면 (2026-06-24 — 2렌즈 검증 차단0, 체크인 정지)
 - [x] M4 2D 뷰어 + 마크업/측정/비교/이슈 (2026-06-24 — 3렌즈 검증, 접근성 차단5 적발→수정, 체크인 정지)
-- [ ] M5 횡단 레이아웃 호환 + 최종 reconcile
+- [x] M5 횡단 레이아웃 호환 + 최종 reconcile (2026-06-25 — FR-LC 파손0·C1 2560 device급 해소·a11y 9모달 훅·2렌즈 차단0·Done-When 전항목 MET → **루프 DONE**)
 
 ## 프로세스 완결성 (Done-When과 별도 추적)
 
-- [x] 각 마일스톤 메타프롬프트를 `prompts/`에 freeze했는가 (M1·M2·M3·M4 freeze 완료; M5 미작성)
-- [x] 각 마일스톤 별도 검증팀(2~4 렌즈) 돌렸는가 (M1=2렌즈, M2=2렌즈, M3=2렌즈, M4=3렌즈; M5 예정)
-- [ ] 최종 Phase 6.5 reconcile(신선한 비평가)을 돌렸는가 (M5 최종에서 LOOP Done-When 전 항목 reconcile 예정 — 아직 미실시)
+- [x] 각 마일스톤 메타프롬프트를 `prompts/`에 freeze했는가 (M1·M2·M3·M4·M5 freeze 완료)
+- [x] 각 마일스톤 별도 검증팀(2~4 렌즈) 돌렸는가 (M1=2, M2=2, M3=2, M4=3, M5=2렌즈[적대적 a11y + Phase 6.5 완결성])
+- [x] 최종 Phase 6.5 reconcile(신선한 비평가)을 돌렸는가 (M5에서 LOOP product Done-When 16항목 전부 MET, NARROWED/UNMET 0 — 사전 메모 비입력 독립 판정)
 
 ## 검증 로그
 
@@ -57,4 +65,10 @@
 - **M2 구현 (2026-06-24, 세션 11)**: `npm run build` PASS · `npm test` **39 PASS**(34→시드 반영 기존 2건 정정 + M2 회귀 5건). 검증팀 2 독립 렌즈(구조/엣지·레이아웃/비기능) 모두 **차단 0**. acceptance A1~A9·A7-bis·B1~B4·C1·D1·D2 전부 MET. C1 2560 device 등급 실측 보강(M1 부채 해소: 1920=1906==1906, 2560=2546==2546, 매트릭스 최대 전개 오버플로 0). 상세 `EVIDENCE.md` §M2.
 - **M3 구현 (2026-06-24, 세션 12)**: `npm run build` PASS · `npm test` **43 PASS**(기준선 39 + M3 회귀 4건: 홈 개요/종합 탭전환·종합 6분석카드·시트 행메뉴 팝오버·파일 업로드 모달). 검증팀 2 독립 렌즈(렌즈1=구조 비평가 정적, 렌즈2=브라우저 렌더/레이아웃) 모두 **차단 0**. acceptance A1~A8·B1~B4·C1·D1·D2 전부 MET. C1 1920/2560 device 실측(파일 11컬럼 -15/-16·홈/시트 -16, 넓은 표는 `.table-scroll` 내부 격리). 콘솔 0. 이동 5화면 마크업 바이트 동일(분할 무회귀). 상세 `EVIDENCE.md` §M3.
 - **M4 구현 (2026-06-24, 세션 13)**: `npm run build` PASS · `npm test` **49 PASS**(기준선 43 + M4 회귀 6건: 도구 토글·타입별 속성·3탭·측정+교정·비교 A/B+오버레이·측정패널 자동닫힘). 검증팀 3 독립 렌즈(렌즈1=구조 비평가 차단0, 렌즈2=접근성/엣지 비평가 차단5 적발, 렌즈3=브라우저 직접 실측). 렌즈2 차단5(비교 모드 하단컨트롤 중복·패널 중첩·측정 도구 잔류·activeTool 잔류·모달 ESC 부재) **전부 수정** + 브라우저 재실측으로 해소 확인(dup 2→1). acceptance A1~A8·B1~B4·C1·D1·D2 전부 MET. C1 1920=-16·2048(4열 has-aside)=-15 device 실측, 2560은 고정폭 합산 정적 근거(OS 창 한계). 콘솔 0. 상세 `EVIDENCE.md` §M4.
-- 기준선: M4 종료 시점 **49 PASS**·build PASS.
+- **M5 구현 (2026-06-25, 세션 14)**: `npm run build` PASS · `npm test` **52 PASS**(기준선 49 + M5 회귀 3건: accordion 헤더·모달 ESC+트리거복귀·포커스 dialog 진입). FR-LC 재검증=헤드리스 Chrome 실제 2560 창(zero-dep CDP)으로 전 10화면 1920·2560 셸 오버플로 ≤0·클리핑 0 → **파손 0(레이아웃 코드 미변경)**. C1 2560 누적 부채 device급 해소. a11y=공통 훅 `useModalDismiss` 9모달 적용 + A2 accordion 교정. 검증팀 2 독립 렌즈(적대적 a11y=차단0/비차단4[B-2만 수정], Phase 6.5 완결성=Done-When 16항목 전부 MET). 콘솔 0·diff-check clean. 상세 `EVIDENCE.md` §M5.
+- 기준선: **M5 종료 시점 52 PASS**·build PASS. **루프 DONE(전 마일스톤 완료, product Done-When 전 항목 MET, HUMAN_GATE 0).**
+
+## 잔여 수용 부채 (차단 아님 — 후속 정리 후보)
+- **A3** 샘플 카드 "복사" 칩·"사용자 정의" 서브텍스트(ACC 원본 캡처 부재로 제거 위험), **A4** templateId 이름 문자열(프리필 의존 → 시맨틱 리팩터 위험).
+- **모달 훅 잠재 결함 3건**(현 구성 미트리거): B-1 0-포커서블 모달 트랩 누수, B-3 모달 내 `<select>` ESC가 모달 닫음, **B-4 중첩 모달 동시 ESC**(향후 중첩 모달 도입 시 차단 승격 — 도입 전 훅에 최상위-모달-only 스택 필요).
+- ARIA 미세(tablist roving·tabpanel 연결) — 기존 탭 구현과 일관, 별도 정리 후보.
