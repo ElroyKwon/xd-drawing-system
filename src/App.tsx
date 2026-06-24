@@ -135,6 +135,9 @@ const sampleTemplates = [
   { name: "Owner Operator", access: "소유자" }
 ];
 
+// 템플릿 상세(M2) 진입점 시드 — 허브 템플릿 행이 기본 렌더되어 행 클릭으로 상세에 진입할 수 있어야 한다.
+const seedHubTemplates: HubTemplate[] = [{ id: "template-standard", name: "표준 프로젝트 템플릿" }];
+
 function formatCreatedAt() {
   return "방금 전";
 }
@@ -142,15 +145,18 @@ function formatCreatedAt() {
 export default function App() {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [projectAccessRecords, setProjectAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
-  const [hubTemplates, setHubTemplates] = useState<HubTemplate[]>([]);
+  const [hubTemplates, setHubTemplates] = useState<HubTemplate[]>(seedHubTemplates);
   const [query, setQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<ProjectForm>(emptyForm);
   const [nameError, setNameError] = useState(false);
   const [activeView, setActiveView] = useState<
-    "my-home" | "projects" | "project-templates" | "project-admin" | "build-sheets"
+    "my-home" | "projects" | "project-templates" | "project-admin" | "template-admin" | "build-sheets"
   >("projects");
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjects[0].id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(seedHubTemplates[0].id);
+
+  const selectedTemplate = hubTemplates.find((template) => template.id === selectedTemplateId) ?? hubTemplates[0];
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
 
@@ -252,6 +258,11 @@ export default function App() {
     setHubTemplates((current) => [...current, { id: `template-${Date.now()}`, name }]);
   }
 
+  function openTemplateAdmin(templateId: string) {
+    setSelectedTemplateId(templateId);
+    setActiveView("template-admin");
+  }
+
   const visibleCountLabel =
     filteredProjects.length === 0
       ? `${projects.length}개 중 0개 표시 중`
@@ -264,6 +275,16 @@ export default function App() {
         accessRecords={projectAccessRecords}
         onAccessRecordsChange={setProjectAccessRecords}
         onBackToProjects={() => setActiveView("projects")}
+      />
+    );
+  }
+
+  if (activeView === "template-admin") {
+    return (
+      <ProjectAdminView
+        mode="template"
+        templateName={selectedTemplate?.name ?? "프로젝트 템플릿"}
+        onBackToProjects={() => setActiveView("project-templates")}
       />
     );
   }
@@ -310,6 +331,7 @@ export default function App() {
             hubTemplates={hubTemplates}
             onCreateTemplate={addHubTemplate}
             onUseTemplate={openModalWithTemplate}
+            onOpenTemplate={openTemplateAdmin}
           />
         ) : (
           <section className="project-panel" aria-labelledby="project-list-title">
@@ -626,9 +648,10 @@ type ProjectTemplatesViewProps = {
   hubTemplates: HubTemplate[];
   onCreateTemplate: (name: string) => void;
   onUseTemplate: (templateName: string) => void;
+  onOpenTemplate: (templateId: string) => void;
 };
 
-function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate }: ProjectTemplatesViewProps) {
+function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate, onOpenTemplate }: ProjectTemplatesViewProps) {
   const [flowStep, setFlowStep] = useState<"none" | "type" | "name">("none");
   const [templateKind, setTemplateKind] = useState<"blank" | "existing">("blank");
   const [templateName, setTemplateName] = useState("");
@@ -729,7 +752,16 @@ function ProjectTemplatesView({ hubTemplates, onCreateTemplate, onUseTemplate }:
               <tbody>
                 {hubTemplates.map((template) => (
                   <tr key={template.id} data-testid="template-row">
-                    <td>{template.name}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="project-name-button"
+                        aria-label={`${template.name} 템플릿 열기`}
+                        onClick={() => onOpenTemplate(template.id)}
+                      >
+                        {template.name}
+                      </button>
+                    </td>
                     <td>소유자</td>
                     <td>방금 전</td>
                   </tr>

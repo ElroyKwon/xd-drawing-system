@@ -29,17 +29,16 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 ### 외관 완성 ai-loop (다음 세션 바로 실행)
 
-다음 세션은 `ai-loop` 스킬을 장착하고 `docs/appearance-loop/LOOP.md` → `docs/appearance-loop/PROGRESS.md`를 먼저 읽어 **재시작이 아니라 이어받기**로 진행한다. **M1 완료. 다음은 M2(Project Admin/템플릿 상세) 구현** — 메타프롬프트는 freeze v2(`prompts/02-m2-admin.md`, 3-렌즈 객관 검토 반영)까지 끝났으므로 **공동설계가 아니라 곧바로 구현(Phase 3)부터** 시작한다.
+다음 세션은 `ai-loop` 스킬을 장착하고 `docs/appearance-loop/LOOP.md` → `docs/appearance-loop/PROGRESS.md`를 먼저 읽어 **재시작이 아니라 이어받기**로 진행한다. **M1·M2 완료. 다음은 M3(Build 비뷰어 표면)** — 메타프롬프트가 아직 없으므로 **초안 → `AskUserQuestion` 공동설계 → freeze(Phase 2.5)부터** 시작한 뒤 구현한다.
 
-- ⚠ **구현 착수 전 사용자 게이트**: M2가 큼(5섹션+모드분기+알림 매트릭스 15도구 3단 계층) → 분할(M2a 4섹션+동선 / M2b 알림 매트릭스) vs 단일 유지+단계화를 먼저 확정(`02-m2-admin.md` 말미 §게이트).
 - 목표: 기존 로컬 셸을 카탈로그 구조 수준으로 끌어올려 외관 완성(없는 화면 만들기 아님).
 - Freeze된 결정: ① 충실도=카탈로그 구조 완성(픽셀 일치 비대상) ② 검증=구조 체크리스트+브라우저 스크린샷+test/build ③ 예산=마일스톤마다 체크인.
-- 마일스톤: ~~M1 Hub~~(완료) → **M2 Project Admin+템플릿 상세** → M3 Build 비뷰어 → M4 2D 뷰어(마크업/측정/비교/이슈) → M5 레이아웃 호환+최종 reconcile (`docs/appearance-loop/PLAN.md`).
+- 마일스톤: ~~M1 Hub~~(완료) → ~~M2 Project Admin+템플릿 상세~~(완료) → **M3 Build 비뷰어** → M4 2D 뷰어(마크업/측정/비교/이슈) → M5 레이아웃 호환+최종 reconcile (`docs/appearance-loop/PLAN.md`).
 - 영속화·실연동·유료 SDK·DWG 렌더·배포는 HUMAN_GATE — affordance만.
 
 직전 세션(2026-06-24) 완료:
 - **M1 Hub 표면 완료**(`f627cd1`): 샘플 템플릿 접기/펴기, 카드 "사용하여 생성"→작성 모달 프리필, 드롭다운 옵션. 검증팀 2렌즈 PASS, build PASS·test 34 PASS.
-- **M2 메타프롬프트 freeze v2**(`prompts/02-m2-admin.md`): 공동설계 3결정 + 캡처/구현/스코프 3-렌즈 객관 검토로 차단 7건 수정(알림 15도구·3단 계층, 진입점 시드, App state 분기, 네비 타입 격리, FR-FS-004 이월 추적 등).
+- **M2 Project Admin 템플릿 상세 완료**: 진입동선(시드 행 클릭)+모드분기(`template-admin`)+측면 네비 2그룹+5섹션(구성·템플릿/프로젝트 구성원·회사·알림)+알림 매트릭스 3단 계층(기타 15도구·필요한 작업 9도구·자료전송·주파수 4종). 게이트=단일 M2+매트릭스 단계화(확정). 2 독립 렌즈 검증 차단0, build PASS·test 39 PASS, C1 2560 device 실측 보강. 상세 `EVIDENCE.md` §M2.
 
 남은 작업 큐:
 

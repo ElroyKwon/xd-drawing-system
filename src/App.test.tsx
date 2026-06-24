@@ -41,7 +41,7 @@ describe("initial setup project list and create modal", () => {
     expect(screen.queryByRole("tab", { name: "허브 설정" })).not.toBeInTheDocument();
   });
 
-  it("opens the Hub-level project template screen with sample templates and hub template empty state", async () => {
+  it("opens the Hub-level project template screen with sample templates and a seeded hub template row", async () => {
     const { user } = renderApp();
 
     await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
@@ -52,7 +52,8 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Owner Operator")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "허브 템플릿" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 템플릿 작성" })).toBeInTheDocument();
-    expect(screen.getByText("프로젝트 템플릿 구성원이 아니십니까?")).toBeInTheDocument();
+    expect(screen.getByTestId("template-row")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "표준 프로젝트 템플릿 템플릿 열기" })).toBeInTheDocument();
   });
 
   it("opens the project creation modal prefilled with the chosen sample template", async () => {
@@ -81,7 +82,7 @@ describe("initial setup project list and create modal", () => {
     await user.click(within(nameDialog).getByRole("button", { name: "템플릿 작성" }));
 
     expect(screen.queryByRole("dialog", { name: "템플릿 작성" })).not.toBeInTheDocument();
-    expect(screen.getByTestId("template-row")).toBeInTheDocument();
+    expect(screen.getAllByTestId("template-row")).toHaveLength(2);
     expect(screen.getByText("test1")).toBeInTheDocument();
   });
 
@@ -241,5 +242,88 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Empty Build Project")).toBeInTheDocument();
     expect(screen.getByText("아직 등록된 시트가 없습니다.")).toBeInTheDocument();
     expect(screen.queryByText("A001")).not.toBeInTheDocument();
+  });
+});
+
+describe("template detail (Project Admin template mode)", () => {
+  async function openTemplateAdmin(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("tab", { name: "프로젝트 템플릿" }));
+    await user.click(screen.getByRole("button", { name: "표준 프로젝트 템플릿 템플릿 열기" }));
+  }
+
+  it("opens template detail from a hub template row and returns to the templates tab", async () => {
+    const { user } = renderApp();
+    await openTemplateAdmin(user);
+
+    expect(screen.getByText("템플릿 관리")).toBeInTheDocument();
+    expect(screen.getAllByText("표준 프로젝트 템플릿").length).toBeGreaterThan(0);
+    expect(screen.getByText("템플릿 설정")).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 설정")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "구성" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "프로젝트 템플릿" }));
+
+    expect(screen.getByRole("tab", { name: "프로젝트 템플릿", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "샘플 템플릿" })).toBeInTheDocument();
+    expect(screen.queryByText("템플릿 관리")).not.toBeInTheDocument();
+  });
+
+  it("switches between the five template detail sections as distinct screens", async () => {
+    const { user } = renderApp();
+    await openTemplateAdmin(user);
+
+    expect(screen.getByRole("heading", { name: "구성" })).toBeInTheDocument();
+    expect(screen.getByText("템플릿 게시")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "템플릿 구성원" }));
+    expect(screen.getByRole("heading", { name: "템플릿 구성원" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "프로젝트 구성원" }));
+    expect(screen.getByRole("heading", { name: "프로젝트 구성원" })).toBeInTheDocument();
+    expect(screen.getByText("표시할 프로젝트 구성원이 없습니다.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "회사" }));
+    expect(screen.getByRole("heading", { name: "회사" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "알림" }));
+    expect(screen.getByRole("heading", { name: "프로젝트 알림 설정" })).toBeInTheDocument();
+  });
+
+  it("expands 기타 알림 to reveal the 15 notification tools including 자료전송", async () => {
+    const { user } = renderApp();
+    await openTemplateAdmin(user);
+    await user.click(screen.getByRole("button", { name: "알림" }));
+
+    expect(screen.queryAllByTestId("notify-tool-row")).toHaveLength(0);
+
+    await user.click(screen.getByRole("button", { name: "기타 알림 전개" }));
+
+    expect(screen.getAllByTestId("notify-tool-row")).toHaveLength(15);
+    expect(screen.getByText("자료전송")).toBeInTheDocument();
+  });
+
+  it("expands 필요한 작업 알림 to 9 tools and a tool to its event rows", async () => {
+    const { user } = renderApp();
+    await openTemplateAdmin(user);
+    await user.click(screen.getByRole("button", { name: "알림" }));
+
+    await user.click(screen.getByRole("button", { name: "필요한 작업 알림 전개" }));
+    expect(screen.getAllByTestId("notify-tool-row")).toHaveLength(9);
+
+    await user.click(screen.getByRole("button", { name: "양식 전개" }));
+    expect(screen.getByText("Form assigned to you")).toBeInTheDocument();
+  });
+
+  it("keeps the general Project Admin path unchanged after adding template mode", async () => {
+    const { user } = renderApp();
+    await user.click(screen.getByRole("button", { name: "Study_Project 프로젝트 열기" }));
+
+    expect(screen.getByText("Project 레벨")).toBeInTheDocument();
+    expect(screen.getByText("프로젝트 관리")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
+    ["구성원", "회사", "브리지", "액티비티", "알림", "위치", "설정"].forEach((item) => {
+      expect(screen.getByRole("button", { name: item })).toBeInTheDocument();
+    });
+    expect(screen.queryByText("템플릿 관리")).not.toBeInTheDocument();
   });
 });
