@@ -6,5 +6,6 @@ ezdxf>=1.4.0
 matplotlib>=3.8.0
 pillow>=10.0.0
 pymupdf>=1.26.0
-# TypeDB 적재용 (Docker TypeDB 3.7.3 기동 시 사용; 없으면 JSON store fallback)
-typedb-driver>=3.7.0
+# TypeDB 적재용 (Docker TypeDB 3.7.x 기동 시 사용; 없으면 JSON store fallback)
+# 3.7.0 고정 — 3.11.x는 DriverOptions API가 바뀌어 서버 3.7.x와 불일치
+typedb-driver==3.7.0

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -51,11 +52,23 @@ class JsonDrawingStore(DrawingStore):
     def _read(self) -> dict:
         try:
             return json.loads(self._path.read_text(encoding="utf-8"))
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError:
+            # 손상 인덱스는 조용히 삼키지 않고 백업해 유실을 가시화한다.
+            backup = self._path.with_name(self._path.name + ".corrupt")
+            try:
+                os.replace(str(self._path), str(backup))
+                logger.error("index corrupt → backed up to %s", backup)
+            except OSError:
+                pass
             return {}
 
     def _write(self, data: dict) -> None:
-        self._path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        # atomic write: 임시파일에 쓴 뒤 교체(부분 쓰기/lost-update 방지).
+        tmp = self._path.with_name(self._path.name + ".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(str(tmp), str(self._path))
 
     def add_drawing(self, meta: dict) -> None:
         with self._lock:
@@ -99,7 +112,7 @@ class TypeDBDrawingStore(DrawingStore):
         self._db = config.TYPEDB_DB
         # 연결 시도 (실패 시 예외 → 팩토리가 json으로 폴백)
         self._driver = TypeDB.driver(
-            self._addr, Credentials("admin", "password"), DriverOptions(False, None)
+            self._addr, Credentials("admin", "password"), DriverOptions(is_tls_enabled=False)
         )
         self._ensure_db()
         logger.info("TypeDB connected: %s/%s", self._addr, self._db)
@@ -130,6 +143,8 @@ class TypeDBDrawingStore(DrawingStore):
                 'has conversion_status "pending";'
             ).resolve()
             tx.commit()
+        # 조회/시트는 JSON 미러를 권위로 쓰므로 미러에도 반드시 적재한다(누락 시 조회 깨짐).
+        _MIRROR.add_drawing(meta)
 
     def get_drawing(self, file_id: str) -> Optional[dict]:
         # walking skeleton: 메타 권위는 JSON과 미러. TypeDB 조회는 후속(S2+)에서 강화.
@@ -161,13 +176,25 @@ def _esc(s: str) -> str:
 _MIRROR = JsonDrawingStore()
 
 
+# 요청마다 새 인스턴스를 만들면 인스턴스별 Lock이 상호배제를 못 해 동시 업로드가
+# _index.json을 손상시킨다(검증 BLOCKER-1). 단일 싱글톤으로 Lock과 상태를 공유한다.
+_store_singleton: Optional[DrawingStore] = None
+
+
 def get_store() -> DrawingStore:
+    global _store_singleton
+    if _store_singleton is not None:
+        return _store_singleton
     backend = config.STORE_BACKEND
+    chosen: Optional[DrawingStore] = None
     if backend in ("typedb", "auto"):
         try:
-            return TypeDBDrawingStore()
+            chosen = TypeDBDrawingStore()
         except Exception as e:  # noqa: BLE001
             if backend == "typedb":
                 raise
             logger.warning("TypeDB unavailable, falling back to JSON store: %s", e)
-    return JsonDrawingStore()
+    if chosen is None:
+        chosen = JsonDrawingStore()
+    _store_singleton = chosen
+    return _store_singleton

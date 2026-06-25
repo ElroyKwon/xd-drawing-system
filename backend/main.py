@@ -4,6 +4,7 @@
 (또는 python -m uvicorn ...)
 """
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +37,6 @@ async def health():
     return {
         "status": "ok",
         "store_backend": store.backend_name,
-        "oda_available": bool(config.ODA_EXE),
+        "oda_available": os.path.exists(config.ODA_EXE),
         "uploads_dir": str(config.UPLOADS_DIR),
     }

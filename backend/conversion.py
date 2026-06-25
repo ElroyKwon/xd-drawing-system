@@ -106,13 +106,15 @@ def _render_layout_png(doc, layout, out_png: str, dpi: int) -> None:
     from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
     fig = plt.figure(dpi=dpi)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_axis_off()
-    ctx = RenderContext(doc)
-    backend = MatplotlibBackend(ax)
-    Frontend(ctx, backend).draw_layout(layout, finalize=True)
-    fig.savefig(out_png, dpi=dpi, facecolor="white")
-    plt.close(fig)
+    try:
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.set_axis_off()
+        ctx = RenderContext(doc)
+        backend = MatplotlibBackend(ax)
+        Frontend(ctx, backend).draw_layout(layout, finalize=True)
+        fig.savefig(out_png, dpi=dpi, facecolor="white")
+    finally:
+        plt.close(fig)  # 예외 시에도 figure 누수 방지
 
 
 def render_dxf_sheets(dxf_path: str, file_id: str, base_dir: str, dpi: int = None) -> tuple:

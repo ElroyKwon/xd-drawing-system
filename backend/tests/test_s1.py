@@ -1,6 +1,9 @@
-"""S1 백엔드 회귀: JSON store roundtrip + PDF 렌더 파이프라인 (외부 파일 비의존)."""
+"""S1 백엔드 회귀: JSON store roundtrip + PDF 렌더 + BLOCKER 회귀 방지."""
+import importlib
 import os
 import sys
+
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # backend/
 
@@ -55,3 +58,28 @@ def test_pdf_render_pipeline(tmp_path):
     assert sheets[0].source == "pdf-page"
     assert os.path.exists(sheets[0].png_path)
     assert os.path.getsize(sheets[0].png_path) > 0
+
+
+def test_project_name_traversal_rejected():
+    """BLOCKER-2 회귀: project_name이 uploads 밖을 벗어나면 400."""
+    from fastapi import HTTPException
+    import routes_drawing
+    importlib.reload(routes_drawing)
+    for bad in ["../x", "C:/x", "/etc/x", "a/b", "a\\b", "..", ""]:
+        with pytest.raises(HTTPException):
+            routes_drawing._validate_project_name(bad)
+    # 정상(영문/한글/공백)은 통과
+    routes_drawing._validate_project_name("Study_Project")
+    routes_drawing._validate_project_name("청주 R-Center (1)")
+
+
+def test_store_is_singleton(tmp_path, monkeypatch):
+    """BLOCKER-1 회귀: get_store()는 단일 인스턴스를 공유해야 Lock이 유효하다."""
+    monkeypatch.setattr(config, "UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr(config, "STORE_BACKEND", "json")
+    import store as store_mod
+    importlib.reload(store_mod)
+    a = store_mod.get_store()
+    b = store_mod.get_store()
+    assert a is b
+    assert a.backend_name == "json"

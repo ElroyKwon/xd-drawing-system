@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +18,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/drawings", tags=["drawings"])
 
 SUPPORTED = {"dwg", "dxf", "pdf"}
+_PROJECT_NAME_RE = re.compile(r"[\w .()\-]{1,80}", re.UNICODE)
+
+
+def _validate_project_name(name: str) -> None:
+    # project_name이 uploads 밖으로 탈출(절대경로/../)하는 것을 차단(검증 BLOCKER-2).
+    if (
+        not name
+        or os.path.isabs(name)
+        or ".." in name
+        or "/" in name
+        or "\\" in name
+        or not _PROJECT_NAME_RE.fullmatch(name)
+    ):
+        raise HTTPException(400, f"잘못된 project_name: {name!r}")
 
 
 def _png_url(abs_png: str) -> str | None:
@@ -51,12 +67,17 @@ async def upload_drawing(
     project_name: str = Form("Study_Project"),
     version: str = Form("1.0"),
 ):
+    _validate_project_name(project_name)
     ext = Path(file.filename or "").suffix.lower().lstrip(".")
     if ext not in SUPPORTED:
         raise HTTPException(400, f"지원하지 않는 형식: .{ext} (지원: {sorted(SUPPORTED)})")
 
     file_id = str(uuid.uuid4())
-    base_dir = Path(config.UPLOADS_DIR) / project_name / file_id
+    uploads_root = Path(config.UPLOADS_DIR).resolve()
+    base_dir = uploads_root / project_name / file_id
+    # 이중 방어: 결합 결과가 uploads 하위가 아니면 거부.
+    if not base_dir.resolve().is_relative_to(uploads_root):
+        raise HTTPException(400, "project_name 경로 위반")
     base_dir.mkdir(parents=True, exist_ok=True)
     dest = base_dir / f"original.{ext}"
     data = await file.read()
