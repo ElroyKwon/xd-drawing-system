@@ -2,7 +2,21 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-25, 세션 3 — S2 시트 레지스터 DONE)
+## 현재 상태 (2026-06-25, 세션 4 — S3 파일/폴더 관리 DONE)
+
+- **단계**: **S3 DONE.** 폴더 트리 CRUD + 명시적 버전세트 + 권한 메타(표시·편집) + 다운로드/삭제. 정적 `buildFilesData` 11폴더 시드 제거 → 백엔드 seed-on-create(ACC 기본 9폴더+PDFs). 메타프롬프트 `prompts/04-s3-files-folders.md` FROZEN, acceptance **D1~D9 전부 MET**(EVIDENCE 하단 S3 섹션). **미커밋(이 세션에서 커밋 예정).**
+- **공동설계 4결정(freeze)**: 권한=메타+표시까지(인증/RBAC 강제는 S7) · 영속=DrawingStore 확장(folder 엔티티+drawing.folder_id, Json·TypeDB 양 백엔드) · 버전=명시적 버전세트(보관·이력·최신 1행) · 폴더 시드=백엔드 seed-on-create.
+- **구현 요약**: backend `store.py`(folder CRUD+버전세트 `add_version`/`list_versions`/`delete_drawing`+`list_drawings(folder_id,latest_only)`, TypeDB는 _MIRROR 위임), `routes_files.py`(신설 폴더 CRUD), `routes_drawing.py`(`/versions`·`/download`·DELETE·folder_id·share 상속). 프론트 `drawings.ts`(folder/version/download API+`Folder`·`share_status` 타입), `FilesView.tsx`(전면 개편: 실 폴더트리·CRUD·폴더 타깃 업로드·실데이터 테이블·행메뉴·버전이력 모달·공유 편집), `buildFilesData.ts` 삭제.
+- **검증**: build PASS · npm test **65**(FilesView 8 추가) · backend pytest **28**(S3 13) · git diff clean · 브라우저 e2e(seed트리·폴더생성·폴더타깃 업로드·버전 v2+이력·다운로드·삭제·콘솔0, 스크린샷 `evidence/s3-*.png`).
+- **독립 검증팀 3렌즈**: 백엔드 적대적(BLOCKER-1 레거시 버전 중복·MAJOR-2 version_no 경합·MAJOR-3 PATCH parent 미검증·MINOR-4 delete depth 적발)·프론트 비기능(D7 파일 공유 대리표시·편집UI 부재 적발)·Done-When 비평가(D7 NARROWED). **전부 수리·재검증**(회귀 테스트 6건 추가, e2e 재확인).
+- **남은 위험**(비차단): 설명 컬럼 placeholder(Drawing description 모델 부재) · TypeDB folder 직접쿼리화 후속 · 파일 단위 공유 override(현재 폴더 상속) · 인증/RBAC 강제=S7.
+
+### 세션 4 진입점 (S3 메타프롬프트)
+- `prompts/04-s3-files-folders.md` FROZEN(공동설계 4결정). 다음=S4(마크업·측정·비교 실연산+영속).
+
+---
+
+## 이전 상태 (2026-06-25, 세션 3 — S2 시트 레지스터 DONE)
 
 - **단계**: **S2 DONE.** PDF 페이지 분할→시트 목록 실데이터 완전 교체 + 타이틀블록 휴리스틱(번호/제목/공종+폴백) + paperspace 다중 분리. 메타프롬프트 `prompts/03-s2-sheet-register.md` FROZEN, acceptance **C1~C8 전부 MET**(EVIDENCE 하단 S2 섹션). **커밋 `877518d`.**
 - **구현 요약**: backend `sheet_meta.py`(휴리스틱 추출), `conversion.py`(PDF 페이지 분할 메타·paperspace 분리·Sheet 메타필드), `GET /api/drawings` `_with_urls`(png_url 부여·png_path 제거). 프론트 `BuildSheetsView`(실데이터 fetch+poll·정적 시드 제거·공종 필터·자연정렬), `drawingsToSheets`, `SheetDisciplineCode` string화.
@@ -52,11 +66,12 @@
   - 변환 도구체인 검증됨: ODA File Converter(설치), ezdxf, PyMuPDF(fitz), matplotlib, Pillow.
   - 테스트 도면: `D:\_Project` 전역 dwg 822·pdf 901·dxf 25. xd 레포 내 `reference/old-prototypes/.../dwg/`에 다분야 도면.
 
-## 다음 작업 — S1·S1.5·S2 DONE, 다음은 S3
+## 다음 작업 — S1·S1.5·S2·S3 DONE, 다음은 S4
 
-**S1 완료**(e146fc8+f7b1a99). **S1.5 완료**(`2284512`). **S2 완료**(`877518d`, C1~C8 MET, 3렌즈 검증). 다음 진입:
-- **S3 파일/폴더 관리 + 버전 + 권한**: ACC Files(카탈로그 I). `buildFilesData` 11폴더 정적 시드 → 실 폴더트리 CRUD + 업로드 + **버전 히스토리**(S2에서 연기) + 다운로드/삭제 + 폴더 권한. → `prompts/04-*.md` 공동설계·freeze 후 ai-loop.
-- (참고) S2 후속 부채: 멀티페이지 타이틀블록 강추출 개선·빈 paperspace modelspace 자동분할·TypeDB 직접쿼리화 — 별도 요구 시.
+**S1 완료**(e146fc8+f7b1a99). **S1.5 완료**(`2284512`). **S2 완료**(`877518d`). **S3 완료**(D1~D9 MET, 3렌즈+e2e 검증, 이 세션 커밋). 다음 진입:
+- **S4 마크업·측정·비교 실연산 + 영속**: 뷰어 affordance 실동작화. 마크업 그리기/저장(영속), 측정(픽셀↔실척 캘리브레이션 연산), 시트 비교(두 버전 실제 오버레이/diff). `viewerData` 정적 → 영속. → `prompts/05-*.md` 공동설계·freeze 후 ai-loop.
+- (참고) S3 후속 부채: 설명 컬럼 실데이터(Drawing description 모델 추가)·TypeDB folder 직접쿼리화·파일 단위 공유 override·인증/RBAC 강제(S7).
+- (참고) S2 후속 부채: 멀티페이지 타이틀블록 강추출·빈 paperspace modelspace 자동분할·TypeDB 직접쿼리화.
 
 ### ⚙️ 다음 세션 재기동 방법 (중요)
 1. **TypeDB 컨테이너**: `docker ps`로 `typedb-server`(typedb/typedb:3.7.3, 포트 1729) 확인. 없으면 `docker start typedb-server`(또는 Study_TypeDB README의 run 명령).

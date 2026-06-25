@@ -33,6 +33,27 @@ export type Drawing = {
   error?: string | null;
   sheets: BackendSheet[];
   scan?: Record<string, unknown>;
+  // S3 버전세트/폴더/권한
+  version_set_id?: string;
+  version_no?: number;
+  is_latest?: boolean;
+  folder_id?: string | null;
+  share_status?: string;
+  uploaded_by?: string;
+};
+
+// S3: 폴더 트리 + 권한 메타
+export type FolderPermission = { role: string; level: string };
+export type Folder = {
+  folder_id: string;
+  project_name: string;
+  name: string;
+  parent_id: string | null;
+  share_status: string;
+  permissions: FolderPermission[];
+  updated_at: string;
+  updated_by: string;
+  seeded?: boolean;
 };
 
 /** png_url(상대) → 백엔드 절대 URL */
@@ -40,15 +61,108 @@ export function sheetImageUrl(sheet: BackendSheet): string | undefined {
   return sheet.png_url ? `${BACKEND_BASE}${sheet.png_url}` : undefined;
 }
 
-export async function uploadDrawing(file: File, projectName = "Study_Project"): Promise<Drawing> {
+export async function uploadDrawing(
+  file: File,
+  projectName = "Study_Project",
+  folderId?: string | null,
+): Promise<Drawing> {
   const form = new FormData();
   form.append("file", file);
   form.append("project_name", projectName);
+  if (folderId) form.append("folder_id", folderId);
   const res = await fetch(`${BACKEND_BASE}/api/drawings`, { method: "POST", body: form });
   if (!res.ok) {
     throw new Error(`업로드 실패 (${res.status}): ${await res.text()}`);
   }
   return res.json();
+}
+
+// --- S3: 버전세트 ---
+
+/** 같은 논리 파일에 새 버전을 명시적으로 추가(이전 버전 보관). */
+export async function addDrawingVersion(fileId: string, file: File): Promise<Drawing> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BACKEND_BASE}/api/drawings/${fileId}/versions`, { method: "POST", body: form });
+  if (!res.ok) {
+    throw new Error(`버전 추가 실패 (${res.status}): ${await res.text()}`);
+  }
+  return res.json();
+}
+
+/** 한 version_set의 모든 버전(version_no 내림차순). */
+export async function listDrawingVersions(fileId: string): Promise<Drawing[]> {
+  const res = await fetch(`${BACKEND_BASE}/api/drawings/${fileId}/versions`);
+  if (!res.ok) {
+    throw new Error(`버전 이력 실패 (${res.status})`);
+  }
+  return res.json();
+}
+
+/** 원본 파일 다운로드 URL. */
+export function downloadUrl(fileId: string): string {
+  return `${BACKEND_BASE}/api/drawings/${fileId}/download`;
+}
+
+export async function deleteDrawing(fileId: string): Promise<void> {
+  const res = await fetch(`${BACKEND_BASE}/api/drawings/${fileId}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`삭제 실패 (${res.status})`);
+  }
+}
+
+// --- S3: 폴더 트리 ---
+
+export async function listFolders(projectName = "Study_Project"): Promise<Folder[]> {
+  const url = new URL(`${BACKEND_BASE}/api/folders`);
+  url.searchParams.set("project_name", projectName);
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    throw new Error(`폴더 목록 실패 (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function createFolder(input: {
+  projectName?: string;
+  name: string;
+  parentId?: string | null;
+}): Promise<Folder> {
+  const res = await fetch(`${BACKEND_BASE}/api/folders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      project_name: input.projectName ?? "Study_Project",
+      name: input.name,
+      parent_id: input.parentId ?? null,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`폴더 생성 실패 (${res.status}): ${await res.text()}`);
+  }
+  return res.json();
+}
+
+export async function updateFolder(
+  folderId: string,
+  patch: { name?: string; share_status?: string; parent_id?: string | null; permissions?: FolderPermission[] },
+): Promise<Folder> {
+  const res = await fetch(`${BACKEND_BASE}/api/folders/${folderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    throw new Error(`폴더 수정 실패 (${res.status}): ${await res.text()}`);
+  }
+  return res.json();
+}
+
+export async function deleteFolder(folderId: string): Promise<void> {
+  const res = await fetch(`${BACKEND_BASE}/api/folders/${folderId}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`폴더 삭제 실패 (${res.status})`);
+  }
 }
 
 // --- S1.5 ②오픈소스 벡터 경로 ---
@@ -110,10 +224,19 @@ export function drawingsToSheets(drawings: Drawing[], projectId: string): Sheet[
   return sheets;
 }
 
-export async function listDrawings(projectName?: string): Promise<Drawing[]> {
+export async function listDrawings(
+  projectName?: string,
+  opts?: { folderId?: string | null; latestOnly?: boolean },
+): Promise<Drawing[]> {
   const url = new URL(`${BACKEND_BASE}/api/drawings`);
   if (projectName) {
     url.searchParams.set("project_name", projectName);
+  }
+  if (opts?.folderId !== undefined && opts.folderId !== null) {
+    url.searchParams.set("folder_id", opts.folderId);
+  }
+  if (opts?.latestOnly) {
+    url.searchParams.set("latest_only", "true");
   }
   const res = await fetch(url.toString());
   if (!res.ok) {

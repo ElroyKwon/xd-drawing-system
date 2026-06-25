@@ -2130,6 +2130,107 @@ button {
   font-weight: 800;
 }
 
+/* S3: 폴더 트리 헤더(새 폴더 버튼) + 인라인 새 폴더 입력 */
+.folder-tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.folder-tree-head strong {
+  margin-bottom: 0;
+}
+.folder-new-inline {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.folder-new-inline input {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.folder-new-inline .primary-action {
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+/* S3: 폴더 브레드크럼 + 공유상태 칩 + 행 메뉴 */
+.files-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #33495b;
+  font-weight: 600;
+}
+.share-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.share-shared {
+  color: #166534;
+  background: #dcfce7;
+}
+.share-private {
+  color: #9a3412;
+  background: #ffedd5;
+}
+.file-name-link {
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  cursor: pointer;
+}
+.files-row-menu-cell {
+  position: relative;
+}
+.row-menu {
+  position: absolute;
+  right: 8px;
+  top: 32px;
+  z-index: 20;
+  min-width: 150px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+.row-menu li button,
+.row-menu li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  color: #33495b;
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.row-menu li button:hover,
+.row-menu li a:hover {
+  background: #f1f5f9;
+}
+.files-empty {
+  padding: 28px 16px;
+  color: #5b6b78;
+  text-align: center;
+}
+
 .files-table-panel,
 .issue-list-panel,
 .issue-inspector,
