@@ -43,6 +43,31 @@ export async function uploadDrawing(file: File, projectName = "Study_Project"): 
   return res.json();
 }
 
+// --- S1.5 ②오픈소스 벡터 경로 ---
+
+/** 벡터 폴리라인(선) — DXF 엔티티를 평탄화한 2D 좌표열. */
+export type VectorStroke = { pts: [number, number][]; color: string; layer: string; width: number };
+/** 벡터 채움 폴리곤(HATCH·SOLID·텍스트 path 등). */
+export type VectorFill = { pts: [number, number][]; color: string; layer: string };
+
+export type VectorData = {
+  strokes: VectorStroke[];
+  fills: VectorFill[];
+  points: { x: number; y: number; color: string; layer: string }[];
+  layers: string[];
+  bbox: [number, number, number, number] | null;
+  stats: Record<string, unknown>;
+};
+
+/** DXF에서 추출한 벡터 엔티티(②경로). PDF/변환 미완이면 4xx. */
+export async function fetchVector(fileId: string): Promise<VectorData> {
+  const res = await fetch(`${BACKEND_BASE}/api/drawings/${fileId}/vector`);
+  if (!res.ok) {
+    throw new Error(`벡터 조회 실패 (${res.status}): ${await res.text()}`);
+  }
+  return res.json();
+}
+
 export async function getDrawing(fileId: string): Promise<Drawing> {
   const res = await fetch(`${BACKEND_BASE}/api/drawings/${fileId}`);
   if (!res.ok) {

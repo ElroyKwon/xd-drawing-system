@@ -93,3 +93,136 @@
   color: #c0392b;
   font-size: 12px;
 }
+
+/* === S1.5 ②벡터 렌더러 + 렌더 엔진 토글 === */
+.vector-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+.vector-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+.vector-canvas:active {
+  cursor: grabbing;
+}
+.vector-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #cbd5e0;
+  font-size: 13px;
+  pointer-events: none;
+}
+.vector-error {
+  color: #f6a6a6;
+  padding: 16px;
+  text-align: center;
+}
+.vector-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(33, 37, 43, 0.92);
+  border: 1px solid #3a3f47;
+  border-radius: 10px;
+}
+.vector-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.vector-controls button:hover {
+  background: #3a3f47;
+}
+.vector-controls button[aria-pressed="true"] {
+  background: #2b6cb0;
+  color: #fff;
+}
+.vector-layers {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  max-height: 60%;
+  width: 220px;
+  overflow: auto;
+  padding: 10px 12px;
+  background: rgba(33, 37, 43, 0.96);
+  border: 1px solid #3a3f47;
+  border-radius: 10px;
+  color: #e2e8f0;
+}
+.vector-layers strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #a0aec0;
+}
+.vector-layers ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.vector-layers label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.render-engine-toggle {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(33, 37, 43, 0.92);
+  border: 1px solid #3a3f47;
+  border-radius: 9px;
+}
+.render-engine-toggle button {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #cbd5e0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.render-engine-toggle button[aria-pressed="true"] {
+  background: #2b6cb0;
+  color: #fff;
+}
+
+/* 렌더 엔진 토글(absolute)을 stage 기준으로 앵커. */
+.viewer-stage {
+  position: relative;
+}

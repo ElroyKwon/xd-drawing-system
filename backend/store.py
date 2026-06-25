@@ -36,6 +36,7 @@ class DrawingStore(ABC):
     def update_conversion(self, file_id: str, status: str, *,
                           sheets: Optional[list] = None,
                           scan: Optional[dict] = None,
+                          dxf_path: Optional[str] = None,
                           error: Optional[str] = None) -> None: ...
 
 
@@ -86,7 +87,7 @@ class JsonDrawingStore(DrawingStore):
         rows.sort(key=lambda r: r.get("upload_date", ""), reverse=True)
         return rows
 
-    def update_conversion(self, file_id, status, *, sheets=None, scan=None, error=None):
+    def update_conversion(self, file_id, status, *, sheets=None, scan=None, dxf_path=None, error=None):
         with self._lock:
             data = self._read()
             row = data.get(file_id)
@@ -97,6 +98,8 @@ class JsonDrawingStore(DrawingStore):
                 row["sheets"] = sheets
             if scan is not None:
                 row["scan"] = scan
+            if dxf_path is not None:
+                row["dxf_path"] = dxf_path
             if error is not None:
                 row["error"] = error
             self._write(data)
@@ -153,7 +156,7 @@ class TypeDBDrawingStore(DrawingStore):
     def list_drawings(self, project_name: Optional[str] = None) -> list:
         return _MIRROR.list_drawings(project_name)
 
-    def update_conversion(self, file_id, status, *, sheets=None, scan=None, error=None):
+    def update_conversion(self, file_id, status, *, sheets=None, scan=None, dxf_path=None, error=None):
         from typedb.driver import TransactionType
         try:
             with self._driver.transaction(self._db, TransactionType.WRITE) as tx:
@@ -165,7 +168,7 @@ class TypeDBDrawingStore(DrawingStore):
                 tx.commit()
         except Exception as e:  # noqa: BLE001
             logger.error("typedb update_conversion: %s", e)
-        _MIRROR.update_conversion(file_id, status, sheets=sheets, scan=scan, error=error)
+        _MIRROR.update_conversion(file_id, status, sheets=sheets, scan=scan, dxf_path=dxf_path, error=error)
 
 
 def _esc(s: str) -> str:

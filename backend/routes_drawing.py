@@ -9,10 +9,12 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 import config
 from conversion import process_drawing
 from store import get_store
+from vector import get_vector_json
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/drawings", tags=["drawings"])
@@ -56,7 +58,8 @@ def _run_conversion(file_id: str, file_path: str, file_format: str, base_dir: st
     store.update_conversion(file_id, "converting")
     res = process_drawing(file_path, file_id, file_format, base_dir)
     store.update_conversion(
-        file_id, res.status, sheets=res.sheets, scan=res.scan, error=res.error
+        file_id, res.status, sheets=res.sheets, scan=res.scan,
+        dxf_path=res.dxf_path, error=res.error,
     )
 
 
@@ -112,3 +115,32 @@ async def get_drawing(file_id: str):
     if not row:
         raise HTTPException(404, f"도면 없음: {file_id}")
     return _with_urls(row)
+
+
+@router.get("/{file_id}/vector")
+async def get_drawing_vector(file_id: str):
+    """②오픈소스 벡터 경로: DXF에서 추출한 벡터 엔티티 JSON.
+
+    DWG/DXF만 지원(PDF는 ①래스터 경로 유지). dxf_path는 uploads 내부여야 한다.
+    """
+    row = get_store().get_drawing(file_id)
+    if not row:
+        raise HTTPException(404, f"도면 없음: {file_id}")
+    dxf_path = row.get("dxf_path")
+    if not dxf_path:
+        raise HTTPException(400, "벡터 미지원: DXF 산출물 없음(PDF이거나 변환 미완)")
+    uploads_root = Path(config.UPLOADS_DIR).resolve()
+    abs_dxf = Path(dxf_path).resolve()
+    if not abs_dxf.is_relative_to(uploads_root) or not abs_dxf.exists():
+        raise HTTPException(404, "DXF 파일 없음")
+    cache_path = abs_dxf.with_name("vector.json")
+    try:
+        get_vector_json(str(abs_dxf), str(cache_path))  # 추출+캐시 보장
+    except Exception:  # noqa: BLE001
+        # 상세(경로 포함)는 서버 로그로만, 클라이언트엔 일반 메시지(정보 노출 차단).
+        logger.exception("vector extract failed: %s", file_id)
+        raise HTTPException(500, "벡터 추출 실패")
+    # 캐시 파일을 그대로 서빙(대용량 JSON 재파싱/재직렬화 회피).
+    if cache_path.exists():
+        return FileResponse(str(cache_path), media_type="application/json")
+    raise HTTPException(500, "벡터 캐시 생성 실패")

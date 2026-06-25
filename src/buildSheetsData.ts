@@ -18,6 +18,10 @@ export type Sheet = {
   lastUpdatedBy: string;
   /** S1: 업로드·변환된 실제 도면 시트의 렌더 이미지(백엔드 PNG URL). 정적 시드는 비어 있음. */
   imageUrl?: string;
+  /** S1.5: ②벡터 경로용 백엔드 도면 id. DWG/DXF만 채워지며 PDF/정적 시드는 비어 있음. */
+  fileId?: string;
+  /** S1.5: 시트 소스("modelspace"|"paperspace"|"pdf-page"). 벡터 가용 판단에 사용. */
+  source?: string;
 };
 
 export const selectedBuildProject: BuildProject = {

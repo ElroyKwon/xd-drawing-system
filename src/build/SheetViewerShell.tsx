@@ -9,6 +9,7 @@ import MarkupCanvas from "./viewer/MarkupCanvas";
 import MarkupListPanel from "./viewer/MarkupListPanel";
 import MarkupPropertyPanel from "./viewer/MarkupPropertyPanel";
 import MarkupToolRail from "./viewer/MarkupToolRail";
+import VectorCanvas from "./viewer/VectorCanvas";
 import MeasurePanel from "./viewer/MeasurePanel";
 import {
   demoIssuePins,
@@ -44,6 +45,14 @@ export default function SheetViewerShell({
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareSheetB, setCompareSheetB] = useState<Sheet | null>(null);
   const [compareResultOpen, setCompareResultOpen] = useState(false);
+
+  // S1.5 렌더 bake-off: ②벡터(승자, 기본) ↔ ①래스터(PNG) 토글.
+  // DWG/DXF(벡터 산출물 보유)만 토글을 노출하고, 승자인 벡터를 기본 엔진으로 둔다.
+  const vectorCapable = Boolean(selectedSheet.fileId) && selectedSheet.source !== "pdf-page";
+  const [renderEngine, setRenderEngine] = useState<"vector" | "raster">(
+    vectorCapable ? "vector" : "raster"
+  );
+  const showVector = vectorCapable && renderEngine === "vector";
 
   const selectedMarkup = demoMarkups.find((markup) => markup.id === selectedMarkupId) ?? null;
   // 비교 결과 모드에서는 우측 보조 패널을 띄우지 않는다(컨텍스트 누수 방지).
@@ -141,13 +150,28 @@ export default function SheetViewerShell({
             <CompareOverlay sheetA={selectedSheet} sheetB={compareSheetB} onClose={closeCompareResult} />
           ) : (
             <>
-              <MarkupCanvas
-                selectedSheet={selectedSheet}
-                markups={demoMarkups}
-                issuePins={demoIssuePins}
-                selectedMarkupId={selectedMarkupId}
-                onSelectMarkup={selectMarkup}
-              />
+              {vectorCapable ? (
+                <div className="render-engine-toggle" role="group" aria-label="렌더 엔진">
+                  <button type="button" aria-pressed={renderEngine === "vector"} onClick={() => setRenderEngine("vector")}>
+                    벡터
+                  </button>
+                  <button type="button" aria-pressed={renderEngine === "raster"} onClick={() => setRenderEngine("raster")}>
+                    래스터
+                  </button>
+                </div>
+              ) : null}
+              {showVector ? (
+                <VectorCanvas fileId={selectedSheet.fileId as string} />
+              ) : (
+                <MarkupCanvas
+                  selectedSheet={selectedSheet}
+                  markups={demoMarkups}
+                  issuePins={demoIssuePins}
+                  selectedMarkupId={selectedMarkupId}
+                  onSelectMarkup={selectMarkup}
+                />
+              )}
+              {!showVector && (
               <div className="viewer-bottom-controls" aria-label="뷰어 하단 컨트롤">
                 <button type="button" aria-label="이동">
                   <Move size={18} aria-hidden="true" />
@@ -169,6 +193,7 @@ export default function SheetViewerShell({
                   <span>시트 비교</span>
                 </button>
               </div>
+              )}
             </>
           )}
         </div>

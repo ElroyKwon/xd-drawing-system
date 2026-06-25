@@ -57,6 +57,8 @@ export default function FilesView({ onOpenSheet }: { onOpenSheet?: (sheet: Sheet
       tag: s.source ?? "",
       lastUpdatedBy: "업로드",
       imageUrl: sheetImageUrl(s),
+      fileId: d.file_id,
+      source: s.source,
     });
   }
 
