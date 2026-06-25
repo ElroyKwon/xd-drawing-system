@@ -1,0 +1,10 @@
+# xd-drawing-system 로컬 백엔드 (S1 업로드→변환→뷰어)
+fastapi==0.136.1
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+ezdxf>=1.4.0
+matplotlib>=3.8.0
+pillow>=10.0.0
+pymupdf>=1.26.0
+# TypeDB 적재용 (Docker TypeDB 3.7.3 기동 시 사용; 없으면 JSON store fallback)
+typedb-driver>=3.7.0

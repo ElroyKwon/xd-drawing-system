@@ -126,7 +126,7 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             onViewModeChange={setViewMode}
           />
         ) : activeSection === "파일" ? (
-          <FilesView />
+          <FilesView onOpenSheet={openSheet} />
         ) : activeSection === "이슈" ? (
           <IssuesView />
         ) : activeSection === "양식" ? (

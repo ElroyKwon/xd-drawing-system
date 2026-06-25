@@ -1,0 +1,41 @@
+"""xd-drawing-system 로컬 백엔드 엔트리 (S1).
+
+기동: uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+(또는 python -m uvicorn ...)
+"""
+import logging
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+import config
+from routes_drawing import router as drawing_router
+from store import get_store
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+app = FastAPI(title="XD Drawing System — Local Backend", version="S1")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 시트 PNG/원본 정적 서빙
+app.mount("/files", StaticFiles(directory=str(config.UPLOADS_DIR)), name="files")
+app.include_router(drawing_router)
+
+
+@app.get("/health")
+async def health():
+    store = get_store()
+    return {
+        "status": "ok",
+        "store_backend": store.backend_name,
+        "oda_available": bool(config.ODA_EXE),
+        "uploads_dir": str(config.UPLOADS_DIR),
+    }

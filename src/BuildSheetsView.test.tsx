@@ -214,7 +214,7 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "파일 업로드" }));
     const dialog = screen.getByRole("dialog", { name: "파일 업로드" });
-    expect(within(dialog).getByText("여기로 파일을 끌어 놓거나 파일을 선택하십시오.")).toBeInTheDocument();
+    expect(within(dialog).getByText(/파일을 선택하십시오/)).toBeInTheDocument();
     expect(within(dialog).getByRole("tab", { name: "컴퓨터에서" })).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "닫기" }));

@@ -1,0 +1,85 @@
+# Drawing Management Schema
+# ISSUE-007 PRD-01: File Upload
+# TypeDB 3.x Syntax
+
+define
+
+# ===========================
+# Attribute Types
+# ===========================
+
+attribute file_id, value string;
+attribute filename, value string;
+attribute file_path, value string;
+attribute file_format, value string;
+attribute file_size, value integer;
+attribute upload_date, value datetime;
+attribute project_name, value string;
+attribute version_number, value string;
+attribute conversion_status, value string;
+
+attribute sheet_id, value string;
+attribute sheet_name, value string;
+attribute sheet_index, value integer;
+attribute png_path, value string;
+
+# AI Analysis attributes
+attribute analysis_status, value string;
+attribute equipment_count, value integer;
+attribute analysis_date, value datetime;
+attribute analysis_id, value string;
+attribute model_name, value string;
+attribute result_json, value string;
+attribute confidence_score, value double;
+
+# ===========================
+# Entity Types
+# ===========================
+
+entity drawing_file,
+    owns file_id @key,
+    owns filename,
+    owns file_path,
+    owns file_format,
+    owns file_size,
+    owns upload_date,
+    owns project_name,
+    owns version_number,
+    owns conversion_status;
+
+entity drawing_sheet,
+    owns sheet_id @key,
+    owns sheet_name,
+    owns sheet_index,
+    owns png_path,
+    owns analysis_status,
+    owns equipment_count;
+
+entity analysis_result,
+    owns analysis_id @key,
+    owns model_name,
+    owns analysis_date,
+    owns result_json,
+    owns confidence_score;
+
+# ===========================
+# Relation Types
+# ===========================
+
+relation contains_sheet,
+    relates parent_file,
+    relates child_sheet;
+
+relation has_analysis,
+    relates analyzed_sheet,
+    relates analysis;
+
+# ===========================
+# Role Assignments
+# ===========================
+
+drawing_file plays contains_sheet:parent_file;
+drawing_sheet plays contains_sheet:child_sheet;
+
+drawing_sheet plays has_analysis:analyzed_sheet;
+analysis_result plays has_analysis:analysis;

@@ -1,12 +1,64 @@
-import { ChevronDown, Download, Filter, Folder, Maximize2, MonitorUp, MoreVertical, Search, Upload, X } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { ChevronDown, Download, Eye, Filter, Folder, Loader2, Maximize2, MonitorUp, MoreVertical, Search, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { fileFolders } from "./buildFilesData";
 import { useModalDismiss } from "../hooks/useModalDismiss";
+import { getDrawing, sheetImageUrl, uploadDrawing, type BackendSheet, type Drawing } from "../api/drawings";
+import type { Sheet } from "../buildSheetsData";
 
-export default function FilesView() {
+const STATUS_LABEL: Record<Drawing["conversion_status"], string> = {
+  pending: "대기",
+  converting: "변환 중",
+  completed: "완료",
+  failed: "실패",
+};
+
+export default function FilesView({ onOpenSheet }: { onOpenSheet?: (sheet: Sheet) => void }) {
   const [showWelcome, setShowWelcome] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState("project-root");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploads, setUploads] = useState<Drawing[]>([]);
+
+  function upsert(d: Drawing) {
+    setUploads((prev) => {
+      const i = prev.findIndex((x) => x.file_id === d.file_id);
+      if (i === -1) return [d, ...prev];
+      const next = [...prev];
+      next[i] = d;
+      return next;
+    });
+  }
+
+  // 변환 중인 도면을 폴링해 상태/시트를 갱신한다.
+  useEffect(() => {
+    const pending = uploads.filter((d) => d.conversion_status === "pending" || d.conversion_status === "converting");
+    if (pending.length === 0) return;
+    const timer = setInterval(() => {
+      pending.forEach(async (d) => {
+        try {
+          upsert(await getDrawing(d.file_id));
+        } catch {
+          /* 폴링 실패는 다음 주기에 재시도 */
+        }
+      });
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [uploads]);
+
+  function openInViewer(d: Drawing, s: BackendSheet) {
+    onOpenSheet?.({
+      id: s.sheet_id,
+      projectId: "project-study",
+      number: d.filename,
+      title: s.sheet_name,
+      version: d.version,
+      versionSet: "-",
+      disciplineCode: "A",
+      disciplineLabel: d.file_format.toUpperCase(),
+      tag: s.source ?? "",
+      lastUpdatedBy: "업로드",
+      imageUrl: sheetImageUrl(s),
+    });
+  }
 
   return (
     <section className="build-page files-page" aria-labelledby="files-title">
@@ -90,6 +142,39 @@ export default function FilesView() {
             </div>
           </div>
 
+          {uploads.length > 0 ? (
+            <div className="files-uploads" aria-label="업로드한 도면">
+              <strong className="files-uploads-title">업로드한 도면</strong>
+              <ul className="upload-list">
+                {uploads.map((d) => (
+                  <li key={d.file_id} className="upload-row" data-status={d.conversion_status}>
+                    <span className="upload-name">
+                      <Folder size={16} aria-hidden="true" />
+                      {d.filename}
+                    </span>
+                    <span className={`status-chip status-${d.conversion_status}`}>
+                      {(d.conversion_status === "pending" || d.conversion_status === "converting") && (
+                        <Loader2 size={13} className="spin" aria-hidden="true" />
+                      )}
+                      {STATUS_LABEL[d.conversion_status]}
+                      {d.conversion_status === "completed" ? ` · 시트 ${d.sheets.length}` : ""}
+                    </span>
+                    <span className="upload-sheets">
+                      {d.conversion_status === "completed" &&
+                        d.sheets.map((s) => (
+                          <button key={s.sheet_id} type="button" className="home-link-button" onClick={() => openInViewer(d, s)}>
+                            <Eye size={14} aria-hidden="true" />
+                            {s.sheet_name} 뷰어로 열기
+                          </button>
+                        ))}
+                      {d.conversion_status === "failed" ? <span className="upload-error">{d.error ?? "변환 실패"}</span> : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="table-scroll files-table-scroll">
             <table className="project-table files-table">
               <thead>
@@ -151,23 +236,41 @@ export default function FilesView() {
         </div>
       </div>
 
-      {isUploadOpen ? <FileUploadModal onClose={() => setIsUploadOpen(false)} /> : null}
+      {isUploadOpen ? <FileUploadModal onClose={() => setIsUploadOpen(false)} onUploaded={upsert} /> : null}
     </section>
   );
 }
 
-function FileUploadModal({ onClose }: { onClose: () => void }) {
+function FileUploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: (d: Drawing) => void }) {
   const dialogRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   useModalDismiss(onClose, dialogRef);
 
-  function submitUpload(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onClose();
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const file of Array.from(files)) {
+        onUploaded(await uploadDrawing(file));
+      }
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onInputChange(event: ChangeEvent<HTMLInputElement>) {
+    void handleFiles(event.target.files);
   }
 
   return (
     <div className="modal-backdrop">
-      <form ref={dialogRef} tabIndex={-1} className="project-modal file-upload-modal" role="dialog" aria-modal="true" aria-labelledby="file-upload-title" onSubmit={submitUpload}>
+      <form ref={dialogRef} tabIndex={-1} className="project-modal file-upload-modal" role="dialog" aria-modal="true" aria-labelledby="file-upload-title" onSubmit={(e) => e.preventDefault()}>
         <header className="modal-header">
           <h2 id="file-upload-title">파일 업로드</h2>
           <div className="modal-header-actions">
@@ -186,14 +289,32 @@ function FileUploadModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <div className="modal-body">
-          <div className="upload-dropzone" aria-label="파일 드롭 영역">
-            <Upload size={40} aria-hidden="true" />
-            <span>여기로 파일을 끌어 놓거나 파일을 선택하십시오.</span>
-          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".dwg,.dxf,.pdf"
+            multiple
+            hidden
+            aria-label="도면 파일 선택"
+            onChange={onInputChange}
+          />
+          <button
+            type="button"
+            className="upload-dropzone"
+            aria-label="파일 선택"
+            disabled={busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 size={40} className="spin" aria-hidden="true" /> : <Upload size={40} aria-hidden="true" />}
+            <span>{busy ? "업로드 중..." : "여기를 눌러 파일을 선택하십시오 (.dwg .dxf .pdf)"}</span>
+          </button>
+          {error ? <p className="upload-error" role="alert">{error}</p> : null}
         </div>
         <footer className="modal-footer upload-modal-footer">
           <button className="home-link-button" type="button">이 파일이 모델임을 의미합니까?</button>
-          <button className="primary-action" type="submit">완료</button>
+          <button className="primary-action" type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
+            파일 선택
+          </button>
         </footer>
       </form>
     </div>

@@ -54,17 +54,26 @@ export default function MarkupCanvas({
   selectedMarkupId: string | null;
   onSelectMarkup: (id: string) => void;
 }) {
+  // S1: 업로드·변환된 실제 도면이면 PNG를 렌더하고, 정적 시드면 기존 데모 외관을 유지한다.
+  const hasImage = Boolean(selectedSheet.imageUrl);
+
   return (
-    <div className="static-sheet" aria-label="정적 시트 렌더">
-      <span>정적 시트 렌더</span>
-      <div className="drawing-title">{selectedSheet.number}</div>
-      <div className="drawing-gridline vertical-one" />
-      <div className="drawing-gridline vertical-two" />
-      <div className="drawing-gridline horizontal-one" />
-      <div className="drawing-gridline horizontal-two" />
-      <div className="drawing-room room-large" />
-      <div className="drawing-room room-small" />
-      <div className="drawing-callout">A</div>
+    <div className={`static-sheet${hasImage ? " has-image" : ""}`} aria-label={hasImage ? "도면 렌더" : "정적 시트 렌더"}>
+      {hasImage ? (
+        <img className="sheet-render-image" src={selectedSheet.imageUrl} alt={`${selectedSheet.number} 도면 렌더`} />
+      ) : (
+        <>
+          <span>정적 시트 렌더</span>
+          <div className="drawing-title">{selectedSheet.number}</div>
+          <div className="drawing-gridline vertical-one" />
+          <div className="drawing-gridline vertical-two" />
+          <div className="drawing-gridline horizontal-one" />
+          <div className="drawing-gridline horizontal-two" />
+          <div className="drawing-room room-large" />
+          <div className="drawing-room room-small" />
+          <div className="drawing-callout">A</div>
+        </>
+      )}
 
       <svg width="0" height="0" aria-hidden="true">
         <defs>

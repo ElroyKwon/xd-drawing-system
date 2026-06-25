@@ -16,6 +16,8 @@ export type Sheet = {
   disciplineLabel: string;
   tag: string;
   lastUpdatedBy: string;
+  /** S1: 업로드·변환된 실제 도면 시트의 렌더 이미지(백엔드 PNG URL). 정적 시드는 비어 있음. */
+  imageUrl?: string;
 };
 
 export const selectedBuildProject: BuildProject = {
