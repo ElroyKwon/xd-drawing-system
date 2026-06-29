@@ -80,7 +80,6 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
     setSelectedSheet(sheet);
   }
 
-  const countLabel = sheets.length === 0 ? `${projectSheets.length} 중 0 표시` : `${projectSheets.length} 중 1-${sheets.length} 표시`;
   const emptyMessage = projectSheets.length === 0 ? "아직 등록된 시트가 없습니다." : "검색 결과가 없습니다.";
 
   return (
@@ -153,7 +152,6 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
           <BuildHomeView projectName={project.name} sheetCount={projectSheets.length} />
         ) : activeSection === "시트" ? (
           <SheetsListView
-            countLabel={countLabel}
             emptyMessage={emptyMessage}
             query={query}
             sheets={sheets}

@@ -47,6 +47,18 @@ def _png_url(abs_png: str) -> str | None:
         return None
 
 
+def _storage_bytes(row: dict) -> int:
+    """도면의 저장 용량(원본+파생 PNG/벡터). file 디렉토리 전체 합. (S2.5 용량 가시화)"""
+    fp = row.get("file_path")
+    if not fp:
+        return 0
+    try:
+        base = Path(fp).parent
+        return sum(f.stat().st_size for f in base.rglob("*") if f.is_file())
+    except OSError:
+        return 0
+
+
 def _with_urls(row: dict) -> dict:
     row = dict(row)
     sheets = []
@@ -56,6 +68,7 @@ def _with_urls(row: dict) -> dict:
         s.pop("png_path", None)  # 절대 서버경로는 응답에서 제거(정보 노출 차단)
         sheets.append(s)
     row["sheets"] = sheets
+    row["storage_bytes"] = _storage_bytes(row)  # S2.5: 도면별 저장 용량
     return row
 
 

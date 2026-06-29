@@ -2,7 +2,22 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-25, 세션 4 — S3 파일/폴더 관리 DONE)
+## 현재 상태 (2026-06-29, 세션 5 — S2.5 멀티페이지 스케일 강건화 DONE)
+
+- **단계**: **S2.5 DONE.** 실측(제주 BESS 68p/94MB 전기도면)으로 도출한 스케일 부채 3건 해소. 메타프롬프트 `prompts/06-s2_5-multipage-scale.md` FROZEN, acceptance **F1~F10 전부 MET**(EVIDENCE 하단 S2.5). **미커밋**(diff --check clean, 커밋은 사용자 지시 시).
+- **공동설계 freeze**: P1=라벨앵커+폴백 · P2=클라 페이지네이션(50/페이지) · P3=용량 가시화(현행 보관 유지).
+- **실측 before→after(동일 도면)**: 시트번호 추출 **0%→98%(67/68)** · 고유제목 1→67 · 공종 100%G→67 E(전기) · storage_bytes None→118MB 노출.
+- **구현 요약**: backend `sheet_meta.py`(좌표 라벨앵커 `_spatial_value`/`_spatial_number`/`_spatial_title` — `DWG NO`/`DWG. TITLE` 바로 아래 값 공간 페어링, `get_text` 순서 비의존 + 다중토큰 공종 `_discipline`[ESS-EE-DWG→E] + 멀티페이지 `_title` + 날짜 가드), `conversion.py`(`_page_lines`로 dict 라인 추출→전달), `routes_drawing.py`(`_storage_bytes`+`_with_urls` 노출). 프론트 `SheetsListView.tsx`(클라 페이지네이션 50/페이지·필터 리셋·경계), `FilesView.tsx`(크기=원본+파생), `drawings.ts`(storage_bytes), 옛 countLabel 정리.
+- **검증**: build PASS · npm test **70**(페이지네이션 5 추가) · backend pytest **39**(S2.5 11) · git diff clean · 브라우저 e2e(제주 68p→실 번호/제목/공종·페이지네이션 81개 2페이지·용량 118.8MB·콘솔 0, 스크린샷 `evidence/s2_5-*.png`).
+- **독립 검증팀 3렌즈**: 백엔드 적대적(F1·F2·F3·F7 실데이터 PASS, **MAJOR-1 적발**=단일파일 제목 좌표우회 F4 회귀)·프론트 비기능(F5·F6·F8·F9 PASS, MINOR a11y)·Done-When 비평가(F1~F10 MET). **MAJOR-1 수리**(좌표 제목 `if lines and multipage:`로 멀티페이지 한정, 청주 5개 단일파일 제목=stem device 재검증·F4 회귀 0) + MINOR-4(날짜 둔갑 가드) 수리·회귀 테스트 2건 추가.
+- **잔여 후속 부채**(비차단): 멀티벤더 양식 날짜/노이즈 오염·below창·공종 첫글자폴백 오분류 · 용량 stat rglob 캐시 · 페이저 aria-live · OCR/스캔 PDF.
+
+### 세션 5 진입점
+- `prompts/06-s2_5-multipage-scale.md` FROZEN. 다음=S4(마크업·측정·비교, `prompts/05` 이미 FROZEN).
+
+---
+
+## 이전 상태 (2026-06-25, 세션 4 — S3 파일/폴더 관리 DONE)
 
 - **단계**: **S3 DONE.** 폴더 트리 CRUD + 명시적 버전세트 + 권한 메타(표시·편집) + 다운로드/삭제. 정적 `buildFilesData` 11폴더 시드 제거 → 백엔드 seed-on-create(ACC 기본 9폴더+PDFs). 메타프롬프트 `prompts/04-s3-files-folders.md` FROZEN, acceptance **D1~D9 전부 MET**(EVIDENCE 하단 S3 섹션). **미커밋(이 세션에서 커밋 예정).**
 - **공동설계 4결정(freeze)**: 권한=메타+표시까지(인증/RBAC 강제는 S7) · 영속=DrawingStore 확장(folder 엔티티+drawing.folder_id, Json·TypeDB 양 백엔드) · 버전=명시적 버전세트(보관·이력·최신 1행) · 폴더 시드=백엔드 seed-on-create.

@@ -1,11 +1,13 @@
 import { ArrowDownAZ, ArrowUpAZ, Download, Grid2X2, List, MoreVertical, Search, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Sheet, SheetSortKey } from "../buildSheetsData";
 
 export type ViewMode = "list" | "grid";
 
+// S2.5: 수백 행 시트 목록 대비 클라이언트 페이지네이션(페이지당 50).
+export const SHEETS_PAGE_SIZE = 50;
+
 type SheetsListViewProps = {
-  countLabel: string;
   emptyMessage: string;
   query: string;
   sheets: Sheet[];
@@ -21,7 +23,6 @@ type SheetsListViewProps = {
 };
 
 export default function SheetsListView({
-  countLabel,
   emptyMessage,
   query,
   sheets,
@@ -36,6 +37,23 @@ export default function SheetsListView({
   onSortToggle
 }: SheetsListViewProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+
+  // S2.5: 필터/검색/정렬이 바뀌면 1페이지로 리셋(빈 페이지 방지).
+  useEffect(() => {
+    setPage(1);
+  }, [query, disciplineFilter, sortKey]);
+
+  const total = sheets.length;
+  const pageCount = Math.max(1, Math.ceil(total / SHEETS_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const start = (currentPage - 1) * SHEETS_PAGE_SIZE;
+  const pageSheets = useMemo(
+    () => sheets.slice(start, start + SHEETS_PAGE_SIZE),
+    [sheets, start]
+  );
+  const rangeLabel =
+    total === 0 ? "0개" : `총 ${total}개 중 ${start + 1}–${Math.min(start + SHEETS_PAGE_SIZE, total)}`;
 
   function toggleMenu(id: string) {
     setOpenMenuId((current) => (current === id ? null : id));
@@ -114,7 +132,7 @@ export default function SheetsListView({
             </tr>
           </thead>
           <tbody>
-            {sheets.map((sheet) => (
+            {pageSheets.map((sheet) => (
               <SheetRow
                 key={sheet.id}
                 sheet={sheet}
@@ -135,13 +153,23 @@ export default function SheetsListView({
       </div>
 
       <div className="pagination sheets-pagination" aria-label="시트 페이지네이션">
-        <span>{countLabel}</span>
+        <span>{rangeLabel}</span>
         <div className="pager-buttons">
-          <button type="button" aria-label="이전 페이지">
+          <button
+            type="button"
+            aria-label="이전 페이지"
+            disabled={currentPage <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
             &lsaquo;
           </button>
-          <span>1 중 1</span>
-          <button type="button" aria-label="다음 페이지">
+          <span>{`${currentPage} / ${pageCount}`}</span>
+          <button
+            type="button"
+            aria-label="다음 페이지"
+            disabled={currentPage >= pageCount}
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+          >
             &rsaquo;
           </button>
         </div>

@@ -251,7 +251,7 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "시트" })).toBeInTheDocument();
     expect(await screen.findByText("A001")).toBeInTheDocument();
-    expect(screen.getByText("6 중 1-6 표시")).toBeInTheDocument();
+    expect(screen.getByText("총 6개 중 1–6")).toBeInTheDocument();
     expect(screen.queryByText("Hub Admin")).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "프로젝트" })).not.toBeInTheDocument();
   });

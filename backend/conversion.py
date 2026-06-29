@@ -184,6 +184,23 @@ def render_dxf_sheets(dxf_path: str, file_id: str, base_dir: str, filename: str 
 # PDF → 페이지 PNG (PyMuPDF)
 # ---------------------------------------------------------------------------
 
+def _page_lines(page) -> list[dict]:
+    """PDF 페이지를 라인 단위 {text,x0,y0,x1,y1} 목록으로(좌표 라벨 페어링용)."""
+    out: list[dict] = []
+    try:
+        data = page.get_text("dict")
+    except Exception:  # noqa: BLE001
+        return out
+    for b in data.get("blocks", []):
+        for l in b.get("lines", []):
+            txt = "".join(s.get("text", "") for s in l.get("spans", [])).strip()
+            if not txt:
+                continue
+            x0, y0, x1, y1 = l["bbox"]
+            out.append({"text": txt, "x0": x0, "y0": y0, "x1": x1, "y1": y1})
+    return out
+
+
 def render_pdf_sheets(pdf_path: str, file_id: str, base_dir: str, filename: str = "", dpi: int = None) -> tuple:
     """PDF를 페이지별 시트(PNG)로 분할(S2). 각 페이지 텍스트로 시트 메타 휴리스틱 추출."""
     import fitz  # PyMuPDF
@@ -195,11 +212,16 @@ def render_pdf_sheets(pdf_path: str, file_id: str, base_dir: str, filename: str 
     sheets: list[Sheet] = []
     zoom = dpi / 72.0
     mat = fitz.Matrix(zoom, zoom)
+    multipage = doc.page_count > 1
     for i, page in enumerate(doc):
         sid = f"{file_id}_sheet_{i+1:03d}"
         png = sheets_dir / f"{sid}.png"
         page.get_pixmap(matrix=mat).save(str(png))
-        meta = extract_sheet_meta(page.get_text(), filename, i)
+        # S2.5: 좌표 포함 라인(text+bbox)으로 타이틀블록 라벨-값 공간 페어링.
+        lines = _page_lines(page)
+        meta = extract_sheet_meta(page.get_text(), filename, i,
+                                  lines=lines, page_size=(page.rect.width, page.rect.height),
+                                  multipage=multipage)
         sheets.append(Sheet(sid, meta["number"], i, str(png), "pdf-page",
                             sheet_number=meta["number"], sheet_title=meta["title"],
                             discipline_code=meta["discipline_code"],

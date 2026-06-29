@@ -40,6 +40,8 @@ export type Drawing = {
   folder_id?: string | null;
   share_status?: string;
   uploaded_by?: string;
+  // S2.5: 도면별 저장 용량(원본+파생 PNG/벡터) bytes.
+  storage_bytes?: number;
 };
 
 // S3: 폴더 트리 + 권한 메타

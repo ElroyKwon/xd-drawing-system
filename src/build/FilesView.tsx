@@ -437,7 +437,9 @@ export default function FilesView({ onOpenSheet }: { onOpenSheet?: (sheet: Sheet
                       </td>
                       <td title="마크업은 S4에서 연결됩니다">0</td>
                       <td title="이슈는 S5에서 연결됩니다">0</td>
-                      <td>{formatSize(d.file_size)}</td>
+                      <td title={`원본 ${formatSize(d.file_size)} + 파생(시트 PNG/벡터)`}>
+                        {formatSize(d.storage_bytes ?? d.file_size)}
+                      </td>
                       <td>{formatDate(d.upload_date)}</td>
                       <td>{d.uploaded_by ?? "업로드"}</td>
                       <td>{d.uploaded_by ?? "업로드"}</td>

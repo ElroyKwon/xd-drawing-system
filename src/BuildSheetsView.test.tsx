@@ -73,7 +73,7 @@ describe("BuildSheetsView", () => {
     expect(await loadedRows()).toHaveLength(6);
     expect(screen.getByText("A001")).toBeInTheDocument();
     expect(screen.getByText("P101")).toBeInTheDocument();
-    expect(screen.getByText("6 중 1-6 표시")).toBeInTheDocument();
+    expect(screen.getByText("총 6개 중 1–6")).toBeInTheDocument();
   });
 
   it("filters sheets by number, title, discipline, and tag", async () => {
