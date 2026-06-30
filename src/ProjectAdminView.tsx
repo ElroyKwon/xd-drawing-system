@@ -22,13 +22,17 @@ import {
   X,
   type LucideIcon
 } from "lucide-react";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useModalDismiss } from "./hooks/useModalDismiss";
 import {
-  buildProjectAccessRows,
-  initialMembers,
-  initialProjectAccess,
-  memberHasProjectAccess,
+  addProjectMember,
+  listMembers,
+  listProjectMembers,
+  patchProjectMember,
+  type Member,
+  type MemberRole
+} from "./api/admin";
+import {
   memberRoles,
   notificationFrequencies,
   notificationGroups,
@@ -51,6 +55,7 @@ type ProjectAdminViewProps = {
   project?: ProjectAdminProject;
   accessRecords?: ProjectMemberAccess[];
   onAccessRecordsChange?: (records: ProjectMemberAccess[]) => void;
+  canManage?: boolean;   // S7: 현재 사용자가 이 프로젝트 관리자인가(구성원 관리 권한)
 };
 
 type AddMemberForm = {
@@ -86,45 +91,53 @@ export default function ProjectAdminView(props: ProjectAdminViewProps) {
 
 function ProjectMemberAdminView({
   project = selectedProject,
-  accessRecords,
-  onAccessRecordsChange,
+  canManage = true,
   onBackToProjects
 }: ProjectAdminViewProps) {
-  const [localAccessRecords, setLocalAccessRecords] = useState<ProjectMemberAccess[]>(initialProjectAccess);
+  // S7: 구성원은 백엔드 영속(project_member). 역할 변경/추가는 관리자만(canManage·서버 403).
+  const [rows, setRows] = useState<ProjectAccessRow[]>([]);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("member-owner");
   const [activeSection, setActiveSection] = useState<AdminSection>("구성원");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddMemberForm>(emptyAddMemberForm);
   const [addError, setAddError] = useState("");
-  const effectiveAccessRecords = accessRecords ?? localAccessRecords;
 
-  function updateAccessRecords(updater: (records: ProjectMemberAccess[]) => ProjectMemberAccess[]) {
-    const nextRecords = updater(effectiveAccessRecords);
-    if (onAccessRecordsChange) {
-      onAccessRecordsChange(nextRecords);
-      return;
-    }
+  const reload = useCallback(() => {
+    listProjectMembers(project.name)
+      .then((pm) =>
+        setRows(
+          pm.map((r) => ({
+            projectId: project.id, memberId: r.member_id, role: r.role, status: r.status,
+            addedAt: r.added_at, id: r.id, name: r.name, email: r.email, phone: r.phone,
+          })),
+        ),
+      )
+      .catch(() => setRows([]));
+  }, [project.name, project.id]);
 
-    setLocalAccessRecords(nextRecords);
-  }
+  useEffect(() => {
+    reload();
+    listMembers().then(setAllMembers).catch(() => {});
+  }, [reload]);
 
-  const accessRows = useMemo(() => {
-    return buildProjectAccessRows(project.id, initialMembers, effectiveAccessRecords);
-  }, [effectiveAccessRecords, project.id]);
+  const accessRows = rows;
 
   const filteredRows = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) {
-      return accessRows;
-    }
-
-    return accessRows.filter((row) => {
-      return row.name.toLowerCase().includes(normalized) || row.email.toLowerCase().includes(normalized);
-    });
+    if (!normalized) return accessRows;
+    return accessRows.filter(
+      (row) => row.name.toLowerCase().includes(normalized) || row.email.toLowerCase().includes(normalized),
+    );
   }, [accessRows, query]);
 
   const selectedRow = accessRows.find((row) => row.memberId === selectedMemberId) ?? accessRows[0];
+
+  const availableMembers = useMemo(() => {
+    const assigned = new Set(rows.map((r) => r.memberId));
+    return allMembers.filter((m) => !assigned.has(m.id));
+  }, [rows, allMembers]);
 
   function openAddModal() {
     setAddForm(emptyAddMemberForm);
@@ -138,30 +151,27 @@ function ProjectMemberAdminView({
     setIsAddModalOpen(false);
   }
 
-  function submitAddMember(event: FormEvent<HTMLFormElement>) {
+  async function submitAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     if (!addForm.memberId) {
       setAddError("구성원을 선택하세요.");
       return;
     }
-
-    if (memberHasProjectAccess(project.id, addForm.memberId, effectiveAccessRecords)) {
-      setAddError("이미 이 프로젝트에 추가된 구성원입니다.");
-      return;
+    try {
+      await addProjectMember(project.name, { member_id: addForm.memberId, role: addForm.role });
+      setSelectedMemberId(addForm.memberId);
+      closeAddModal();
+      reload();
+    } catch (e) {
+      setAddError(e instanceof Error ? e.message : "구성원 추가 실패");
     }
+  }
 
-    const nextAccess: ProjectMemberAccess = {
-      projectId: project.id,
-      memberId: addForm.memberId,
-      role: addForm.role,
-      status: "활성",
-      addedAt: "방금 전"
-    };
-
-    updateAccessRecords((current) => [...current, nextAccess]);
-    setSelectedMemberId(addForm.memberId);
-    closeAddModal();
+  async function changeRole(memberId: string, role: MemberRole) {
+    try {
+      await patchProjectMember(project.name, memberId, { role });
+      reload();
+    } catch {/* 권한 없음(403) 등 — 무시, 목록 유지 */}
   }
 
   return (
@@ -204,7 +214,13 @@ function ProjectMemberAdminView({
           <section className="admin-panel" aria-label="Project Admin 구성원 목록">
             <div className="admin-heading">
               <h1 id="member-access-title">구성원</h1>
-              <button className="primary-action" type="button" onClick={openAddModal}>
+              <button
+                className="primary-action"
+                type="button"
+                onClick={openAddModal}
+                disabled={!canManage}
+                title={canManage ? undefined : "구성원 추가는 관리자만 가능합니다"}
+              >
                 구성원 추가
               </button>
             </div>
@@ -270,12 +286,17 @@ function ProjectMemberAdminView({
         )}
       </section>
 
-      {activeSection === "구성원" ? <MemberInspector row={selectedRow} /> : <AdminSectionInspector activeSection={activeSection} />}
+      {activeSection === "구성원" ? (
+        <MemberInspector row={selectedRow} canManage={canManage} onRoleChange={changeRole} />
+      ) : (
+        <AdminSectionInspector activeSection={activeSection} />
+      )}
 
       {isAddModalOpen ? (
         <AddMemberModal
           form={addForm}
           error={addError}
+          availableMembers={availableMembers}
           onClose={closeAddModal}
           onSubmit={submitAddMember}
           onUpdate={setAddForm}
@@ -342,7 +363,15 @@ function AdminSectionInspector({ activeSection }: { activeSection: Exclude<Admin
   );
 }
 
-function MemberInspector({ row }: { row: ProjectAccessRow | undefined }) {
+function MemberInspector({
+  row,
+  canManage,
+  onRoleChange
+}: {
+  row: ProjectAccessRow | undefined;
+  canManage: boolean;
+  onRoleChange: (memberId: string, role: MemberRole) => void;
+}) {
   if (!row) {
     return (
       <aside className="admin-inspector" role="complementary" aria-label="구성원 상세">
@@ -362,7 +391,14 @@ function MemberInspector({ row }: { row: ProjectAccessRow | undefined }) {
       <span className="status-pill">{row.status}</span>
       <div className="field select-field">
         <span>역할</span>
-        <select aria-label="현재 역할" name="current-member-role" value={row.role} disabled>
+        <select
+          aria-label="현재 역할"
+          name="current-member-role"
+          value={row.role}
+          disabled={!canManage}
+          title={canManage ? undefined : "역할 변경은 관리자만 가능합니다"}
+          onChange={(e) => onRoleChange(row.memberId, e.target.value as MemberRole)}
+        >
           {memberRoles.map((role) => (
             <option key={role}>{role}</option>
           ))}
@@ -375,12 +411,13 @@ function MemberInspector({ row }: { row: ProjectAccessRow | undefined }) {
 type AddMemberModalProps = {
   form: AddMemberForm;
   error: string;
+  availableMembers: Member[];
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onUpdate: (form: AddMemberForm) => void;
 };
 
-function AddMemberModal({ form, error, onClose, onSubmit, onUpdate }: AddMemberModalProps) {
+function AddMemberModal({ form, error, availableMembers, onClose, onSubmit, onUpdate }: AddMemberModalProps) {
   const dialogRef = useRef<HTMLFormElement>(null);
   useModalDismiss(onClose, dialogRef);
   return (
@@ -405,7 +442,7 @@ function AddMemberModal({ form, error, onClose, onSubmit, onUpdate }: AddMemberM
             <span>구성원</span>
             <select name="member-id" value={form.memberId} onChange={(event) => onUpdate({ ...form, memberId: event.target.value })}>
               <option value="">구성원 선택</option>
-              {initialMembers.map((member) => (
+              {availableMembers.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name} / {member.email}
                 </option>

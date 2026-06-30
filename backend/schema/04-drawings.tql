@@ -116,9 +116,38 @@ entity issue,
     owns geometry_json,
     owns created_at;
 
+# S7: 구성원·프로젝트·역할 attributes (JSON 미러 SoT, 직접쿼리화는 후속)
+attribute member_id, value string;
+attribute member_name, value string;
+attribute member_email, value string;
+attribute member_phone, value string;
+attribute project_id, value string;
+attribute member_role, value string;
+attribute member_status, value string;
+attribute added_at, value string;
+
 # ===========================
 # Relation Types
 # ===========================
+
+# S7: 구성원·프로젝트·프로젝트-구성원(역할) entities
+entity member,
+    owns member_id @key,
+    owns member_name,
+    owns member_email,
+    owns member_phone;
+
+entity project,
+    owns project_id @key,
+    owns project_name,
+    owns created_at;
+
+entity project_member,
+    owns project_name,
+    owns member_id,
+    owns member_role,
+    owns member_status,
+    owns added_at;
 
 relation contains_sheet,
     relates parent_file,

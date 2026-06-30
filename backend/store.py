@@ -37,11 +37,36 @@ DEFAULT_FOLDERS = [
     ("pdfs", "PDFs", "supported-files"),
 ]
 
-# S3: 폴더/파일 권한 메타 기본값(역할별 접근 레벨). 인증/RBAC 강제는 S7 — 여기선 메타·표시만.
+# S3: 폴더/파일 권한 메타 기본값(역할별 접근 레벨). 강제(enforcement)는 S7에서 추가됨.
 _DEFAULT_PERMISSIONS = [
     {"role": "관리자", "level": "관리"},
     {"role": "편집자", "level": "편집"},
     {"role": "뷰어", "level": "보기"},
+]
+
+# S7: 구성원·프로젝트·역할 시드(seed-on-create, idempotent). project_member는 project_name 키.
+_SEED_MEMBERS = [
+    {"id": "member-owner", "name": "개혁 이", "email": "cruelkh@gmail.com", "phone": "+82 10-4112-9638"},
+    {"id": "member-reviewer", "name": "도면 검토자", "email": "reviewer@xd.local", "phone": "+82 10-2000-1200"},
+    {"id": "member-field", "name": "현장 담당자", "email": "field@xd.local", "phone": "+82 10-3000-3400"},
+    {"id": "member-viewer", "name": "고객 열람자", "email": "viewer@xd.local", "phone": "+82 10-4000-5600"},
+]
+_SEED_PROJECTS = [
+    {"id": "project-study", "typeIcon": "project", "name": "Study_Project", "number": "",
+     "projectType": "지정되지 않음", "templateId": "none", "address": "", "manualAddress": False,
+     "timezone": "서울", "startDate": "", "endDate": "", "projectValue": "", "currency": "USD",
+     "defaultAccess": "Build", "hub": "TEST-", "createdAt": "2026년 6월 12일", "created_by": "member-owner"},
+    {"id": "project-seaport", "typeIcon": "project",
+     "name": "Construction : Sample Project - Seaport Civic Center", "number": "",
+     "projectType": "건설", "templateId": "owner", "address": "300 Mission Street", "manualAddress": False,
+     "timezone": "서울", "startDate": "", "endDate": "", "projectValue": "", "currency": "USD",
+     "defaultAccess": "Build", "hub": "TEST-", "createdAt": "2026년 6월 12일", "created_by": "member-field"},
+]
+_SEED_PROJECT_MEMBERS = [
+    {"project_name": "Study_Project", "member_id": "member-owner", "role": "관리자", "status": "활성", "added_at": "2026.06.12."},
+    {"project_name": "Study_Project", "member_id": "member-reviewer", "role": "편집자", "status": "활성", "added_at": "2026.06.13."},
+    {"project_name": "Study_Project", "member_id": "member-viewer", "role": "뷰어", "status": "활성", "added_at": "2026.06.13."},
+    {"project_name": "Construction : Sample Project - Seaport Civic Center", "member_id": "member-field", "role": "관리자", "status": "활성", "added_at": "2026.06.14."},
 ]
 
 
@@ -139,6 +164,44 @@ class DrawingStore(ABC):
     def delete_issue(self, issue_id: str) -> bool:
         """soft delete: status를 '삭제됨'으로 전환(이력 보존)."""
 
+    # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자(로컬 모의) ---
+    @abstractmethod
+    def list_members(self) -> list: ...
+
+    @abstractmethod
+    def get_member(self, member_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def add_member(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def list_projects(self) -> list: ...
+
+    @abstractmethod
+    def add_project(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def list_project_members(self, project_name: str) -> list: ...
+
+    @abstractmethod
+    def get_project_member(self, project_name: str, member_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def add_project_member(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def update_project_member(self, project_name: str, member_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def remove_project_member(self, project_name: str, member_id: str) -> bool: ...
+
+    @abstractmethod
+    def get_current_user(self) -> Optional[str]:
+        """현재 사용자 member_id(로컬 모의 인증). 없으면 시드 관리자."""
+
+    @abstractmethod
+    def set_current_user(self, member_id: str) -> None: ...
+
 
 class JsonDrawingStore(DrawingStore):
     """uploads/_index.json 단일 인덱스. 단일 프로세스 로컬 개발용."""
@@ -150,6 +213,11 @@ class JsonDrawingStore(DrawingStore):
         self._markups_path = Path(config.UPLOADS_DIR) / "_markups.json"
         self._measurements_path = Path(config.UPLOADS_DIR) / "_measurements.json"
         self._issues_path = Path(config.UPLOADS_DIR) / "_issues.json"
+        # S7: 구성원·프로젝트·프로젝트-구성원·현재 사용자
+        self._members_path = Path(config.UPLOADS_DIR) / "_members.json"
+        self._projects_path = Path(config.UPLOADS_DIR) / "_projects.json"
+        self._project_members_path = Path(config.UPLOADS_DIR) / "_project_members.json"
+        self._auth_path = Path(config.UPLOADS_DIR) / "_auth.json"
         self._lock = threading.Lock()
         if not self._path.exists():
             self._write({})
@@ -460,6 +528,102 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._issues_path, data)
             return True
 
+    # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자 ---
+    def _seed_s7(self) -> None:
+        """구성원/프로젝트/역할이 비었으면 ACC식 시드 생성(idempotent). project_member는 project_name 키."""
+        if self._read_at(self._members_path):
+            return
+        self._write_at(self._members_path, {m["id"]: m for m in _SEED_MEMBERS})
+        if not self._read_at(self._projects_path):
+            self._write_at(self._projects_path, {p["id"]: p for p in _SEED_PROJECTS})
+        if not self._read_at(self._project_members_path):
+            pm = {}
+            for r in _SEED_PROJECT_MEMBERS:
+                pm[f"{r['project_name']}::{r['member_id']}"] = r
+            self._write_at(self._project_members_path, pm)
+
+    def list_members(self) -> list:
+        with self._lock:
+            self._seed_s7()
+        return list(self._read_at(self._members_path).values())
+
+    def get_member(self, member_id: str) -> Optional[dict]:
+        with self._lock:
+            self._seed_s7()
+        return self._read_at(self._members_path).get(member_id)
+
+    def add_member(self, meta: dict) -> None:
+        with self._lock:
+            self._seed_s7()
+            data = self._read_at(self._members_path)
+            data[meta["id"]] = meta
+            self._write_at(self._members_path, data)
+
+    def list_projects(self) -> list:
+        with self._lock:
+            self._seed_s7()
+        return list(self._read_at(self._projects_path).values())
+
+    def add_project(self, meta: dict) -> None:
+        with self._lock:
+            self._seed_s7()
+            data = self._read_at(self._projects_path)
+            data[meta["id"]] = meta
+            self._write_at(self._projects_path, data)
+
+    def list_project_members(self, project_name: str) -> list:
+        with self._lock:
+            self._seed_s7()
+        return [r for r in self._read_at(self._project_members_path).values()
+                if r.get("project_name") == project_name]
+
+    def get_project_member(self, project_name: str, member_id: str) -> Optional[dict]:
+        with self._lock:
+            self._seed_s7()
+        return self._read_at(self._project_members_path).get(f"{project_name}::{member_id}")
+
+    def add_project_member(self, meta: dict) -> None:
+        with self._lock:
+            self._seed_s7()
+            data = self._read_at(self._project_members_path)
+            data[f"{meta['project_name']}::{meta['member_id']}"] = meta
+            self._write_at(self._project_members_path, data)
+
+    def update_project_member(self, project_name: str, member_id: str, **fields) -> Optional[dict]:
+        with self._lock:
+            self._seed_s7()
+            data = self._read_at(self._project_members_path)
+            row = data.get(f"{project_name}::{member_id}")
+            if not row:
+                return None
+            for k in ("role", "status"):
+                if k in fields and fields[k] is not None:
+                    row[k] = fields[k]
+            self._write_at(self._project_members_path, data)
+            return row
+
+    def remove_project_member(self, project_name: str, member_id: str) -> bool:
+        with self._lock:
+            self._seed_s7()
+            data = self._read_at(self._project_members_path)
+            key = f"{project_name}::{member_id}"
+            if key not in data:
+                return False
+            del data[key]
+            self._write_at(self._project_members_path, data)
+            return True
+
+    def get_current_user(self) -> Optional[str]:
+        with self._lock:
+            self._seed_s7()
+        uid = self._read_at(self._auth_path).get("current_user")
+        # 미설정 시 시드 관리자(개혁) — 기존 동작·테스트 보존.
+        return uid or _SEED_MEMBERS[0]["id"]
+
+    def set_current_user(self, member_id: str) -> None:
+        with self._lock:
+            self._write_at(self._auth_path, {"current_user": member_id})
+
 
 class TypeDBDrawingStore(DrawingStore):
     """typedb-driver 적재. 04-drawings 온톨로지(이식). 미가동 시 생성에서 예외."""
@@ -689,6 +853,43 @@ class TypeDBDrawingStore(DrawingStore):
 
     def delete_issue(self, issue_id: str) -> bool:
         return self.update_issue(issue_id, status="삭제됨") is not None
+
+    # --- S7: 구성원·프로젝트·역할·현재 사용자 — JSON 미러 SoT(직접쿼리화는 후속) ---
+    def list_members(self) -> list:
+        return _MIRROR.list_members()
+
+    def get_member(self, member_id: str) -> Optional[dict]:
+        return _MIRROR.get_member(member_id)
+
+    def add_member(self, meta: dict) -> None:
+        _MIRROR.add_member(meta)
+
+    def list_projects(self) -> list:
+        return _MIRROR.list_projects()
+
+    def add_project(self, meta: dict) -> None:
+        _MIRROR.add_project(meta)
+
+    def list_project_members(self, project_name: str) -> list:
+        return _MIRROR.list_project_members(project_name)
+
+    def get_project_member(self, project_name: str, member_id: str) -> Optional[dict]:
+        return _MIRROR.get_project_member(project_name, member_id)
+
+    def add_project_member(self, meta: dict) -> None:
+        _MIRROR.add_project_member(meta)
+
+    def update_project_member(self, project_name: str, member_id: str, **fields) -> Optional[dict]:
+        return _MIRROR.update_project_member(project_name, member_id, **fields)
+
+    def remove_project_member(self, project_name: str, member_id: str) -> bool:
+        return _MIRROR.remove_project_member(project_name, member_id)
+
+    def get_current_user(self) -> Optional[str]:
+        return _MIRROR.get_current_user()
+
+    def set_current_user(self, member_id: str) -> None:
+        _MIRROR.set_current_user(member_id)
 
 
 def _esc(s: str) -> str:

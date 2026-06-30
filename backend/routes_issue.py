@@ -18,6 +18,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from auth import require_role, require_role_for_issue
 from store import get_store
 
 logger = logging.getLogger(__name__)
@@ -145,6 +146,7 @@ async def issue_categories(project_name: Optional[str] = None):
 @router.post("")
 async def create_issue(body: IssueCreate):
     store = get_store()
+    require_role(body.project_name, "편집자")  # S7: 이슈 작성 = 편집자 이상
     if not body.title.strip():
         raise HTTPException(400, "이슈 제목은 필수입니다")
     if body.status not in _ISSUE_STATUSES:
@@ -181,6 +183,7 @@ async def create_issue(body: IssueCreate):
 @router.patch("/{issue_id}")
 async def patch_issue(issue_id: str, body: IssuePatch):
     store = get_store()
+    require_role_for_issue(issue_id, "편집자")  # S7: 이슈 변경 = 편집자 이상
     current = store.get_issue(issue_id)
     if not current:
         raise HTTPException(404, f"이슈 없음: {issue_id}")
@@ -213,6 +216,7 @@ async def patch_issue(issue_id: str, body: IssuePatch):
 @router.delete("/{issue_id}")
 async def delete_issue(issue_id: str):
     store = get_store()
+    require_role_for_issue(issue_id, "편집자")  # S7: 이슈 삭제 = 편집자 이상
     if not store.delete_issue(issue_id):
         raise HTTPException(404, f"이슈 없음: {issue_id}")
     return {"deleted": issue_id}

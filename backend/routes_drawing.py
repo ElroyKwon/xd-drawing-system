@@ -13,6 +13,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Uploa
 from fastapi.responses import FileResponse
 
 import config
+from auth import require_role
 from conversion import process_drawing
 from store import get_store
 from vector import get_vector_json
@@ -120,6 +121,7 @@ async def upload_drawing(
     uploaded_by: str = Form("업로드"),
 ):
     store = get_store()
+    require_role(project_name, "편집자")  # S7: 업로드 = 편집자 이상
     file_id, dest, ext, size = await _save_upload(file, project_name)
     meta = {
         "file_id": file_id,
@@ -171,6 +173,7 @@ async def add_drawing_version(
     if not base:
         raise HTTPException(404, f"도면 없음: {file_id}")
     project_name = base.get("project_name", "Study_Project")
+    require_role(project_name, "편집자")  # S7: 버전 추가 = 편집자 이상
     vset = base.get("version_set_id") or file_id
 
     new_id, dest, ext, size = await _save_upload(file, project_name)
@@ -229,6 +232,7 @@ async def delete_drawing_route(file_id: str):
     row = store.get_drawing(file_id)
     if not row:
         raise HTTPException(404, f"도면 없음: {file_id}")
+    require_role(row.get("project_name"), "편집자")  # S7: 삭제 = 편집자 이상
     # 업로드 디렉토리(uploads 내부 한정) 정리 후 메타 삭제.
     uploads_root = Path(config.UPLOADS_DIR).resolve()
     fp = row.get("file_path")

@@ -225,7 +225,7 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
         ) : activeSection === "사진" ? (
           <PhotosView />
         ) : (
-          <BuildManagementView section={activeSection} />
+          <BuildManagementView section={activeSection} projectName={project.name} />
         )}
       </section>
     </main>

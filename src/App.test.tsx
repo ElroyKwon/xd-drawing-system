@@ -32,6 +32,35 @@ vi.mock("./api/drawings", async (importActual) => {
   };
 });
 
+// S7: 인증/구성원/프로젝트 API. getMe=개혁(관리자), 구성원은 project_name별 시드.
+vi.mock("./api/admin", () => {
+  const MEMBERS = [
+    { id: "member-owner", name: "개혁 이", email: "cruelkh@gmail.com", phone: "+82 10-4112-9638" },
+    { id: "member-reviewer", name: "도면 검토자", email: "reviewer@xd.local", phone: "+82 10-2000-1200" },
+    { id: "member-field", name: "현장 담당자", email: "field@xd.local", phone: "+82 10-3000-3400" },
+    { id: "member-viewer", name: "고객 열람자", email: "viewer@xd.local", phone: "+82 10-4000-5600" },
+  ];
+  const join = (r: { member_id: string; role: string; status: string; added_at: string; project_name: string }) => ({
+    ...MEMBERS.find((m) => m.id === r.member_id), ...r,
+  });
+  return {
+    getMe: vi.fn(async () => ({ member_id: "member-owner", member: MEMBERS[0], roles: { Study_Project: "관리자" } })),
+    switchUser: vi.fn(async (id: string) => ({ member_id: id, member: MEMBERS.find((m) => m.id === id) ?? null, roles: {} })),
+    listMembers: vi.fn(async () => MEMBERS),
+    listProjects: vi.fn(async () => []),     // App은 initialProjects 시드를 유지(목록 2행)
+    createProject: vi.fn(async (p: unknown) => p),
+    listProjectMembers: vi.fn(async (proj: string) =>
+      proj === "Study_Project"
+        ? [
+            join({ project_name: proj, member_id: "member-owner", role: "관리자", status: "활성", added_at: "2026.06.12." }),
+            join({ project_name: proj, member_id: "member-reviewer", role: "편집자", status: "활성", added_at: "2026.06.13." }),
+          ]
+        : [join({ project_name: proj, member_id: "member-owner", role: "관리자", status: "활성", added_at: "방금 전" })]),
+    addProjectMember: vi.fn(async () => ({})),
+    patchProjectMember: vi.fn(async () => ({})),
+  };
+});
+
 function renderApp() {
   return {
     user: userEvent.setup(),
@@ -200,7 +229,7 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Project Admin")).toBeInTheDocument();
     expect(screen.getByText("XD Pilot Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
-    expect(screen.getAllByTestId("project-access-row")).toHaveLength(1);
+    expect(await screen.findAllByTestId("project-access-row")).toHaveLength(1);   // 신규 프로젝트: 생성자=관리자 1행
     expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
     expect(screen.queryByText("도면 검토자")).not.toBeInTheDocument();
 
@@ -236,7 +265,7 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Project 레벨")).toBeInTheDocument();
     expect(screen.getByText("Study_Project")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "구성원" })).toBeInTheDocument();
-    expect(screen.getAllByText("개혁 이").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("개혁 이")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Hub Admin")).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "프로젝트" })).not.toBeInTheDocument();
   });

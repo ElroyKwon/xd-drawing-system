@@ -2,7 +2,20 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-30, 세션 8 — S6 Build 홈 위젯 실데이터 + 전역 검색 DONE)
+## 현재 상태 (2026-06-30, 세션 9 — S7 인증(로컬 모의)+RBAC 강제+구성원/프로젝트 영속 구현 DONE · 검증 부분완료 · 커밋)
+
+- **단계**: **S7 구현 완료, 검증 부분완료(사용자 세션 종료 요청).** 메타프롬프트 `prompts/09-s7-auth-rbac-members.md` FROZEN(4결정: **로컬 모의 사용자 전환 · 백엔드 역할 기반 강제(403) · 구성원+프로젝트 둘 다 영속 · 정규화 역할 모델**). acceptance J1~J12.
+- **구현 요약**: 백엔드 `store.py`(member/project/project_member CRUD+current_user, seed-on-create), `auth.py` 신설(역할위계 뷰어<편집자<관리자 `require_role*`, 미구성 프로젝트 미강제=레거시 보존), `routes_auth.py` 신설(`/api/auth/me`·`/api/projects`·구성원 CRUD), 기존 mutation 라우트에 `require_role(편집자)` 적용, schema entity. 프론트 `api/admin.ts`, `App.tsx`(현재 사용자 로드·하드코딩 제거·사용자 전환 메뉴·프로젝트 백엔드·canManage), `ProjectAdminView`(구성원 백엔드+역할변경+게이트), `BuildManagementView` 실데이터.
+- **게이트(전부 PASS)**: build · npm test **92** · pytest **74**(신규 S7 6, **기존 68 회귀 0**) · git diff clean.
+- **검증 입증**: RBAC 라이브 403(뷰어)/200(관리자) 브라우저 fetch. e2e device(콘솔 0): J1 사용자 전환(개혁↔고객열람자 헤더/아바타 반영·하드코딩 제거)·J2 프로젝트 2개 영속·J7 권한 UI(뷰어 비활성/관리자 활성, `evidence/s7-01·02`)·구성원 3행 실데이터. unit이 J3/J4/J5/J6/J9 커버.
+- **다음 세션 이월(S7 DONE 선언 전)**: 독립 검증팀 3렌즈·Done-When reconcile(J1~J12)·**J7 Build 콘텐츠 UI 게이팅**(업로드/폴더/마크업/이슈 버튼은 서버 403 차단되나 UI 사전 비활성 미적용)·J11 e2e 확장(구성원 추가/역할변경 device·프로젝트 생성 복원).
+
+### 세션 9 진입점
+- `prompts/09` FROZEN·구현 완료·자동 게이트 GREEN·RBAC 라이브+핵심 UI e2e 입증. 다음 = **S7 검증 마무리**(3렌즈 → reconcile → J7 Build UI 게이팅 → 커밋) 후 S7 DONE, 그 다음 S8(온톨로지+AI, AI=HUMAN_GATE). 재기동법 세션6 블록과 동일.
+
+---
+
+## 이전 상태 (2026-06-30, 세션 8 — S6 Build 홈 위젯 실데이터 + 전역 검색 DONE)
 
 - **단계**: **S6 DONE.** 메타프롬프트 `prompts/08-s6-home-search.md` FROZEN(AskUserQuestion 4결정: **미구현 위젯 정직한 빈 상태 · 카운트+이슈 분석 차트[신규 의존성 0] · 백엔드 `/api/search`+상단 전역검색 · 검색 대상 시트+이슈+파일/폴더 전부**). acceptance **I1~I14 전부 MET**(EVIDENCE 하단 S6 reconcile).
 - **구현 요약**: 백엔드 `routes_search.py` 신설(`GET /api/search` 시트·이슈·파일·폴더 교차 부분일치+딥링크 식별자+상한/truncated, read-only seed=False), `main.py` 등록, `store.list_folders` seed 파라미터. 프론트 `homeStats.ts` 신설(순수 집계), `BuildHomeView` 재작성(인라인 하드코딩 제거→실데이터 집계+정직한 빈 상태+경량 SVG/CSS 이슈 차트), `GlobalSearch.tsx` 신설(상단 전역검색·디바운스·결과 패널·딥링크), `drawings.ts` `searchProject`, `BuildSheetsView`(검색 배선·딥링크·드로잉 로드 모든 섹션), `IssuesView` focusIssueId·`FilesView` focusFolderId.
@@ -123,10 +136,11 @@
   - 변환 도구체인 검증됨: ODA File Converter(설치), ezdxf, PyMuPDF(fitz), matplotlib, Pillow.
   - 테스트 도면: `D:\_Project` 전역 dwg 822·pdf 901·dxf 25. xd 레포 내 `reference/old-prototypes/.../dwg/`에 다분야 도면.
 
-## 다음 작업 — S1~S6 DONE, 다음은 S7
+## 다음 작업 — S1~S6 DONE, S7 구현완료(검증 이월), 다음은 S7 검증 마무리→S8
 
-**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(`83996d9`, H1~H13 MET) · **S6**(I1~I14 MET, 3렌즈+e2e, 세션8 커밋) **완료**. 다음 진입:
-- **S7 인증/RBAC + 프로젝트/구성원 영속**: 로컬 인증 + 역할(관리자·편집자·뷰어), `projectAdminData` 정적→영속, 권한 반영. 프로덕션 auth는 HUMAN_GATE(로컬 범위). prompts/09 메타프롬프트 작성부터.
+**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(`83996d9`) · **S6**(`776ae88`) **DONE**. **S7 구현 완료**(prompts/09 FROZEN, 세션9 커밋, 검증 이월). 다음 진입:
+- **S7 검증 마무리**: 독립 3렌즈 → Done-When reconcile(J1~J12) → J7 Build 콘텐츠 UI 게이팅(currentRole를 Build 뷰로 thread해 뷰어 업로드/폴더/마크업/이슈 버튼 비활성) → J11 e2e 확장 → S7 DONE.
+- **S8 XD 온톨로지 + AI 분석**: 도면 entity TypeDB 적재 + equipmentEntityId 바인딩. **AI(LLM)=HUMAN_GATE**.
 - (참고) S6 후속 부채: 홈 active vs 이슈탭 전체 카운트 차이(닫힘 전용뷰)·검색 퍼지/하이라이트/랭킹·차트 색맹 대응·구성원/작업/브리지/양식/날씨/진행률 백엔드.
 - (참고) S5 후속 부채: 삭제됨 이슈 편집·"열린 이슈" 탭 닫힘 노출·핀 색맹 대체·이슈 첨부/댓글/알림·TypeDB 그래프 직접쿼리화·권한 enforcement(S7).
 - (참고) S3 후속 부채: 설명 컬럼 실데이터·TypeDB folder 직접쿼리화·파일 단위 공유 override·인증/RBAC(S7). S2 후속: 멀티페이지 타이틀블록 강추출·빈 paperspace 자동분할.

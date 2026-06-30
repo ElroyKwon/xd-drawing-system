@@ -16,11 +16,12 @@ import {
   Settings,
   X
 } from "lucide-react";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import BuildSheetsView from "./BuildSheetsView";
 import ProjectAdminView from "./ProjectAdminView";
 import { useModalDismiss } from "./hooks/useModalDismiss";
 import { initialProjectAccess, type ProjectMemberAccess } from "./projectAdminData";
+import { createProject as apiCreateProject, getMe, listMembers, listProjects, switchUser, type Me, type Member } from "./api/admin";
 
 type Project = {
   id: string;
@@ -156,10 +157,31 @@ export default function App() {
   >("projects");
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjects[0].id);
   const [selectedTemplateId, setSelectedTemplateId] = useState(seedHubTemplates[0].id);
+  // S7: 로컬 모의 현재 사용자 + 백엔드 영속 프로젝트/구성원.
+  const [me, setMe] = useState<Me | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    getMe().then((m) => alive && setMe(m)).catch(() => {});
+    listMembers().then((m) => alive && setMembers(m)).catch(() => {});
+    listProjects<Project>().then((rows) => {
+      if (alive && rows.length) setProjects(rows);
+    }).catch(() => {/* 백엔드 미가동 시 시드 유지 */});
+    return () => { alive = false; };
+  }, []);
+
+  async function handleSwitchUser(memberId: string) {
+    try {
+      setMe(await switchUser(memberId));
+    } catch {/* 무시 */}
+  }
 
   const selectedTemplate = hubTemplates.find((template) => template.id === selectedTemplateId) ?? hubTemplates[0];
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
+  // S7: 현재 사용자의 선택 프로젝트 역할(권한 UI 게이트용).
+  const currentRole = me?.roles?.[selectedProject?.name ?? ""] ?? null;
 
   const filteredProjects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -200,7 +222,7 @@ export default function App() {
     }
   }
 
-  function submitProject(event: FormEvent<HTMLFormElement>) {
+  async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const projectName = form.name.trim();
@@ -229,20 +251,12 @@ export default function App() {
       createdAt: formatCreatedAt()
     };
 
+    // 낙관적 반영(즉시 표시) + 백엔드 영속(생성자=관리자 자동). 새로고침 복원은 mount 로드가 담당.
     setProjects((current) => [createdProject, ...current]);
-    setProjectAccessRecords((current) => [
-      ...current,
-      {
-        projectId,
-        memberId: "member-owner",
-        role: "관리자",
-        status: "활성",
-        addedAt: "방금 전"
-      }
-    ]);
     setSelectedProjectId(projectId);
     closeModal();
     setActiveView("project-admin");
+    apiCreateProject<Project>(createdProject).catch(() => {/* 백엔드 미가동 폴백 — 로컬 유지 */});
   }
 
   function openProject(projectId: string) {
@@ -275,6 +289,7 @@ export default function App() {
         project={selectedProject}
         accessRecords={projectAccessRecords}
         onAccessRecordsChange={setProjectAccessRecords}
+        canManage={currentRole === "관리자"}
         onBackToProjects={() => setActiveView("projects")}
       />
     );
@@ -296,14 +311,14 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <BrandBar />
+      <BrandBar me={me} members={members} onSwitch={handleSwitchUser} />
 
       <section className="workspace">
         <HubAdminBar />
 
         <div className="hero-row">
           <div>
-            <h1>개혁 님, 환영합니다.</h1>
+            <h1>{me?.member?.name ?? "사용자"} 님, 환영합니다.</h1>
             <p>오늘 무엇을 하시겠습니까?</p>
           </div>
         </div>
@@ -469,7 +484,18 @@ export default function App() {
   );
 }
 
-function BrandBar() {
+function BrandBar({ me, members, onSwitch }: { me: Me | null; members: Member[]; onSwitch: (memberId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+  const name = me?.member?.name ?? "사용자";
   return (
     <header className="brand-bar">
       <div className="brand">
@@ -485,9 +511,28 @@ function BrandBar() {
         <button type="button" className="round-button" aria-label="도움말">
           <CircleHelp size={18} />
         </button>
-        <button type="button" className="avatar" aria-label="사용자 메뉴">
-          개혁 <ChevronDown size={14} />
-        </button>
+        <div className="user-switch" ref={ref}>
+          <button type="button" className="avatar" aria-label="사용자 메뉴" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((v) => !v)}>
+            {name} <ChevronDown size={14} />
+          </button>
+          {open ? (
+            <div className="user-switch-menu" role="menu">
+              <p className="user-switch-head">사용자 전환 (로컬 모의)</p>
+              {members.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={me?.member_id === m.id}
+                  className={me?.member_id === m.id ? "is-current" : ""}
+                  onClick={() => { onSwitch(m.id); setOpen(false); }}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
     </header>
   );

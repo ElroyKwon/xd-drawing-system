@@ -57,7 +57,7 @@
 - [x] S4 마크업·측정·비교 실연산+영속 (벡터 world+PDF 정규화 이중트랙·DXF 실척 측정·클라 색상오버레이+백엔드 픽셀 diff, E1~E13 MET)
 - [x] S5 이슈 영속+핀 연계 (독립 Issue 엔티티·ACC식 상태4종+메타·양방향 딥링크·핀 선택적[DXF world/PDF image], H1~H13 MET, 3렌즈+e2e[DWG·PDF·무핀]·MAJOR-1 수리)
 - [x] S6 Build 홈 위젯 실데이터+검색 (홈 집계 실데이터+정직한 빈 상태+이슈 분석 차트[의존성0] + 백엔드 /api/search 4종 교차+상단 전역검색+딥링크, I1~I14 MET, 3렌즈+e2e·seed 부작용 수리)
-- [ ] S7 인증/RBAC+프로젝트/구성원 영속
+- [~] S7 인증/RBAC+프로젝트/구성원 영속 — **구현 DONE · 자동게이트 GREEN(test 92·pytest 74)·RBAC 라이브 403 + 핵심 UI e2e, 검증 마무리(3렌즈·reconcile·J7 Build UI 게이팅·e2e 확장) 이월** (로컬 모의 인증·역할 강제·정규화 모델, prompts/09 FROZEN)
 - [ ] S8 XD 온톨로지 바인딩+AI 분석
 
 ## 순서 근거 / 조정 여지

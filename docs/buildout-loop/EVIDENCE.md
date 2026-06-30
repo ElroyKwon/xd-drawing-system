@@ -475,3 +475,39 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 - 홈 "진행 중인 이슈"(active) vs 이슈 탭(비삭제 전체) 카운트 차이 — 닫힘 이슈 존재 시 표면화(active 의미는 정확, 닫힘 전용 뷰=후속).
 - 검색: project_name=None 시 폴더 스코프 비대칭·pending 파일명 노출·퍼지/하이라이트/랭킹 없음(부분일치까지).
 - 홈: 차트 색맹 대응(세그먼트 색상전용)·구성원/날씨 카드 제거(빈 카드 보존 대신)·진행률/작업/브리지/양식/날씨 백엔드(각 후속·S7).
+
+---
+
+# S7 — 인증(로컬 모의) + RBAC 강제 + 프로젝트/구성원 영속 (2026-06-30, 세션 9 — 구현 DONE · 검증 부분완료 · 미커밋→커밋)
+
+> 메타프롬프트 `prompts/09-s7-auth-rbac-members.md` FROZEN(AskUserQuestion 4결정: 로컬 모의 사용자 전환 · 백엔드 역할 기반 강제(403) · 구성원+프로젝트 둘 다 영속 · 정규화 역할 모델). acceptance J1~J12. **자동 게이트 GREEN + RBAC 라이브 강제 + 핵심 UI e2e 입증**, 다만 독립 검증팀 3렌즈·전체 Done-When reconcile·J7 Build 콘텐츠 UI 게이팅 일부는 **다음 세션 이월**.
+
+## 구현 요약
+- **백엔드**: `store.py` member/project/project_member CRUD + current_user(JSON `_members/_projects/_project_members/_auth.json`, TypeDB는 _MIRROR 위임, seed-on-create=4구성원+Study_Project 역할[개혁 관리자·도면검토자 편집자·고객열람자 뷰어]). `auth.py` 신설(역할 위계 뷰어<편집자<관리자, `require_role`/`require_role_for_file|folder|issue`, **미구성 프로젝트는 강제 안 함**=레거시/테스트 보존). `routes_auth.py` 신설(GET/PUT `/api/auth/me`·GET/POST `/api/projects`·구성원 GET/POST/PATCH/DELETE, 관리자 강제). 기존 mutation 라우트(folders·drawings 업로드/버전/삭제·markup/measurement·issue 생성/수정/삭제)에 `require_role(편집자)` 적용. `schema/04-drawings.tql` member/project/project_member entity. `main.py` 등록.
+- **프론트**: `api/admin.ts` 신설(getMe/switchUser/listProjects/createProject/listMembers/listProjectMembers/addProjectMember/patchProjectMember/removeProjectMember). `App.tsx`(현재 사용자 getMe 로드·하드코딩 "개혁" 제거·BrandBar 사용자 전환 메뉴·프로젝트 백엔드 로드+낙관적 생성·currentRole→canManage). `BrandBar` 사용자 전환 드롭다운(combobox ARIA). `ProjectAdminView`(구성원 백엔드 listProjectMembers·추가 addProjectMember·역할변경 select enable→patchProjectMember·canManage 게이트). `BuildManagementView` 구성원 실데이터(project_member).
+
+## 게이트 (전부 PASS)
+- `npm run build` PASS · `npm test` **92 PASS**(ProjectAdminView 9 재작성 + App 2 admin 모킹) · backend `pytest` **74 PASS**(신규 S7 6, **기존 68 회귀 0** — 기본 current_user=관리자 + 미구성 프로젝트 미강제) · `git diff --check` clean.
+
+## RBAC 라이브 강제 (브라우저 fetch 경로, json 백엔드)
+- 뷰어(고객 열람자)로 전환 → Study_Project 폴더 생성 → **403** `"권한 부족: '편집자' 이상 필요 (현재 역할: 뷰어)"`.
+- 관리자(개혁)로 복귀 → 폴더 생성 → **200**. (curl Git Bash는 body 아티팩트로 400 — 브라우저 경로가 정답, pytest도 동일 입증.)
+
+## 브라우저 e2e (device, 콘솔 0)
+- **J1 현재 사용자 + 전환**: 헤더/아바타 "개혁 이"(하드코딩 제거, getMe 실데이터) → 사용자 메뉴 4구성원 → "고객 열람자" 전환 → 헤더/아바타 "고객 열람자" 갱신 → 관리자 복귀.
+- **J2 프로젝트 영속**: 프로젝트 목록 2개(Study_Project·Seaport, 백엔드 시드 로드).
+- **J7 권한 UI**: 뷰어로 Project Admin → "구성원 추가"·역할 select **disabled**(스크린샷 `s7-01`). 관리자로 → 둘 다 **enabled**(스크린샷 `s7-02`). 콘솔 0.
+- **구성원 실데이터**: Study_Project 구성원 3행(개혁 관리자·도면검토자 편집자·고객열람자 뷰어).
+
+## 단위 테스트 입증(J3/J4/J5/J6/J9)
+- backend: RBAC 뷰어 403·편집자/관리자 허용·구성원 관리 관리자 한정·역할변경·프로젝트 생성 생성자=관리자·current user 전환·join·seed.
+- frontend: ProjectAdminView 구성원 로드·추가(백엔드)·역할변경·canManage 비활성·필터.
+
+## 다음 세션 이월 (S7 DONE 선언 전)
+- **독립 검증팀 3렌즈**(백엔드 적대 + 프론트 a11y + Done-When 비평가) — 미실시.
+- **Done-When reconcile(J1~J12 + 증거등급)** — 미실시.
+- **J7 Build 콘텐츠 UI 게이팅**: 현재 ProjectAdmin(추가·역할변경)만 UI 비활성. Build 업로드·폴더생성·마크업·이슈 작성 버튼은 **서버 403으로 차단되나 UI 사전 비활성 미적용**(currentRole를 Build 뷰로 thread 필요). 403 수신 시 사용자 안내도 후속.
+- **J11 브라우저 e2e 확장**: 구성원 추가/역할변경 device 입증(unit 통과, 브라우저 미실시), 프로젝트 생성 영속 새로고침 복원 device.
+
+## 잔여 비차단 부채 (S7 범위 외·후속)
+- 실제 인증(비밀번호·세션·OAuth·로그아웃)=프로덕션 HUMAN_GATE 후속. 회사·액세스레벨(별도 축)·템플릿 구성원·알림 권한 매트릭스·프로젝트 데이터 격리 강제·구성원 초대 이메일=후속. TypeDB 구성원/프로젝트 직접쿼리화(JSON 미러 SoT 유지).

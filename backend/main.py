@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 import config
 from routes_drawing import router as drawing_router
 from routes_files import router as files_router
+from routes_auth import router as auth_router
 from routes_issue import router as issue_router
 from routes_markup import router as markup_router
 from routes_search import router as search_router
@@ -37,6 +38,7 @@ app.include_router(files_router)
 app.include_router(markup_router)
 app.include_router(issue_router)
 app.include_router(search_router)
+app.include_router(auth_router)
 
 
 @app.get("/health")

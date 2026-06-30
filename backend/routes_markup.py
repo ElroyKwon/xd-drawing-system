@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import config
+from auth import require_role_for_file
 from compare import compute_diff
 from routes_drawing import _png_url
 from store import get_store
@@ -88,6 +89,7 @@ async def list_markups(file_id: str, sheet_id: str):
 
 @router.post("/{file_id}/markups")
 async def create_markup(file_id: str, body: MarkupCreate):
+    require_role_for_file(file_id, "편집자")  # S7: 마크업 작성 = 편집자 이상
     store = get_store()
     row = _require_drawing(store, file_id)
     _require_sheet(row, body.sheet_id)
@@ -116,6 +118,7 @@ async def create_markup(file_id: str, body: MarkupCreate):
 
 @router.patch("/{file_id}/markups/{markup_id}")
 async def patch_markup(file_id: str, markup_id: str, body: MarkupPatch):
+    require_role_for_file(file_id, "편집자")  # S7
     store = get_store()
     _require_drawing(store, file_id)
     fields = body.model_dump(exclude_none=True)
@@ -129,6 +132,7 @@ async def patch_markup(file_id: str, markup_id: str, body: MarkupPatch):
 
 @router.delete("/{file_id}/markups/{markup_id}")
 async def delete_markup(file_id: str, markup_id: str):
+    require_role_for_file(file_id, "편집자")  # S7
     store = get_store()
     _require_drawing(store, file_id)
     if not store.delete_markup(markup_id):
@@ -149,6 +153,7 @@ async def list_measurements(file_id: str, sheet_id: str):
 
 @router.post("/{file_id}/measurements")
 async def create_measurement(file_id: str, body: MeasurementCreate):
+    require_role_for_file(file_id, "편집자")  # S7
     store = get_store()
     row = _require_drawing(store, file_id)
     _require_sheet(row, body.sheet_id)
@@ -174,6 +179,7 @@ async def create_measurement(file_id: str, body: MeasurementCreate):
 
 @router.delete("/{file_id}/measurements/{measurement_id}")
 async def delete_measurement(file_id: str, measurement_id: str):
+    require_role_for_file(file_id, "편집자")  # S7
     store = get_store()
     _require_drawing(store, file_id)
     if not store.delete_measurement(measurement_id):

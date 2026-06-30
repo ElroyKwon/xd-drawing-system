@@ -12,6 +12,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from auth import require_role, require_role_for_folder
 from routes_drawing import _validate_project_name
 from store import _DEFAULT_PERMISSIONS, get_store
 
@@ -44,6 +45,7 @@ async def list_folders(project_name: str = "Study_Project"):
 @router.post("")
 async def create_folder(body: FolderCreate):
     _validate_project_name(body.project_name)
+    require_role(body.project_name, "편집자")  # S7: 콘텐츠 mutation = 편집자 이상
     name = body.name.strip()
     if not name:
         raise HTTPException(400, "폴더 이름이 비어 있습니다")
@@ -68,6 +70,7 @@ async def create_folder(body: FolderCreate):
 
 @router.patch("/{folder_id}")
 async def patch_folder(folder_id: str, body: FolderPatch):
+    require_role_for_folder(folder_id, "편집자")  # S7: 폴더 수정/공유 = 편집자 이상
     fields = body.model_dump(exclude_none=True)
     if "name" in fields and not fields["name"].strip():
         raise HTTPException(400, "폴더 이름이 비어 있습니다")
@@ -99,6 +102,7 @@ async def patch_folder(folder_id: str, body: FolderPatch):
 
 @router.delete("/{folder_id}")
 async def delete_folder(folder_id: str):
+    require_role_for_folder(folder_id, "편집자")  # S7: 폴더 삭제 = 편집자 이상
     if not get_store().delete_folder(folder_id):
         raise HTTPException(404, f"폴더 없음: {folder_id}")
     return {"deleted": folder_id}
