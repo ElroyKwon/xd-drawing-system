@@ -430,3 +430,48 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 - 백엔드: 삭제됨 이슈 편집 가능·생성 시 종착상태 주입(UI 경로로는 불가, 정상 경로 무영향)·없는 file_id 목록=빈배열(마크업과 일관).
 - 프론트: focusPin draw마다 재중심화·"열린 이슈" 탭에 닫힘 노출(닫힘 전용 뷰 추가 시 해소, 설계 결정)·핀 색상전용 상태구분(텍스트 대체경로 존재)·인라인 폼 ESC·검색 제목한정·로드 race 가드.
 - TypeDB 그래프 직접 쿼리화(JSON 미러 SoT 유지), 이슈 첨부/댓글/알림(ACC 협업), 권한 enforcement=S7.
+
+---
+
+# S6 — Build 홈 위젯 실데이터 + 전역 검색 (2026-06-30, 세션 8 — DONE)
+
+> 메타프롬프트 `prompts/08-s6-home-search.md` FROZEN(AskUserQuestion 4결정: 미구현 위젯 정직한 빈 상태 · 카운트+이슈 분석 차트[신규 의존성 0] · 백엔드 `/api/search` 라우트+상단 전역검색 · 검색 대상 시트+이슈+파일/폴더 전부). acceptance **I1~I14 전부 MET**.
+
+## 구현 요약
+- **백엔드**: `routes_search.py` 신설 — `GET /api/search?q=&project_name=` 시트(완료 도면 sheets 번호/제목/이름)·이슈(제목, 삭제됨 제외)·파일(최신 버전 filename)·폴더(name) 대소문자 무시 부분일치 교차. 타입별 그룹 + 딥링크 식별자(file_id/sheet_id/issue_id/folder_id) + 결과 상한 20/타입·`truncated` 플래그. 빈/공백 q → 빈 결과. `main.py` 라우터 등록. 기존 store 목록 재사용(신규 엔티티 0).
+- **프론트**: `homeStats.ts` 신설(순수 집계 헬퍼: 시트 수[완료]·고유 버전세트 파일 수·폴더 수·활성 이슈 수·상태별·저장용량 합·최근 업로드·작성일별 이슈 상태 + `formatBytes`). `BuildHomeView.tsx` 재작성(인라인 하드코딩 제거 → listDrawings/listIssues/listFolders fetch+집계, 빠른링크·저장용량·작업상태[이슈 실집계]·최근활동 실데이터, 진행률·구성원·작업·브리지·날씨는 정직한 빈 상태, 종합 탭 "작성일별 이슈 상태" 경량 인라인 SVG/CSS 누적막대 차트+양식 빈 상태). `GlobalSearch.tsx` 신설(상단바 전역 검색: 디바운스 250ms·결과 listbox 패널[시트/이슈/파일/폴더 그룹]·빈쿼리/무결과/로딩·바깥클릭 닫기·truncated 안내). `drawings.ts` `searchProject`+`SearchResults` 타입. `BuildSheetsView.tsx`(GlobalSearch 배선·딥링크 핸들러 searchOpenSheet/Issue/Folder·드로잉 로드 모든 섹션 1회+시트/이슈 폴링·홈 props). `IssuesView.tsx` `focusIssueId` preselect·`FilesView.tsx` `focusFolderId` 폴더 선택.
+
+## 게이트 (전부 PASS)
+- `npm run build` PASS · `npm test` **91 PASS**(신규: homeStats 3 + GlobalSearch 4 + BuildSheetsView 갱신) · backend `pytest` **67 PASS**(신규 S6 검색 6) · `git diff --check` clean.
+
+## 브라우저 e2e (device, json 백엔드, 실 도면/이슈)
+- **I1~I6 홈 개요 실데이터**: 홈 진입 → 빠른링크 **시트 15**(시트목록 15개 일치)·**파일 7**·**폴더 11**, **저장 용량 26.7 MB**(storage_bytes 합), 작업상태 "작업 없음 · 추가 예정"(정직한 빈) + **진행 중인 이슈 3개**(실집계), 최근 활동 **실 업로드**(plan_b/plan_a/plan_v1/EE-01-006/제주 BESS, 실 날짜). 스크린샷 `evidence/s6-01-home-overview-realdata.png`.
+- **I7 분석 차트**: 종합 탭 → "작성일별 이슈 상태" 누적막대 차트(열림/진행중/답변됨/닫힘 범례, role=img), 양식 카드는 "양식 기능 추가 예정" 빈 상태. 신규 의존성 0(인라인 SVG/CSS). 스크린샷 `evidence/s6-02-home-analytics-issuechart.png`.
+- **I8 정직한 빈 상태**: 진행률("일정 미구성")·구성원(빠른링크에서 제거)·작업·브리지("콘텐츠 없음·추가 예정")·날씨(제거)·양식 모두 가짜 하드코딩 수치 0.
+- **I10/I11 전역 검색 + 딥링크**: 상단 검색 "EE" → 시트 2 + 파일 2 교차(스크린샷 `s6-03`). 시트 결과 클릭 → **뷰어 진입(EE-01-006)**. "케이블" → 전역 무핀 이슈 → 클릭 → **이슈 탭 전환 + 해당 이슈 자동 선택**(인스펙터 상세, 스크린샷 `s6-04`). "Drawings" → 폴더 → 클릭 → **파일 화면 + Drawings 폴더 선택**. "plan" → 시트 3 + 파일 1.
+- **I13 콘솔 0**: 검색 입력 `name`+combobox ARIA 부여 후 error/warn/issue **0**.
+- **I14 정합성**: 홈 시트 15 = 시트목록 15, 이슈 3 = 이슈탭 3(활성), 검색 결과는 실제 객체.
+
+## 독립 검증팀 3렌즈 (세션 8)
+- **백엔드 적대적**: BLOCKER 0. 부분일치·대소문자·완료필터·이슈 스코프/삭제제외·상한/truncated·빈쿼리·딥링크식별자·latest dedup PASS. **MAJOR 적발**: `GET /api/search`가 `list_folders`의 seed-on-create를 트리거 → 임의 project_name 검색만으로 폴더 트리 영속 생성(GET 안전성/멱등성 위반). MINOR: project_name=None 폴더 스코프 비대칭·pending 파일명 노출(FilesView와 정합, 방어가능).
+- **프론트 비기능/a11y**: BLOCKER 0. fetch race 가드·디바운스·언마운트 정리·catch 폴백·신규 의존성 0·딥링크 배선·빈 상태 정직성 PASS. **조건부 MAJOR**: 홈 "진행 중인 이슈"=active(닫힘 제외) vs IssuesView "열린 이슈" 탭=비삭제 전체(닫힘 포함) → 닫힘 이슈 존재 시 카운트 불일치(현 데이터 닫힘 0 → e2e 3=3 일치). MINOR: combobox ARIA 미완성·차트 색맹·미사용 import·indexOf O(n²)·silent no-op.
+- **Done-When 비평가**: I1~I14 전부 MET, **침묵 좁힘 0건**. 검색 4종 전부·신규 의존성 0·정직한 빈 상태 모두 freeze 준수. DONE 가능.
+
+## 세션 8 수리 (적발 결함)
+- **백엔드 MAJOR 수리**: `store.list_folders`에 `seed: bool=True` 파라미터 추가(abstract·Json·TypeDB), `routes_search`는 `seed=False`로 호출 → 검색이 폴더를 생성하지 않음. 라이브 재현: phantom 프로젝트 검색 → `folders:[]`(부작용 0), 기존 Study_Project Drawings는 정상 검색. 회귀 `test_search_does_not_seed_folders`.
+- **프론트 MINOR 수리(내 편집 orphan/품질)**: `BuildHomeView` 미사용 import(`FolderClosed`/`Layers`) 제거·차트 `indexOf` O(n²)→map index. `GlobalSearch` combobox ARIA 보강(role=combobox·aria-expanded·aria-controls·listbox id). 검색 입력 `name` 부여(폼필드 콘솔 경고 해소).
+- **조건부 MAJOR(I4/I14) 판단**: 홈 위젯은 "진행 중인 프로젝트 이슈"=active(열림+진행중+답변됨)로 의미가 정확하고, 현 데이터(닫힘 0)에서 이슈 탭과 e2e 3=3 일치. 닫힘 이슈 존재 시 두 뷰의 카운트 차이는 active-vs-all 의미 차이(S5 "열린 이슈" 탭 닫힘 노출 부채와 동일 근원) — 캡처 손실 없이 무리하게 통합하지 않고 **잔여 비차단 부채**로 기록.
+
+## Done-When reconcile (I1~I14)
+- **I1~I7** — MET(A): 홈 실데이터 로드·시트/파일/폴더 수·이슈 집계·최근활동·저장용량·이슈 차트 e2e 입증.
+- **I8** — MET(A/C): 정직한 빈 상태, 가짜 수치 0(e2e 개요+코드).
+- **I9** — MET(A): 검색 라우트 교차·부분일치·스코프·상한·빈쿼리, seed 부작용 수리. pytest 7+e2e.
+- **I10/I11** — MET(A): 상단 전역 검색 + 시트/이슈/폴더 딥링크 e2e.
+- **I12** — MET(B): build·npm test **91**·pytest **68**·diff clean.
+- **I13** — MET(A): e2e 콘솔 0.
+- **I14** — MET(A): 홈 집계가 시트목록·이슈탭·파일화면 실수와 일치(현 데이터).
+
+## 잔여 비차단 부채 (S6 범위 외·후속)
+- 홈 "진행 중인 이슈"(active) vs 이슈 탭(비삭제 전체) 카운트 차이 — 닫힘 이슈 존재 시 표면화(active 의미는 정확, 닫힘 전용 뷰=후속).
+- 검색: project_name=None 시 폴더 스코프 비대칭·pending 파일명 노출·퍼지/하이라이트/랭킹 없음(부분일치까지).
+- 홈: 차트 색맹 대응(세그먼트 색상전용)·구성원/날씨 카드 제거(빈 카드 보존 대신)·진행률/작업/브리지/양식/날씨 백엔드(각 후속·S7).

@@ -4,6 +4,7 @@ import { drawingsToSheets, listDrawings, type Drawing, type Issue } from "./api/
 import { filterSheets, selectedBuildProject, sortSheets, type Sheet, type SheetSortKey } from "./buildSheetsData";
 import BuildHomeView from "./build/BuildHomeView";
 import BuildManagementView from "./build/BuildManagementView";
+import GlobalSearch from "./build/GlobalSearch";
 import FilesView from "./build/FilesView";
 import FormsView from "./build/FormsView";
 import IssuesView from "./build/IssuesView";
@@ -31,10 +32,14 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [disciplineFilter, setDisciplineFilter] = useState<string>("전체");
   const [sortKey, setSortKey] = useState<SheetSortKey>("number-asc");
+  // S6: 전역 검색 딥링크 — 이슈 탭 preselect / 파일 화면 폴더 선택.
+  const [issuesFocusId, setIssuesFocusId] = useState<string | null>(null);
+  const [filesFocusFolderId, setFilesFocusFolderId] = useState<string | null>(null);
 
-  // 시트/이슈 섹션에서 도면 목록을 조회·폴링(변환 완료분 + 이슈→시트 매핑용).
+  // 도면 목록을 조회한다. 섹션 진입마다 1회 로드(전역 검색 딥링크의 시트 매핑용),
+  // 시트/이슈 화면에서는 변환 진행 반영을 위해 폴링한다.
   useEffect(() => {
-    if (selectedSheet || (activeSection !== "시트" && activeSection !== "이슈")) {
+    if (selectedSheet) {
       return;
     }
     let alive = true;
@@ -44,10 +49,10 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
         .catch(() => {/* 폴링 실패는 다음 주기 재시도 */});
     };
     load();
-    const timer = setInterval(load, 2500);
+    const timer = activeSection === "시트" || activeSection === "이슈" ? setInterval(load, 2500) : null;
     return () => {
       alive = false;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     };
   }, [activeSection, selectedSheet, project.name]);
 
@@ -76,6 +81,8 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
     setActiveSection(section);
     setSelectedSheet(null);
     setFocusIssue(null);
+    setIssuesFocusId(null);
+    setFilesFocusFolderId(null);
   }
 
   function openSheet(sheet: Sheet) {
@@ -89,6 +96,26 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
     setActiveSection("시트");
     setSelectedSheet(sheet);
     setFocusIssue(issue);
+  }
+
+  // S6: 전역 검색 결과 딥링크 — 시트=뷰어, 이슈=이슈 탭+선택, 파일/폴더=파일 화면+폴더.
+  function searchOpenSheet(sheetId: string) {
+    const sheet = projectSheets.find((s) => s.id === sheetId);
+    if (sheet) openSheet(sheet);
+  }
+  function searchOpenIssue(issueId: string) {
+    setSelectedSheet(null);
+    setFocusIssue(null);
+    setFilesFocusFolderId(null);
+    setActiveSection("이슈");
+    setIssuesFocusId(issueId);
+  }
+  function searchOpenFolder(folderId: string | null) {
+    setSelectedSheet(null);
+    setFocusIssue(null);
+    setIssuesFocusId(null);
+    setActiveSection("파일");
+    setFilesFocusFolderId(folderId);
   }
 
   const emptyMessage = projectSheets.length === 0 ? "아직 등록된 시트가 없습니다." : "검색 결과가 없습니다.";
@@ -147,6 +174,12 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             </div>
           </div>
           <div className="build-topbar-actions">
+            <GlobalSearch
+              projectName={project.name}
+              onPickSheet={searchOpenSheet}
+              onPickIssue={searchOpenIssue}
+              onPickFolder={searchOpenFolder}
+            />
             <span className="settings-scope-chip">프로젝트 작업</span>
             <div className="build-trial">30일 평가판 - XD Build Essentials</div>
           </div>
@@ -162,7 +195,12 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             onBack={() => { setSelectedSheet(null); setFocusIssue(null); }}
           />
         ) : activeSection === "홈" ? (
-          <BuildHomeView projectName={project.name} sheetCount={projectSheets.length} />
+          <BuildHomeView
+            projectName={project.name}
+            onOpenSheets={() => openSection("시트")}
+            onOpenIssues={() => openSection("이슈")}
+            onOpenFiles={() => openSection("파일")}
+          />
         ) : activeSection === "시트" ? (
           <SheetsListView
             emptyMessage={emptyMessage}
@@ -179,9 +217,9 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             onSortToggle={() => setSortKey((k) => (k === "number-asc" ? "number-desc" : "number-asc"))}
           />
         ) : activeSection === "파일" ? (
-          <FilesView onOpenSheet={openSheet} />
+          <FilesView onOpenSheet={openSheet} focusFolderId={filesFocusFolderId} />
         ) : activeSection === "이슈" ? (
-          <IssuesView projectName={project.name} sheets={projectSheets} onOpenIssuePin={openIssuePin} />
+          <IssuesView projectName={project.name} sheets={projectSheets} onOpenIssuePin={openIssuePin} focusIssueId={issuesFocusId} />
         ) : activeSection === "양식" ? (
           <FormsView />
         ) : activeSection === "사진" ? (

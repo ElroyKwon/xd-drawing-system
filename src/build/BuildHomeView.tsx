@@ -1,10 +1,52 @@
-import { ChevronRight, CloudSun, Plus } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { listDrawings, listFolders, listIssues, type Drawing, type Folder, type Issue } from "../api/drawings";
+import { computeHomeStats, formatBytes, type IssueStatusDay } from "./homeStats";
 
 type HomeTab = "개요" | "종합";
 
-export default function BuildHomeView({ projectName, sheetCount }: { projectName: string; sheetCount: number }) {
+const STATUS_COLOR: Record<string, string> = {
+  열림: "#e8590c",
+  진행중: "#1971c2",
+  답변됨: "#2f9e44",
+  닫힘: "#868e96"
+};
+
+export default function BuildHomeView({
+  projectName,
+  onOpenSheets,
+  onOpenIssues,
+  onOpenFiles
+}: {
+  projectName: string;
+  onOpenSheets?: () => void;
+  onOpenIssues?: () => void;
+  onOpenFiles?: () => void;
+}) {
   const [activeTab, setActiveTab] = useState<HomeTab>("개요");
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+
+  // 홈 진입 시 실데이터 집계 로드(시트/파일/폴더/이슈). 정적 하드코딩 대체.
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      listDrawings(projectName).catch(() => [] as Drawing[]),
+      listIssues({ projectName }).catch(() => [] as Issue[]),
+      listFolders(projectName).catch(() => [] as Folder[])
+    ]).then(([d, i, f]) => {
+      if (!alive) return;
+      setDrawings(d);
+      setIssues(i);
+      setFolders(f);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [projectName]);
+
+  const stats = useMemo(() => computeHomeStats(drawings, issues, folders), [drawings, issues, folders]);
 
   return (
     <section className="build-page build-home-page" aria-labelledby="build-home-title">
@@ -13,10 +55,6 @@ export default function BuildHomeView({ projectName, sheetCount }: { projectName
           <h1 id="build-home-title">개혁 님, 환영합니다.</h1>
           <p>오늘 진행 중인 프로젝트를 확인합니다 · {projectName}</p>
         </div>
-        <button className="primary-action" type="button">
-          <Plus size={16} aria-hidden="true" />
-          작업 만들기
-        </button>
       </div>
 
       <div className="home-illustration" aria-hidden="true" />
@@ -30,36 +68,33 @@ export default function BuildHomeView({ projectName, sheetCount }: { projectName
         </button>
       </div>
 
-      {activeTab === "개요" ? <HomeOverview sheetCount={sheetCount} /> : <HomeAnalytics />}
+      {activeTab === "개요" ? (
+        <HomeOverview stats={stats} onOpenSheets={onOpenSheets} onOpenIssues={onOpenIssues} onOpenFiles={onOpenFiles} />
+      ) : (
+        <HomeAnalytics issuesByDate={stats.issuesByDate} />
+      )}
     </section>
   );
 }
 
-function HomeOverview({ sheetCount }: { sheetCount: number }) {
+function HomeOverview({
+  stats,
+  onOpenSheets,
+  onOpenIssues,
+  onOpenFiles
+}: {
+  stats: ReturnType<typeof computeHomeStats>;
+  onOpenSheets?: () => void;
+  onOpenIssues?: () => void;
+  onOpenFiles?: () => void;
+}) {
   return (
     <div className="home-overview-grid">
       <div className="home-overview-main">
         <section className="home-card home-progress-card" aria-label="프로젝트 진행률">
           <h2>프로젝트 진행률</h2>
-          <div className="home-progress-stats">
-            <div>
-              <strong>1%</strong>
-              <span>완료</span>
-            </div>
-            <div>
-              <strong>1,000일</strong>
-              <span>남음</span>
-            </div>
-            <div>
-              <strong>2029년 3월 12일</strong>
-              <span>목표 완료일</span>
-            </div>
-          </div>
-          <div className="home-progress-bar" aria-hidden="true">
-            <span style={{ width: "1%" }} />
-          </div>
           <div className="home-onboarding-note">
-            프로젝트 일정을 추가하거나 프로젝트 표준에 대한 도움말을 확인해 시작 상태를 채울 수 있습니다.
+            프로젝트 일정이 구성되지 않았습니다. 일정을 추가하면 진행률이 여기에 표시됩니다.
           </div>
         </section>
 
@@ -68,120 +103,150 @@ function HomeOverview({ sheetCount }: { sheetCount: number }) {
             <h2>빠른 링크</h2>
             <div className="home-quicklinks">
               <div>
-                <strong>{sheetCount}</strong>
+                <strong>{stats.sheetCount}</strong>
                 <span>시트</span>
               </div>
               <div>
-                <strong>1</strong>
-                <span>구성원</span>
+                <strong>{stats.fileCount}</strong>
+                <span>파일</span>
+              </div>
+              <div>
+                <strong>{stats.folderCount}</strong>
+                <span>폴더</span>
               </div>
             </div>
             <div className="home-quicklink-actions">
-              <button type="button">시트</button>
-              <button type="button">구성원</button>
+              <button type="button" onClick={onOpenSheets}>시트 보기</button>
+              <button type="button" onClick={onOpenFiles}>파일 보기</button>
             </div>
           </section>
 
-          <section className="home-card" aria-label="현장 날씨">
-            <h2>현장 날씨</h2>
-            <div className="home-weather">
-              <CloudSun size={34} aria-hidden="true" />
-              <div>
-                <strong>대체로 흐림</strong>
-                <span>9 ℃ · 습도 65% · 풍속 5 m/s</span>
-              </div>
+          <section className="home-card" aria-label="저장 용량">
+            <h2>저장 용량</h2>
+            <div className="home-storage">
+              <strong>{formatBytes(stats.storageBytes)}</strong>
+              <span>업로드 원본 + 파생 산출물</span>
             </div>
-            <button className="home-link-button" type="button">더 보기 · Weather</button>
           </section>
         </div>
 
         <section className="home-card" aria-label="작업 상태">
           <h2>작업 상태</h2>
-          <button className="home-status-row" type="button">
+          <div className="home-status-row home-status-empty">
             <span>나에게 할당된 작업</span>
-            <span className="home-status-value">진행 중인 작업 1개</span>
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
-          <button className="home-status-row" type="button">
-            <span>프로젝트에 할당된 이슈</span>
-            <span className="home-status-value">진행 중인 이슈 1개</span>
+            <span className="home-status-value muted">작업 없음 · 추가 예정</span>
+          </div>
+          <button className="home-status-row" type="button" onClick={onOpenIssues}>
+            <span>진행 중인 프로젝트 이슈</span>
+            <span className="home-status-value">{stats.issueActiveCount}개</span>
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </section>
 
         <section className="home-card muted-card" aria-label="브리지">
           <h2>브리지</h2>
-          <p>콘텐츠 없음 · 브리지 도구로 이동</p>
+          <p>콘텐츠 없음 · 추가 예정</p>
         </section>
       </div>
 
-      <aside className="home-card home-recent-card" aria-label="최근 작업">
+      <aside className="home-card home-recent-card" aria-label="최근 활동">
         <div className="home-recent-head">
-          <h2>최근 작업</h2>
-          <button className="home-link-button" type="button">모두 보기</button>
+          <h2>최근 활동</h2>
+          <button className="home-link-button" type="button" onClick={onOpenFiles}>모두 보기</button>
         </div>
-        <article className="home-recent-item">
-          <strong>개혁 이 프로젝트 작성했습니다</strong>
-          <span>2026년 6월 19일 · 17:31</span>
-        </article>
+        {stats.recentUploads.length === 0 ? (
+          <p className="home-recent-empty">아직 업로드된 도면이 없습니다.</p>
+        ) : (
+          stats.recentUploads.map((u) => (
+            <article className="home-recent-item" key={u.fileId}>
+              <strong>{u.filename}</strong>
+              <span>{formatDate(u.uploadDate)}</span>
+            </article>
+          ))
+        )}
       </aside>
     </div>
   );
 }
 
-const analyticsCards = [
-  { id: "issue-avg", title: "이슈를 완료하는 데 걸리는 평균 시간", empty: "표시할 이슈 데이터 없음", chart: "none" },
-  { id: "issue-overdue", title: "표시할 기한이 지난 이슈", empty: "표시할 이슈 데이터 없음", chart: "none" },
-  { id: "issue-status", title: "작성 날짜별 이슈 상태", empty: "", chart: "bars" },
-  { id: "form-avg", title: "양식을 완료하는 데 걸리는 평균 시간", empty: "표시할 양식 데이터가 없습니다.", chart: "none" },
-  { id: "form-overdue", title: "표시할 기한이 지난 양식", empty: "표시할 양식 데이터가 없습니다.", chart: "none" },
-  { id: "form-daily", title: "매일 완료하는 양식", empty: "", chart: "bars" }
-] as const;
-
-const issueStatusLegend = ["진행 중", "완료", "답변됨", "보류", "거부"];
-
-function HomeAnalytics() {
+function HomeAnalytics({ issuesByDate }: { issuesByDate: IssueStatusDay[] }) {
+  const formCards = [
+    { id: "form-avg", title: "양식을 완료하는 데 걸리는 평균 시간" },
+    { id: "form-overdue", title: "표시할 기한이 지난 양식" },
+    { id: "form-daily", title: "매일 완료하는 양식" }
+  ];
   return (
     <div className="home-analytics-grid">
-      {analyticsCards.map((card) => (
+      <section className="home-analytics-card home-analytics-wide" aria-label="작성 날짜별 이슈 상태">
+        <header className="home-analytics-head">
+          <h2>작성 날짜별 이슈 상태</h2>
+        </header>
+        <IssueStatusChart issuesByDate={issuesByDate} />
+      </section>
+
+      {formCards.map((card) => (
         <section className="home-analytics-card" key={card.id} aria-label={card.title}>
           <header className="home-analytics-head">
             <h2>{card.title}</h2>
-            <button className="icon-button" type="button" aria-label={`${card.title} 필터`}>
-              <span aria-hidden="true">⋯</span>
-            </button>
           </header>
-          {card.chart === "bars" ? (
-            <div className="home-chart">
-              <div className="home-chart-axis" aria-hidden="true">
-                <span>수</span>
-              </div>
-              <div className="home-chart-plot" aria-hidden="true">
-                {[1, 2, 3, 4, 5, 6].map((tick) => (
-                  <span className="home-chart-tick" key={tick}>
-                    {tick}월
-                  </span>
-                ))}
-              </div>
-              {card.id === "issue-status" ? (
-                <ul className="home-chart-legend">
-                  {issueStatusLegend.map((label) => (
-                    <li key={label}>
-                      <span className={`legend-dot legend-${issueStatusLegend.indexOf(label)}`} aria-hidden="true" />
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ) : (
-            <div className="home-analytics-empty">
-              <strong>{card.empty}</strong>
-              <span>선택한 기간 및 필터에 대해 표시할 데이터가 없습니다.</span>
-            </div>
-          )}
+          <div className="home-analytics-empty">
+            <strong>표시할 양식 데이터가 없습니다.</strong>
+            <span>양식 기능은 추가 예정입니다.</span>
+          </div>
         </section>
       ))}
     </div>
   );
+}
+
+const CHART_STATUSES: Array<keyof Omit<IssueStatusDay, "date">> = ["열림", "진행중", "답변됨", "닫힘"];
+
+function IssueStatusChart({ issuesByDate }: { issuesByDate: IssueStatusDay[] }) {
+  if (issuesByDate.length === 0) {
+    return (
+      <div className="home-analytics-empty">
+        <strong>표시할 이슈 데이터 없음</strong>
+        <span>이슈를 작성하면 작성일별 상태가 여기에 집계됩니다.</span>
+      </div>
+    );
+  }
+  const totals = issuesByDate.map((d) => CHART_STATUSES.reduce((n, s) => n + d[s], 0));
+  const max = Math.max(1, ...totals);
+  return (
+    <div className="home-chart">
+      <div className="home-chart-bars" role="img" aria-label="작성일별 이슈 상태 누적 막대 차트">
+        {issuesByDate.map((day, idx) => (
+          <div className="home-chart-col" key={day.date} title={`${day.date}: ${totals[idx]}건`}>
+            <div className="home-chart-stack">
+              {CHART_STATUSES.map((s) =>
+                day[s] > 0 ? (
+                  <span
+                    key={s}
+                    className="home-chart-seg"
+                    style={{ height: `${(day[s] / max) * 100}%`, background: STATUS_COLOR[s] }}
+                  />
+                ) : null
+              )}
+            </div>
+            <span className="home-chart-xlabel">{day.date.slice(5)}</span>
+          </div>
+        ))}
+      </div>
+      <ul className="home-chart-legend">
+        {CHART_STATUSES.map((s) => (
+          <li key={s}>
+            <span className="legend-dot" style={{ background: STATUS_COLOR[s] }} aria-hidden="true" />
+            {s}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function formatDate(iso: string): string {
+  if (!iso) return "";
+  const d = iso.slice(0, 10);
+  const t = iso.slice(11, 16);
+  return t ? `${d} · ${t}` : d;
 }

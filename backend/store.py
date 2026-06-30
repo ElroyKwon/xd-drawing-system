@@ -87,8 +87,9 @@ class DrawingStore(ABC):
     def get_folder(self, folder_id: str) -> Optional[dict]: ...
 
     @abstractmethod
-    def list_folders(self, project_name: str) -> list:
-        """프로젝트 폴더 목록. 폴더가 없으면 ACC 기본 세트를 seed-on-create(idempotent)."""
+    def list_folders(self, project_name: str, *, seed: bool = True) -> list:
+        """프로젝트 폴더 목록. seed=True이고 폴더가 없으면 ACC 기본 세트를 seed-on-create(idempotent).
+        seed=False는 read-only(검색 등 부작용 금지)."""
 
     @abstractmethod
     def update_folder(self, folder_id: str, **fields) -> Optional[dict]: ...
@@ -277,11 +278,11 @@ class JsonDrawingStore(DrawingStore):
     def get_folder(self, folder_id: str) -> Optional[dict]:
         return self._read_folders().get(folder_id)
 
-    def list_folders(self, project_name: str) -> list:
+    def list_folders(self, project_name: str, *, seed: bool = True) -> list:
         with self._lock:
             data = self._read_folders()
             has_any = any(f.get("project_name") == project_name for f in data.values())
-            if not has_any:
+            if not has_any and seed:
                 # seed-on-create: ACC 기본 폴더 세트를 실제 레코드로 생성(idempotent — 존재하면 skip).
                 now = datetime.now().isoformat()
                 for slug, name, parent_slug in DEFAULT_FOLDERS:
@@ -557,8 +558,8 @@ class TypeDBDrawingStore(DrawingStore):
     def get_folder(self, folder_id: str) -> Optional[dict]:
         return _MIRROR.get_folder(folder_id)
 
-    def list_folders(self, project_name: str) -> list:
-        return _MIRROR.list_folders(project_name)
+    def list_folders(self, project_name: str, *, seed: bool = True) -> list:
+        return _MIRROR.list_folders(project_name, seed=seed)
 
     def update_folder(self, folder_id: str, **fields) -> Optional[dict]:
         return _MIRROR.update_folder(folder_id, **fields)

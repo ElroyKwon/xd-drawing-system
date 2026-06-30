@@ -419,6 +419,31 @@ export async function deleteIssue(issueId: string): Promise<void> {
   if (!res.ok) throw new Error(`이슈 삭제 실패 (${res.status})`);
 }
 
+// --- S6: 프로젝트 전역 검색 ---
+
+export type SearchSheetHit = { file_id: string; sheet_id: string; number: string; title: string; label: string };
+export type SearchIssueHit = { issue_id: string; file_id: string | null; sheet_id: string | null; title: string; status: string; label: string };
+export type SearchFileHit = { file_id: string; folder_id: string | null; filename: string; label: string };
+export type SearchFolderHit = { folder_id: string; name: string; label: string };
+export type SearchResults = {
+  query: string;
+  sheets: SearchSheetHit[];
+  issues: SearchIssueHit[];
+  files: SearchFileHit[];
+  folders: SearchFolderHit[];
+  truncated: boolean;
+};
+
+/** 시트·이슈·파일·폴더를 가로지르는 전역 검색(서버측 부분일치). */
+export async function searchProject(projectName: string, q: string): Promise<SearchResults> {
+  const url = new URL(`${BACKEND_BASE}/api/search`);
+  url.searchParams.set("q", q);
+  url.searchParams.set("project_name", projectName);
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`검색 실패 (${res.status})`);
+  return res.json();
+}
+
 /** 같은 version_set 두 버전 PNG 픽셀 diff(백엔드 마스크 + 변경 통계). */
 export async function compareVersions(
   fileId: string,

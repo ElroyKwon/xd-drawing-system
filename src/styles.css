@@ -3930,29 +3930,41 @@ button {
 
 .home-chart {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 8px;
-  align-items: end;
-  min-height: 130px;
+  gap: 10px;
 }
 
-.home-chart-axis {
-  align-self: stretch;
-  display: grid;
-  align-content: start;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.home-chart-plot {
+/* S6: 작성일별 이슈 상태 누적 막대(경량 SVG/CSS, 신규 의존성 0). */
+.home-chart-bars {
   display: flex;
-  justify-content: space-between;
-  padding-top: 110px;
+  align-items: flex-end;
+  gap: 10px;
+  min-height: 140px;
+  padding-bottom: 4px;
   border-left: 1px solid #d6dee5;
   border-bottom: 1px solid #d6dee5;
 }
 
-.home-chart-tick {
+.home-chart-col {
+  display: grid;
+  gap: 4px;
+  flex: 0 0 auto;
+  justify-items: center;
+}
+
+.home-chart-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  width: 26px;
+  height: 120px;
+}
+
+.home-chart-seg {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+}
+
+.home-chart-xlabel {
   color: var(--muted);
   font-size: 11px;
 }
@@ -3987,6 +3999,130 @@ button {
 .legend-2 { background: #c79a2e; }
 .legend-3 { background: #8a7fbf; }
 .legend-4 { background: #c8584f; }
+
+/* S6: 홈 저장 용량 / 빈 상태 / 분석 와이드 카드 */
+.home-storage {
+  display: grid;
+  gap: 4px;
+}
+
+.home-storage strong {
+  color: #1b3347;
+  font-size: 26px;
+}
+
+.home-storage span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.home-status-empty {
+  cursor: default;
+}
+
+.home-status-value.muted {
+  color: var(--muted);
+}
+
+.home-recent-empty {
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.home-analytics-wide {
+  grid-column: 1 / -1;
+}
+
+/* S6: 전역 검색(상단바) */
+.global-search {
+  position: relative;
+}
+
+.global-search-field {
+  width: 260px;
+  min-height: 34px;
+  border-radius: 4px;
+}
+
+.global-search-clear {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.global-search-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: 360px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #c3ccd4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(20, 40, 60, 0.16);
+}
+
+.global-search-status {
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.global-search-group {
+  padding: 4px 0;
+}
+
+.global-search-group + .global-search-group {
+  border-top: 1px solid var(--line);
+}
+
+.global-search-group h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.global-search-group button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.global-search-group button:hover {
+  background: #eef3f7;
+}
+
+.global-search-meta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+}
 
 /* ===== M3 시트 행 메뉴 팝오버 ===== */
 .row-menu-anchor {

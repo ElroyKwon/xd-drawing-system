@@ -2,7 +2,20 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-30, 세션 8 — S5 이슈 영속+핀 연계 검증 마무리 DONE)
+## 현재 상태 (2026-06-30, 세션 8 — S6 Build 홈 위젯 실데이터 + 전역 검색 DONE)
+
+- **단계**: **S6 DONE.** 메타프롬프트 `prompts/08-s6-home-search.md` FROZEN(AskUserQuestion 4결정: **미구현 위젯 정직한 빈 상태 · 카운트+이슈 분석 차트[신규 의존성 0] · 백엔드 `/api/search`+상단 전역검색 · 검색 대상 시트+이슈+파일/폴더 전부**). acceptance **I1~I14 전부 MET**(EVIDENCE 하단 S6 reconcile).
+- **구현 요약**: 백엔드 `routes_search.py` 신설(`GET /api/search` 시트·이슈·파일·폴더 교차 부분일치+딥링크 식별자+상한/truncated, read-only seed=False), `main.py` 등록, `store.list_folders` seed 파라미터. 프론트 `homeStats.ts` 신설(순수 집계), `BuildHomeView` 재작성(인라인 하드코딩 제거→실데이터 집계+정직한 빈 상태+경량 SVG/CSS 이슈 차트), `GlobalSearch.tsx` 신설(상단 전역검색·디바운스·결과 패널·딥링크), `drawings.ts` `searchProject`, `BuildSheetsView`(검색 배선·딥링크·드로잉 로드 모든 섹션), `IssuesView` focusIssueId·`FilesView` focusFolderId.
+- **게이트(전부 PASS)**: build · npm test **91** · pytest **68**(S6 검색 7) · git diff --check clean.
+- **브라우저 e2e(device)**: 홈 개요 실데이터(시트15·파일7·폴더11·저장 26.7MB·진행중 이슈3·최근활동 실업로드)·종합 이슈 차트·정직한 빈 상태 + 전역 검색(EE→시트2+파일2·케이블→이슈·Drawings→폴더·plan→시트3+파일1) + 딥링크(시트→뷰어/이슈→이슈탭+선택/폴더→파일+폴더). 콘솔 0. 스크린샷 `evidence/s6-01~04`.
+- **독립 검증팀 3렌즈**: 백엔드 적대적(**MAJOR**=GET 검색이 폴더 seed 부작용)·프론트 비기능/a11y(조건부 MAJOR=홈 active vs 이슈탭 전체 카운트, MINOR a11y/정리)·Done-When 비평가(I1~I14 MET·침묵 좁힘 0). **MAJOR seed 수리·재검증**(seed=False, 라이브 phantom→folders:[], 회귀 1) + 프론트 MINOR 수리(미사용 import·indexOf·combobox ARIA·검색 name).
+
+### 세션 8 진입점 (S6 이후)
+- `prompts/08` FROZEN·I1~I14 MET·커밋 완료. 다음 = **S7**(인증/RBAC + 프로젝트/구성원 영속, prompts/09 작성부터 — 프로덕션 auth는 HUMAN_GATE, 로컬 범위). 재기동법은 세션6 블록과 동일.
+
+---
+
+## 이전 상태 (2026-06-30, 세션 8 — S5 이슈 영속+핀 연계 검증 마무리 DONE)
 
 - **단계**: **S5 DONE.** 세션 7 구현+부분검증 → 세션 8에서 이월분(H7·H10 e2e·독립 3렌즈·reconcile·커밋) 마무리. 메타프롬프트 `prompts/07-s5-issues-pins.md` FROZEN(4결정: **독립 Issue 엔티티 · ACC식 상태 4종+메타 · 양방향 점프 · 핀 선택적+S4 좌표계**). acceptance **H1~H13 전부 MET**(EVIDENCE 하단 S5 reconcile).
 - **구현 요약**: 백엔드 `store.py`(이슈 CRUD Json·TypeDB+`_issues.json`, soft delete, 상태머신/핀좌표/카테고리집계), `routes_issue.py` 신설(prefix `/api/issues` — 도면 라우트 경로충돌 회피), `schema/04-drawings.tql`(issue entity), `main.py` 등록. 프론트 `drawings.ts`(Issue API), `IssuesView`(전역 실데이터·필터·검색·작성·상태변경·핀 딥링크), `IssueAddPanel`(실집계+시트 이슈목록), `IssueCreateForm`·`IssueDetailPanel` 신설, `VectorCanvas`(world 핀)·`MarkupCanvas`(image 핀), `SheetViewerShell`(이슈 배선·focusIssue), `BuildSheetsView`(딥링크).
@@ -110,11 +123,12 @@
   - 변환 도구체인 검증됨: ODA File Converter(설치), ezdxf, PyMuPDF(fitz), matplotlib, Pillow.
   - 테스트 도면: `D:\_Project` 전역 dwg 822·pdf 901·dxf 25. xd 레포 내 `reference/old-prototypes/.../dwg/`에 다분야 도면.
 
-## 다음 작업 — S1~S5 DONE, 다음은 S6
+## 다음 작업 — S1~S6 DONE, 다음은 S7
 
-**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(H1~H13 MET, 3렌즈+e2e, 세션8 커밋) **완료**. 다음 진입:
-- **S6 Build 홈 위젯 실데이터 + 전역 검색**: Build 홈 대시보드 위젯(시트/이슈/파일 집계)을 실데이터로, 프로젝트 전역 검색 실동작화. prompts/08 메타프롬프트 작성부터(공동설계 freeze).
-- (참고) S5 후속 부채: 삭제됨 이슈 편집·"열린 이슈" 탭 닫힘 노출(닫힘 전용뷰)·핀 색맹 대체·이슈 첨부/댓글/알림·TypeDB 그래프 직접쿼리화·권한 enforcement(S7).
+**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(`83996d9`, H1~H13 MET) · **S6**(I1~I14 MET, 3렌즈+e2e, 세션8 커밋) **완료**. 다음 진입:
+- **S7 인증/RBAC + 프로젝트/구성원 영속**: 로컬 인증 + 역할(관리자·편집자·뷰어), `projectAdminData` 정적→영속, 권한 반영. 프로덕션 auth는 HUMAN_GATE(로컬 범위). prompts/09 메타프롬프트 작성부터.
+- (참고) S6 후속 부채: 홈 active vs 이슈탭 전체 카운트 차이(닫힘 전용뷰)·검색 퍼지/하이라이트/랭킹·차트 색맹 대응·구성원/작업/브리지/양식/날씨/진행률 백엔드.
+- (참고) S5 후속 부채: 삭제됨 이슈 편집·"열린 이슈" 탭 닫힘 노출·핀 색맹 대체·이슈 첨부/댓글/알림·TypeDB 그래프 직접쿼리화·권한 enforcement(S7).
 - (참고) S3 후속 부채: 설명 컬럼 실데이터·TypeDB folder 직접쿼리화·파일 단위 공유 override·인증/RBAC(S7). S2 후속: 멀티페이지 타이틀블록 강추출·빈 paperspace 자동분할.
 
 ### ⚙️ 다음 세션 재기동 방법 (중요)

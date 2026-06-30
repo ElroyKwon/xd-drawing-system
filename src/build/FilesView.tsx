@@ -40,10 +40,16 @@ function formatDate(iso?: string): string {
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }
 
-export default function FilesView({ onOpenSheet }: { onOpenSheet?: (sheet: Sheet) => void }) {
+export default function FilesView({
+  onOpenSheet,
+  focusFolderId = null
+}: {
+  onOpenSheet?: (sheet: Sheet) => void;
+  focusFolderId?: string | null;
+}) {
   const [showWelcome, setShowWelcome] = useState(true);
   const [folders, setFolders] = useState<FolderMeta[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(focusFolderId);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +85,11 @@ export default function FilesView({ onOpenSheet }: { onOpenSheet?: (sheet: Sheet
   useEffect(() => {
     void refreshFolders();
   }, []);
+
+  // S6: 전역 검색 딥링크 — 대상 폴더(또는 루트)를 선택.
+  useEffect(() => {
+    setSelectedFolderId(focusFolderId);
+  }, [focusFolderId]);
 
   useEffect(() => {
     void refreshDrawings(selectedFolderId);

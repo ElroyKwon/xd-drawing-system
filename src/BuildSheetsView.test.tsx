@@ -146,7 +146,7 @@ describe("BuildSheetsView", () => {
     expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
     expect(screen.getByText("프로젝트 진행률")).toBeInTheDocument();
     expect(screen.getByText("빠른 링크")).toBeInTheDocument();
-    expect(screen.getByText("최근 작업")).toBeInTheDocument();
+    expect(screen.getByText("최근 활동")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "파일" }));
     expect(screen.getByRole("heading", { name: "파일" })).toBeInTheDocument();
@@ -226,27 +226,25 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "홈" }));
     expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
-    expect(screen.getByText("현장 날씨")).toBeInTheDocument();
+    expect(screen.getByText("저장 용량")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "종합" }));
     expect(screen.getByRole("tab", { name: "종합", selected: true })).toBeInTheDocument();
-    expect(screen.getByText("이슈를 완료하는 데 걸리는 평균 시간")).toBeInTheDocument();
-    expect(screen.queryByText("현장 날씨")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "작성 날짜별 이슈 상태" })).toBeInTheDocument();
+    expect(screen.queryByText("저장 용량")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "개요" }));
     expect(screen.getByRole("tab", { name: "개요", selected: true })).toBeInTheDocument();
-    expect(screen.getByText("현장 날씨")).toBeInTheDocument();
+    expect(screen.getByText("저장 용량")).toBeInTheDocument();
   });
 
-  it("renders the six analytics cards on the Build home 종합 tab", async () => {
+  it("renders the analytics cards on the Build home 종합 tab (이슈 차트 + 양식 빈 상태)", async () => {
     const { user } = renderBuildSheets();
 
     await user.click(screen.getByRole("button", { name: "홈" }));
     await user.click(screen.getByRole("tab", { name: "종합" }));
 
     [
-      "이슈를 완료하는 데 걸리는 평균 시간",
-      "표시할 기한이 지난 이슈",
       "작성 날짜별 이슈 상태",
       "양식을 완료하는 데 걸리는 평균 시간",
       "표시할 기한이 지난 양식",

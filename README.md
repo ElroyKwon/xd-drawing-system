@@ -8,7 +8,7 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 - 앱은 Vite + React + TypeScript + Vitest 기반 프론트엔드와 `backend/` FastAPI 로컬 백엔드로 구성된다.
 - 현재 `docs/appearance-loop/PROGRESS.md` 기준 외관 루프는 M5까지 완료됐다.
-- 현재 `docs/buildout-loop/PROGRESS.md` 기준 buildout 루프는 **S5 DONE**이다(S1~S5 + S2.5, H1~H13 MET·3렌즈+e2e 검증).
+- 현재 `docs/buildout-loop/PROGRESS.md` 기준 buildout 루프는 **S6 DONE**이다(S1~S6 + S2.5, S6=홈 위젯 실데이터+전역 검색, I1~I14 MET·3렌즈+e2e 검증).
 - 로컬 백엔드는 `XD_STORE=json` 폴백으로 실제 파일 업로드, PDF 분할, DWG/DXF 변환 경로, 시트 목록, 폴더/버전 메타, 마크업·측정·시트비교·이슈/핀 영속을 다룬다.
 - TypeDB 연결 경로는 코드와 과거 검증 근거가 있으나, 현재 재현은 Docker/TypeDB가 떠 있을 때만 `XD_STORE=auto`로 가능하다. TypeDB 직접 쿼리화는 후속 부채다.
 - Auth, 운영 배포, Autodesk cloud/API 연동, paid SDK, 고객 실도면 반입/저장 정책은 아직 HUMAN_GATE 범위다.
@@ -28,7 +28,7 @@ Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면
 
 ## Next Session
 
-다음 개발 진입점은 `docs/buildout-loop/PROGRESS.md`의 **S6 Build 홈 위젯 실데이터 + 전역 검색**이다(S5 DONE·H1~H13 MET·커밋 완료). S6는 `docs/buildout-loop/prompts/08`(작성 예정) 공동설계 freeze부터 시작한다. 2026-06-29 사용자 범위 정정(**웹 DWG/PDF 원본 직접 수정 금지**, **실제 도면 이미지 기반 운영자 이슈 예시**)을 계승한다.
+다음 개발 진입점은 `docs/buildout-loop/PROGRESS.md`의 **S7 인증/RBAC + 프로젝트/구성원 영속**이다(S6 DONE·I1~I14 MET·커밋 완료). S7은 `docs/buildout-loop/prompts/09`(작성 예정) 공동설계 freeze부터 시작하며 프로덕션 auth는 HUMAN_GATE(로컬 범위)다. 2026-06-29 사용자 범위 정정(**웹 DWG/PDF 원본 직접 수정 금지**, **실제 도면 이미지 기반 운영자 이슈 예시**)을 계승한다.
 
 재시작 순서:
 

@@ -15,6 +15,7 @@ from routes_drawing import router as drawing_router
 from routes_files import router as files_router
 from routes_issue import router as issue_router
 from routes_markup import router as markup_router
+from routes_search import router as search_router
 from store import get_store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -35,6 +36,7 @@ app.include_router(drawing_router)
 app.include_router(files_router)
 app.include_router(markup_router)
 app.include_router(issue_router)
+app.include_router(search_router)
 
 
 @app.get("/health")

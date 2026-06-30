@@ -24,11 +24,13 @@ const STATUS_DOT: Record<string, string> = {
 export default function IssuesView({
   projectName = "Study_Project",
   sheets = [],
-  onOpenIssuePin
+  onOpenIssuePin,
+  focusIssueId = null
 }: {
   projectName?: string;
   sheets?: Sheet[];
   onOpenIssuePin?: (sheet: Sheet, issue: Issue) => void;
+  focusIssueId?: string | null;
 }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -46,6 +48,13 @@ export default function IssuesView({
   useEffect(() => {
     load();
   }, [load]);
+
+  // S6: 전역 검색 딥링크 — 대상 이슈가 목록에 있으면 선택(없으면 무시).
+  useEffect(() => {
+    if (focusIssueId && issues.some((i) => i.issue_id === focusIssueId)) {
+      setSelectedId(focusIssueId);
+    }
+  }, [focusIssueId, issues]);
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
