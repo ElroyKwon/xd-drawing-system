@@ -13,7 +13,8 @@
 - **다음**: **S8 XD 온톨로지 + AI 분석**(도면 entity TypeDB 적재 + equipmentEntityId 바인딩, prompts/10 작성부터). **AI(LLM)=HUMAN_GATE**.
 
 ### 세션 10 진입점
-- S7 DONE. 다음 = S8 메타프롬프트(prompts/10) 공동설계부터. 재기동법 세션6 블록과 동일(XD_STORE=auto/json, backend .venv python uvicorn 8000, npm run dev 5173).
+- S7 DONE. **S8(AI 챗 어시스턴트) 설계 초안 작성** — `docs/buildout-loop/S8-ai-chat-design.md`(STATUS: DRAFT). 공동설계 4결정 확정(Tool-use 그라운딩·제공자 추상화 기본 로컬·프로젝트+사용자 대화 스코프·v1 읽기 Q&A+딥링크). 로드맵 S8.0~S8.5.
+- **다음 세션 = 이 설계 검수** → 승인 시 S8.0(TypeDB 온톨로지 적재 점검)부터, per-stage 메타프롬프트(`prompts/10~`) FROZEN 후 구현. 미승인 항목 수정 후 재검수. 재기동법 세션6 블록과 동일(XD_STORE=auto/json, backend .venv python uvicorn 8000, npm run dev 5173).
 
 ---
 
