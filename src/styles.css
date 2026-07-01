@@ -38,6 +38,13 @@ button {
   cursor: pointer;
 }
 
+/* J7: 권한 게이팅으로 비활성된 컨트롤은 시각적으로도 사용 불가임이 드러나야 한다(뷰어). */
+button:disabled,
+select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .app-shell {
   min-height: 100vh;
   background: var(--panel);

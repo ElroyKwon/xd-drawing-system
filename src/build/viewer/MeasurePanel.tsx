@@ -9,6 +9,7 @@ export default function MeasurePanel({
   units,
   enabled,
   disabledReason,
+  canEdit = true,
   onSelectMeasureType,
   onDeleteMeasurement,
   onCalibrate,
@@ -20,6 +21,8 @@ export default function MeasurePanel({
   units?: VectorUnits;
   enabled: boolean;
   disabledReason?: string;
+  // J7: 뷰어는 측정값 삭제 불가(조회만).
+  canEdit?: boolean;
   onSelectMeasureType: (type: MeasureType) => void;
   onDeleteMeasurement: (id: string) => void;
   onCalibrate: () => void;
@@ -88,14 +91,16 @@ export default function MeasurePanel({
                   <span className="measure-value">
                     {row.value.toFixed(2)} {row.unit}
                   </span>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label={`측정값 M${i + 1} 삭제`}
-                    onClick={() => onDeleteMeasurement(row.measurement_id)}
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                  </button>
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={`측정값 M${i + 1} 삭제`}
+                      onClick={() => onDeleteMeasurement(row.measurement_id)}
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </li>
               ))}
             </ul>

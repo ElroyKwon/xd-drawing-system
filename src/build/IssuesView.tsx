@@ -25,12 +25,15 @@ export default function IssuesView({
   projectName = "Study_Project",
   sheets = [],
   onOpenIssuePin,
-  focusIssueId = null
+  focusIssueId = null,
+  canEdit = true
 }: {
   projectName?: string;
   sheets?: Sheet[];
   onOpenIssuePin?: (sheet: Sheet, issue: Issue) => void;
   focusIssueId?: string | null;
+  // J7: 뷰어는 이슈 작성·상태 변경·삭제 불가(서버 403과 일관). 조회·핀 딥링크는 허용.
+  canEdit?: boolean;
 }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -120,7 +123,13 @@ export default function IssuesView({
           <h1 id="issues-title">이슈</h1>
           <p>열린 이슈와 삭제된 이슈</p>
         </div>
-        <button className="primary-action" type="button" onClick={() => setIsCreateOpen(true)}>
+        <button
+          className="primary-action"
+          type="button"
+          disabled={!canEdit}
+          title={canEdit ? undefined : "이슈 작성 권한이 없습니다(뷰어)"}
+          onClick={() => setIsCreateOpen(true)}
+        >
           <Plus size={16} aria-hidden="true" />
           이슈 작성
         </button>
@@ -216,6 +225,8 @@ export default function IssuesView({
                     name="issue-status"
                     aria-label="이슈 상태"
                     value={selected.status}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : "상태 변경 권한이 없습니다(뷰어)"}
                     onChange={(e) => {
                       const next = e.target.value as IssueStatus;
                       if (next !== selected.status) changeStatus(selected.issue_id, next);
@@ -242,7 +253,7 @@ export default function IssuesView({
                 <p className="issue-empty">연결된 시트를 찾을 수 없습니다(목록 로드 대기).</p>
               ) : null}
 
-              {!showDeleted ? (
+              {!showDeleted && canEdit ? (
                 <button type="button" className="ghost-action issue-delete" onClick={() => remove(selected.issue_id)}>
                   <Trash2 size={15} aria-hidden="true" /> 이슈 삭제
                 </button>

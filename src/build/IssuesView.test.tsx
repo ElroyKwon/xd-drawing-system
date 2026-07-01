@@ -104,4 +104,18 @@ describe("IssuesView (S5 이슈 영속)", () => {
     expect(api.listIssues).toHaveBeenCalledWith({ status: "삭제됨", projectName: "Study_Project" });
     expect(await screen.findByText("삭제된 이슈가 없습니다.")).toBeInTheDocument();
   });
+
+  // J7: 뷰어(canEdit=false)는 이슈 작성·상태 변경·삭제가 비활성/숨김. 조회·핀 딥링크는 유지.
+  describe("뷰어 권한 UI 게이팅 (canEdit=false)", () => {
+    it("disables create and gates status/delete for viewers", async () => {
+      const user = userEvent.setup();
+      render(<IssuesView projectName="Study_Project" sheets={sheets} onOpenIssuePin={vi.fn()} canEdit={false} />);
+      await screen.findByText("구역명/장비 태그 식별 불명확");
+      expect(screen.getByRole("button", { name: "이슈 작성" })).toBeDisabled();
+      // 이슈 선택 시 상태 select는 비활성, 삭제 버튼은 숨김.
+      await user.click(screen.getByText(/현장 패널 번호와 도면 표기가 다름/));
+      expect(await screen.findByLabelText("이슈 상태")).toBeDisabled();
+      expect(screen.queryByRole("button", { name: /이슈 삭제/ })).not.toBeInTheDocument();
+    });
+  });
 });

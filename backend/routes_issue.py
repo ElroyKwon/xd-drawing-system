@@ -18,7 +18,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from auth import require_role, require_role_for_issue
+from auth import require_role, require_role_for_file, require_role_for_issue
 from store import get_store
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,12 @@ async def issue_categories(project_name: Optional[str] = None):
 @router.post("")
 async def create_issue(body: IssueCreate):
     store = get_store()
-    require_role(body.project_name, "편집자")  # S7: 이슈 작성 = 편집자 이상
+    # 렌즈1 MAJOR-C: file_id가 있으면 자기신고 project_name이 아니라 '실 도면 유래' 역할로 강제한다
+    # (마크업/측정과 동일 원칙). 가짜 project_name으로 실도면에 이슈를 주입하는 우회를 차단.
+    if body.file_id:
+        require_role_for_file(body.file_id, "편집자")  # S7: 이슈 작성 = 편집자 이상
+    else:
+        require_role(body.project_name, "편집자")
     if not body.title.strip():
         raise HTTPException(400, "이슈 제목은 필수입니다")
     if body.status not in _ISSUE_STATUSES:

@@ -511,3 +511,57 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 
 ## 잔여 비차단 부채 (S7 범위 외·후속)
 - 실제 인증(비밀번호·세션·OAuth·로그아웃)=프로덕션 HUMAN_GATE 후속. 회사·액세스레벨(별도 축)·템플릿 구성원·알림 권한 매트릭스·프로젝트 데이터 격리 강제·구성원 초대 이메일=후속. TypeDB 구성원/프로젝트 직접쿼리화(JSON 미러 SoT 유지).
+
+---
+
+# S7 검증 마무리 (2026-07-01, 세션 10 — 이월분 완결 → S7 DONE)
+
+> 세션 9 이월(3렌즈·reconcile·J7 Build UI 게이팅·J11 e2e 확장)을 모두 완결. **J7 Build 콘텐츠 UI 게이팅 구현 + 독립 3렌즈 실시 + 적발 결함 전량 수리 + 디바이스급 e2e + Done-When reconcile**. 자동 게이트 재실행 GREEN. **S7 DONE 선언.**
+
+## J7 Build 콘텐츠 UI 게이팅 구현 (이월분)
+- `canEdit = currentRole !== "뷰어"`를 `App.tsx`→`BuildSheetsView`→`FilesView`/`IssuesView`/`SheetViewerShell`로 스레딩(기본 true=레거시/편집, 뷰어만 false; 서버 미구성 프로젝트 미강제와 일관). 뷰어 게이트: **파일**(업로드·새폴더 disabled, 폴더행 메뉴 숨김, 도면행 새버전/삭제 숨김), **이슈**(작성·상태변경·삭제), **뷰어**(MarkupToolRail 작성도구 잠금·IssueDetailPanel·MarkupPropertyPanel·MeasurePanel). 비활성 컨트롤에 사유 title + 전역 `:disabled` 시각 처리(opacity 0.45·not-allowed) 추가.
+- 프론트 게이팅 단위 테스트 신규 6(FilesView 3·IssuesView 1·MarkupToolRail 2).
+
+## 독립 검증팀 3렌즈 (세션 10 — 신선한 Explore 3인 병렬)
+- **렌즈1 백엔드 적대**: mutation 라우트 전수 강제표 작성 후 **BLOCKER 2 + MAJOR 3 적발** — (A) `create_project` require_role 없음+이름중복 병합 → 뷰어가 동명 프로젝트 생성으로 관리자 승격, (B) 클라 지정 `id`로 시드 프로젝트 덮어쓰기, (C) 이슈 생성이 자기신고 project_name으로 강제하나 실 file_id에 바인딩(우회), (D) 전 구성원 제거로 '미구성' 강등→RBAC 무력화, (E) 마지막 관리자 강등 락아웃. 위계 비교·회귀 기본값은 PASS.
+- **렌즈2 프론트 비기능/a11y**: 우회 경로 축 PASS(뷰어 activeTool이 '선택' 외로 못 감→캔버스 무력) + **MAJOR 2 적발** — (1) 캔버스 게이팅이 툴레일 disabled 단일 의존(잠재 fail-open), (2) `FilesView`가 `PROJECT="Study_Project"` 하드코딩→canEdit 게이트와 데이터가 다른 프로젝트 참조. MINOR(로드중 fail-open·name키·a11f·controlled input).
+- **렌즈3 Done-When 비평**: J1~J9·J12 코드 MET이나 증거등급 대부분 emulated/static, **J11 NARROWED**(브라우저 e2e 4요소 중 일부만), J5/J6 라이브 서버 403 미입증 지적. 프로세스 완결성(3렌즈·게이트 재실행) 분리 보고.
+
+## 세션 10 수리 (적발 결함 전량)
+- **백엔드**: (A) `create_project`에 `require_role(name,관리자)`+이름 중복 409+서버 생성 id(클라 id 무시). (B) 동상. (C) `create_issue`가 file_id 있으면 `require_role_for_file`로 실도면 역할 강제. (D/E) `patch/remove_project_member`에 **마지막 활성 관리자 제거·강등 차단**(400) 가드+`_active_admin_ids` 헬퍼.
+- **프론트**: (1) `SheetViewerShell.selectTool`+`commitMarkup/Measurement`/`placePin`/`createIssueFromPin`에 `!canEdit` 방어심화 가드. (2) `FilesView`에 `projectName` prop 스레딩(BuildSheetsView가 `project.name` 전달)—데이터·게이트 동일 프로젝트 참조. MINOR(controlled input `?? ""`·disabled select title).
+- **회귀 테스트**: 백엔드 신규 4(중복명 승격 차단·클라 id 무시·이슈 실file 강제·마지막 관리자 가드). 프론트 게이팅 6.
+- **라이브 재검증(running server)**: 뷰어 create_project('Study_Project')→403·클라 id 시드 무손상·마지막 관리자 제거/강등→400.
+
+## e2e 적발 추가 결함 + 수리
+- 신규 프로젝트 생성 직후 생성자가 구성원 테이블상 관리자인데 ProjectAdmin 관리 컨트롤이 잠김 — `me.roles` 마운트 1회 로드 stale로 새 프로젝트 role 미반영. **수리**: `submitProject`가 생성 성공 시 `getMe()` 재로드. device 재확인(새 프로젝트 "S7 canManage 검증"→구성원 추가 버튼 활성, `s7-10`).
+
+## 게이트 (전부 PASS — 세션 10 재실행)
+- `npm run build` PASS · `npm test` **98**(기존 92 + 게이팅 6) · backend `pytest` **78**(기존 74 + 수리 회귀 4) · `git diff --check` clean.
+
+## 브라우저 e2e (device, 콘솔 0 — chrome-devtools 실브라우저)
+- **J1 전환**: 헤더 "개혁 이"→아바타 메뉴 "고객 열람자" 전환→"고객 열람자 님, 환영합니다." (`s7-03`).
+- **J7 뷰어 게이팅(device·DOM 확인)**: 파일 업로드 `disabled=true`+title+opacity 0.45·새 폴더 동상·폴더행 메뉴 0개·도면행 메뉴는 읽기 항목만(뷰어열기/다운로드/버전이력, 새버전·삭제 숨김) (`s7-05`). 이슈 작성 `disabled=true`+title (`s7-06`). 뷰어 시트 MarkupToolRail: 선택만 활성, 9개 작성도구 `disabled=true`+"편집 권한이 없습니다(뷰어)".
+- **J5 라이브 403(device)**: 뷰어 상태 브라우저 fetch `POST /api/folders`→**403** `{"detail":"권한 부족: '편집자' 이상 필요 (현재 역할: 뷰어)"}`.
+- **J3 역할변경 영속(device)**: 고객 열람자 뷰어→편집자 변경→reload→**편집자 복원** (`s7-07`), 원복.
+- **J2 프로젝트 생성 영속(device)**: "S7 검증 현장" 생성→reload→목록 복원(4개) (`s7-08`).
+- **canManage 수리(device)**: `s7-10`.
+- **콘솔**: 앱 유발 error/warn **0**(관측된 1건은 J5용 의도적 뷰어 probe 403 그 자체).
+
+## Done-When reconcile (J1~J12 — 신선한 비평가 + 디바이스 재검증)
+- **J1** 로컬 모의 현재 사용자+전환/복원 — **MET [device]** (헤더 전환·getMe 실데이터·하드코딩 제거).
+- **J2** 프로젝트 영속 — **MET [device]** (생성→reload 복원, 생성자=관리자, state-only 제거).
+- **J3** 구성원 영속+역할변경 — **MET [device]** (역할 select→PATCH→reload 편집자 복원).
+- **J4** 정규화 역할 모델 — **MET [emulated+static]** (3역할·2상태·member↔project_member 조인·schema entity, pytest join).
+- **J5** RBAC 강제 뷰어 403 — **MET [device]** (브라우저 fetch 403 + 라이브 curl + pytest 경계).
+- **J6** RBAC 강제 편집자/관리자 — **MET [device+emulated]** (관리자 관리 활성 device·편집자 콘텐츠 허용/구성원관리 403 pytest+curl·위계 pytest).
+- **J7** 권한 UI 반영 — **MET [device]** (파일·이슈·뷰어 툴레일 DOM disabled 확인 + 시각 처리 + canManage 수리).
+- **J8** Build 구성원 실데이터 — **MET [static+emulated]** (BuildManagementView listProjectMembers).
+- **J9** 백엔드 영속 모델 — **MET [emulated; TypeDB 미러=static]** (store CRUD+current_user+seed idempotent, pytest, 회귀 0).
+- **J10** 테스트 게이트 — **MET [device/emulated]** (build·npm test 98·pytest 78·diff clean 재실행).
+- **J11** 브라우저 e2e+콘솔0 — **MET [device]** (4요소 전부 device, 콘솔 앱유발 0). ← 세션9 NARROWED 해소.
+- **J12** 실 시드 기반 — **MET [device+static]** (개혁 이·도면 검토자·현장 담당자·고객 열람자 실명, 브라우저+store 확인).
+- **결론**: NARROWED/UNMET **0**. 프로세스 완결성(독립 3렌즈·게이트 재실행·reconcile) 모두 실시. → **S7 DONE.**
+
+## 잔여 비차단 부채 (S7 이후·후속)
+- 파일 없는 전역 이슈에 가짜 project_name(0-구성원) 지정 시 orphan 이슈 생성 가능(폴더/업로드와 동급 저영향, 실프로젝트 목록 미노출). 초기 me 로드 전 순간 fail-open(서버 403이 최종 게이트). 프로젝트명 키 역할 조회(rename 취약). 죽은 체크박스(일괄액션 미배선). TypeDB 미러 json 모드 static-only. 실제 인증(비밀번호·세션·OAuth)=HUMAN_GATE 후속.

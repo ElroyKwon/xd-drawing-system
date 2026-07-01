@@ -11,8 +11,6 @@ import {
 } from "../api/drawings";
 import type { Sheet } from "../buildSheetsData";
 
-const PROJECT = "Study_Project";
-
 const STATUS_LABEL: Record<Drawing["conversion_status"], string> = {
   pending: "대기",
   converting: "변환 중",
@@ -42,11 +40,18 @@ function formatDate(iso?: string): string {
 
 export default function FilesView({
   onOpenSheet,
-  focusFolderId = null
+  focusFolderId = null,
+  canEdit = true,
+  projectName = "Study_Project"
 }: {
   onOpenSheet?: (sheet: Sheet) => void;
   focusFolderId?: string | null;
+  // J7: 뷰어는 업로드·폴더 생성/편집·삭제·버전 추가 불가(서버 403과 일관). 다운로드·뷰어 열기는 허용.
+  canEdit?: boolean;
+  // 렌즈2 MAJOR-2: 파일 데이터·권한 게이트가 같은 프로젝트를 참조하도록 현재 프로젝트를 받는다.
+  projectName?: string;
 }) {
+  const PROJECT = projectName;
   const [showWelcome, setShowWelcome] = useState(true);
   const [folders, setFolders] = useState<FolderMeta[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(focusFolderId);
@@ -84,7 +89,7 @@ export default function FilesView({
 
   useEffect(() => {
     void refreshFolders();
-  }, []);
+  }, [projectName]);
 
   // S6: 전역 검색 딥링크 — 대상 폴더(또는 루트)를 선택.
   useEffect(() => {
@@ -93,7 +98,7 @@ export default function FilesView({
 
   useEffect(() => {
     void refreshDrawings(selectedFolderId);
-  }, [selectedFolderId]);
+  }, [selectedFolderId, projectName]);
 
   // 변환 중인 도면을 폴링해 상태/시트를 갱신한다.
   useEffect(() => {
@@ -274,7 +279,14 @@ export default function FilesView({
         <aside className="folder-tree" aria-label="폴더">
           <div className="folder-tree-head">
             <strong>폴더</strong>
-            <button type="button" className="icon-button" aria-label="새 폴더" onClick={() => setNewFolderOpen((v) => !v)}>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="새 폴더"
+              disabled={!canEdit}
+              title={canEdit ? undefined : "폴더 생성 권한이 없습니다(뷰어)"}
+              onClick={() => setNewFolderOpen((v) => !v)}
+            >
               <FolderPlus size={16} />
             </button>
           </div>
@@ -310,7 +322,13 @@ export default function FilesView({
 
         <div className="files-table-panel">
           <div className="files-action-bar">
-            <button className="primary-action files-upload-button" type="button" onClick={() => setIsUploadOpen(true)}>
+            <button
+              className="primary-action files-upload-button"
+              type="button"
+              disabled={!canEdit}
+              title={canEdit ? undefined : "업로드 권한이 없습니다(뷰어)"}
+              onClick={() => setIsUploadOpen(true)}
+            >
               <Upload size={16} aria-hidden="true" />
               <span>파일 업로드</span>
               <ChevronDown size={15} aria-hidden="true" />
@@ -388,6 +406,8 @@ export default function FilesView({
                     <td>{folder.updated_by}</td>
                     <td>--</td>
                     <td className="files-row-menu-cell">
+                      {/* J7: 폴더 메뉴(이름변경·공유·삭제)는 전부 뮤테이션 → 뷰어에게 숨김. */}
+                      {canEdit ? (
                       <button
                         className="table-icon"
                         type="button"
@@ -396,7 +416,8 @@ export default function FilesView({
                       >
                         <MoreVertical size={18} />
                       </button>
-                      {menuOpenId === folder.folder_id ? (
+                      ) : null}
+                      {canEdit && menuOpenId === folder.folder_id ? (
                         <ul className="row-menu" role="menu">
                           <li>
                             <button type="button" role="menuitem" onClick={() => void handleRenameFolder(folder)}>
@@ -477,21 +498,25 @@ export default function FilesView({
                                 <Download size={14} /> 다운로드
                               </a>
                             </li>
-                            <li>
-                              <button type="button" role="menuitem" onClick={() => triggerAddVersion(d.file_id)}>
-                                <UploadCloud size={14} /> 새 버전 추가
-                              </button>
-                            </li>
+                            {canEdit ? (
+                              <li>
+                                <button type="button" role="menuitem" onClick={() => triggerAddVersion(d.file_id)}>
+                                  <UploadCloud size={14} /> 새 버전 추가
+                                </button>
+                              </li>
+                            ) : null}
                             <li>
                               <button type="button" role="menuitem" onClick={() => void showVersions(d)}>
                                 <History size={14} /> 버전 이력
                               </button>
                             </li>
-                            <li>
-                              <button type="button" role="menuitem" onClick={() => void handleDeleteDrawing(d)}>
-                                <Trash2 size={14} /> 삭제
-                              </button>
-                            </li>
+                            {canEdit ? (
+                              <li>
+                                <button type="button" role="menuitem" onClick={() => void handleDeleteDrawing(d)}>
+                                  <Trash2 size={14} /> 삭제
+                                </button>
+                              </li>
+                            ) : null}
                           </ul>
                         ) : null}
                       </td>
@@ -527,6 +552,7 @@ export default function FilesView({
 
       {isUploadOpen ? (
         <FileUploadModal
+          projectName={PROJECT}
           folderId={selectedFolderId}
           onClose={() => setIsUploadOpen(false)}
           onUploaded={() => void refreshDrawings(selectedFolderId)}
@@ -592,10 +618,12 @@ function VersionHistoryModal({ drawing, versions, onClose }: { drawing: Drawing;
 }
 
 function FileUploadModal({
+  projectName,
   folderId,
   onClose,
   onUploaded,
 }: {
+  projectName: string;
   folderId: string | null;
   onClose: () => void;
   onUploaded: (d: Drawing) => void;
@@ -612,7 +640,7 @@ function FileUploadModal({
     setError(null);
     try {
       for (const file of Array.from(files)) {
-        onUploaded(await uploadDrawing(file, PROJECT, folderId));
+        onUploaded(await uploadDrawing(file, projectName, folderId));
       }
       onClose();
     } catch (e) {

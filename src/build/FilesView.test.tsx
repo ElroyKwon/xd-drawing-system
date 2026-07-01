@@ -131,4 +131,34 @@ describe("FilesView (S3 파일/폴더 관리)", () => {
     await user.upload(fileInput, new File(["x"], "plan_v2.dwg", { type: "application/octet-stream" }));
     expect(api.addDrawingVersion).toHaveBeenCalledWith("d1", expect.any(File));
   });
+
+  // J7: 뷰어(canEdit=false)는 업로드·폴더 생성·폴더 메뉴·삭제/새버전이 비활성/숨김. 조회는 유지.
+  describe("뷰어 권한 UI 게이팅 (canEdit=false)", () => {
+    it("disables upload and new-folder controls for viewers", async () => {
+      render(<FilesView canEdit={false} />);
+      await screen.findByText("plan.dwg");
+      expect(screen.getByRole("button", { name: "파일 업로드" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "새 폴더" })).toBeDisabled();
+    });
+
+    it("hides the all-mutating folder row menu for viewers", async () => {
+      render(<FilesView canEdit={false} />);
+      await screen.findByText("plan.dwg");
+      // 폴더 메뉴(이름변경·공유·삭제)는 전부 뮤테이션 → 뷰어에게 숨김.
+      expect(screen.queryByRole("button", { name: "Bids 메뉴" })).not.toBeInTheDocument();
+    });
+
+    it("keeps read-only drawing menu items but hides edit items for viewers", async () => {
+      const { user } = { user: userEvent.setup() };
+      render(<FilesView canEdit={false} />);
+      await screen.findByText("plan.dwg");
+      await user.click(screen.getByRole("button", { name: "plan.dwg 메뉴" }));
+      // 조회 항목은 유지.
+      expect(screen.getByRole("menuitem", { name: /다운로드/ })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: /버전 이력/ })).toBeInTheDocument();
+      // 편집 항목은 숨김.
+      expect(screen.queryByRole("menuitem", { name: /새 버전 추가/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /삭제/ })).not.toBeInTheDocument();
+    });
+  });
 });

@@ -256,7 +256,11 @@ export default function App() {
     setSelectedProjectId(projectId);
     closeModal();
     setActiveView("project-admin");
-    apiCreateProject<Project>(createdProject).catch(() => {/* 백엔드 미가동 폴백 — 로컬 유지 */});
+    // e2e 적발: 생성 후 me.roles를 갱신하지 않으면 새 프로젝트의 '생성자=관리자'가 currentRole에
+    // 반영되지 않아(마운트 1회 로드 stale) canManage=false로 잠긴다 → 생성 성공 시 me 재로드.
+    apiCreateProject<Project>(createdProject)
+      .then(() => getMe().then(setMe))
+      .catch(() => {/* 백엔드 미가동 폴백 — 로컬 유지 */});
   }
 
   function openProject(projectId: string) {
@@ -306,7 +310,14 @@ export default function App() {
   }
 
   if (activeView === "build-sheets") {
-    return <BuildSheetsView project={selectedProject} onBackToProjects={() => setActiveView("projects")} />;
+    // J7: 뷰어는 콘텐츠 mutation 불가(서버 403과 일관). 미구성 프로젝트(role=null)는 레거시 보존 → 편집 허용.
+    return (
+      <BuildSheetsView
+        project={selectedProject}
+        canEdit={currentRole !== "뷰어"}
+        onBackToProjects={() => setActiveView("projects")}
+      />
+    );
   }
 
   return (

@@ -8,18 +8,21 @@ export default function MarkupPropertyPanel({
   markup,
   onClose,
   onChange,
-  onDelete
+  onDelete,
+  canEdit = true
 }: {
   markup: Markup;
   onClose: () => void;
   onChange: (patch: { text?: string; style?: Markup["style"] }) => void;
   onDelete: () => void;
+  // J7: 뷰어는 텍스트·색상 편집·삭제 불가(속성 조회만).
+  canEdit?: boolean;
 }) {
-  const [text, setText] = useState(markup.text);
+  const [text, setText] = useState(markup.text ?? "");
 
   // 선택 마크업이 바뀌면 편집 상태를 동기화한다.
   useEffect(() => {
-    setText(markup.text);
+    setText(markup.text ?? "");
   }, [markup.markup_id, markup.text]);
 
   const color = markup.style?.color || "#d8232a";
@@ -44,8 +47,9 @@ export default function MarkupPropertyPanel({
               type="text"
               aria-label="마크업 텍스트"
               value={text}
+              readOnly={!canEdit}
               onChange={(e) => setText(e.target.value)}
-              onBlur={() => text !== markup.text && onChange({ text })}
+              onBlur={() => canEdit && text !== markup.text && onChange({ text })}
             />
           </label>
         )}
@@ -61,6 +65,7 @@ export default function MarkupPropertyPanel({
                 style={{ background: c }}
                 aria-label={`색상 ${c}`}
                 aria-pressed={c === color}
+                disabled={!canEdit}
                 onClick={() => onChange({ style: { ...markup.style, color: c } })}
               />
             ))}
@@ -88,12 +93,14 @@ export default function MarkupPropertyPanel({
         <span>{markup.created_at.slice(0, 10)}</span>
       </footer>
 
-      <div className="viewer-aside-actions">
-        <button type="button" className="danger-action" onClick={onDelete}>
-          <Trash2 size={15} aria-hidden="true" />
-          마크업 삭제
-        </button>
-      </div>
+      {canEdit ? (
+        <div className="viewer-aside-actions">
+          <button type="button" className="danger-action" onClick={onDelete}>
+            <Trash2 size={15} aria-hidden="true" />
+            마크업 삭제
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }

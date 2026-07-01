@@ -15,13 +15,15 @@ import { primaryNav, secondaryNav, type BuildSection } from "./build/nav";
 
 type BuildSheetsViewProps = {
   onBackToProjects: () => void;
+  // J7: 현재 사용자 역할이 뷰어면 false → 콘텐츠 작성/삭제 버튼 비활성(서버 403과 일관). 기본 true(레거시/편집 가능).
+  canEdit?: boolean;
   project?: {
     id: string;
     name: string;
   };
 };
 
-export default function BuildSheetsView({ project = selectedBuildProject, onBackToProjects }: BuildSheetsViewProps) {
+export default function BuildSheetsView({ project = selectedBuildProject, canEdit = true, onBackToProjects }: BuildSheetsViewProps) {
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [activeSection, setActiveSection] = useState<BuildSection>("시트");
@@ -190,6 +192,7 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             projectName={project.name}
             selectedSheet={selectedSheet}
             sheets={projectSheets}
+            canEdit={canEdit}
             focusIssueId={focusIssue?.issue_id ?? null}
             focusPin={focusIssue?.pin?.coord_space === "world" ? focusIssue.pin.point : null}
             onBack={() => { setSelectedSheet(null); setFocusIssue(null); }}
@@ -217,9 +220,9 @@ export default function BuildSheetsView({ project = selectedBuildProject, onBack
             onSortToggle={() => setSortKey((k) => (k === "number-asc" ? "number-desc" : "number-asc"))}
           />
         ) : activeSection === "파일" ? (
-          <FilesView onOpenSheet={openSheet} focusFolderId={filesFocusFolderId} />
+          <FilesView onOpenSheet={openSheet} focusFolderId={filesFocusFolderId} canEdit={canEdit} projectName={project.name} />
         ) : activeSection === "이슈" ? (
-          <IssuesView projectName={project.name} sheets={projectSheets} onOpenIssuePin={openIssuePin} focusIssueId={issuesFocusId} />
+          <IssuesView projectName={project.name} sheets={projectSheets} onOpenIssuePin={openIssuePin} focusIssueId={issuesFocusId} canEdit={canEdit} />
         ) : activeSection === "양식" ? (
           <FormsView />
         ) : activeSection === "사진" ? (

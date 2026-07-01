@@ -25,6 +25,15 @@ _ROLES = {"관리자", "편집자", "뷰어"}
 _STATUSES = {"활성", "대기"}
 
 
+def _active_admin_ids(store, project_name: str) -> set:
+    """프로젝트의 활성 관리자 member_id 집합. 마지막 관리자 락아웃/강등 방지에 사용."""
+    return {
+        pm["member_id"]
+        for pm in store.list_project_members(project_name)
+        if pm.get("role") == "관리자" and pm.get("status") == "활성"
+    }
+
+
 # ---------------------------------------------------------------------------
 # 요청 모델
 # ---------------------------------------------------------------------------
@@ -93,19 +102,26 @@ async def create_project(body: dict):
     name = (body.get("name") or "").strip()
     if not name:
         raise HTTPException(400, "프로젝트 이름은 필수입니다")
-    project_id = body.get("id") or f"project-{uuid.uuid4().hex[:8]}"
-    body["id"] = project_id
+    # 렌즈1 BLOCKER-A: 기존 이름 프로젝트에 대한 생성은 그 프로젝트 관리자만(비관리자 → 403).
+    # 신규(미구성) 이름은 require_role이 통과시켜 생성자를 관리자로 부트스트랩한다.
+    require_role(name, "관리자")
+    # 렌즈1 BLOCKER-A: 이름 중복 금지 — project_member가 project_name 키라 동명 생성은
+    # 기존 구성원 집합에 병합/승격되는 권한상승 벡터가 된다.
+    if any(p.get("name") == name for p in store.list_projects()):
+        raise HTTPException(409, f"이미 존재하는 프로젝트 이름입니다: {name}")
+    # 렌즈1 BLOCKER-B: id는 서버가 생성(클라 지정 id로 시드/기존 레코드 덮어쓰기 차단).
     creator = store.get_current_user()
-    body.setdefault("created_by", creator)
-    store.add_project(body)
+    meta = {**body, "id": f"project-{uuid.uuid4().hex[:8]}", "name": name}
+    meta.setdefault("created_by", creator)
+    store.add_project(meta)
     # 생성자를 관리자로 자동 부여.
     store.add_project_member({
         "project_name": name, "member_id": creator,
         "role": "관리자", "status": "활성",
         "added_at": datetime.now().strftime("%Y.%m.%d."),
     })
-    logger.info("project created %s (%s) by %s", project_id, name, creator)
-    return body
+    logger.info("project created %s (%s) by %s", meta["id"], name, creator)
+    return meta
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +175,15 @@ async def patch_project_member(project_name: str, member_id: str, body: PatchPro
         raise HTTPException(400, f"알 수 없는 역할: {body.role}")
     if body.status is not None and body.status not in _STATUSES:
         raise HTTPException(400, f"알 수 없는 상태: {body.status}")
+    # 렌즈1 MAJOR-E: 마지막 활성 관리자를 강등(role≠관리자)하거나 비활성화(status≠활성)하면
+    # 거버넌스 영구 락아웃 → 차단.
+    admins = _active_admin_ids(store, project_name)
+    demotes_admin = member_id in admins and (
+        (body.role is not None and body.role != "관리자")
+        or (body.status is not None and body.status != "활성")
+    )
+    if demotes_admin and len(admins) <= 1:
+        raise HTTPException(400, "마지막 관리자는 강등/비활성화할 수 없습니다")
     updated = store.update_project_member(
         project_name, member_id,
         **{k: v for k, v in body.model_dump().items() if v is not None},
@@ -172,6 +197,11 @@ async def patch_project_member(project_name: str, member_id: str, body: PatchPro
 async def remove_project_member(project_name: str, member_id: str):
     store = get_store()
     require_role(project_name, "관리자")  # 구성원 제거 = 관리자
+    # 렌즈1 MAJOR-D: 마지막 활성 관리자를 제거하면 구성원 0명→'미구성'으로 강등되어
+    # RBAC이 무력화되거나 거버넌스가 락아웃된다 → 차단.
+    admins = _active_admin_ids(store, project_name)
+    if member_id in admins and len(admins) <= 1:
+        raise HTTPException(400, "마지막 관리자는 제거할 수 없습니다")
     if not store.remove_project_member(project_name, member_id):
         raise HTTPException(404, "프로젝트 구성원 없음")
     return {"removed": member_id}

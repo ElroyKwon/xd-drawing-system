@@ -49,6 +49,7 @@ export default function SheetViewerShell({
   projectName,
   selectedSheet,
   sheets,
+  canEdit = true,
   focusIssueId = null,
   focusPin = null,
   onBack
@@ -56,6 +57,8 @@ export default function SheetViewerShell({
   projectName: string;
   selectedSheet: Sheet;
   sheets: Sheet[];
+  // J7: 뷰어는 마크업/측정/이슈 작성·수정·삭제 불가(서버 403과 일관). 조회·팬/줌·비교는 허용.
+  canEdit?: boolean;
   focusIssueId?: string | null;
   focusPin?: Pt | null;
   onBack: () => void;
@@ -150,7 +153,7 @@ export default function SheetViewerShell({
 
   const commitMarkup = useCallback(
     async (m: { kind: string; geometry: Pt[]; text?: string; color: string }) => {
-      if (!fileId) return;
+      if (!canEdit || !fileId) return;
       try {
         const created = await createMarkup(fileId, {
           sheet_id: sheetId,
@@ -166,12 +169,12 @@ export default function SheetViewerShell({
         setOpError(e instanceof Error ? e.message : "마크업 저장 실패");
       }
     },
-    [fileId, sheetId, coordSpace]
+    [canEdit, fileId, sheetId, coordSpace]
   );
 
   const commitMeasurement = useCallback(
     async (m: { type: MeasureType; geometry: Pt[]; value: number; unit: string }) => {
-      if (!fileId) return;
+      if (!canEdit || !fileId) return;
       try {
         const created = await createMeasurement(fileId, {
           sheet_id: sheetId,
@@ -186,7 +189,7 @@ export default function SheetViewerShell({
         setOpError(e instanceof Error ? e.message : "측정 저장 실패");
       }
     },
-    [fileId, sheetId]
+    [canEdit, fileId, sheetId]
   );
 
   async function removeMarkup(id: string) {
@@ -222,14 +225,15 @@ export default function SheetViewerShell({
 
   // 이슈 핀 도구로 캔버스를 클릭하면 핀 위치를 확정하고 작성 폼을 연다.
   const placePin = useCallback((point: Pt) => {
+    if (!canEdit) return;
     setSelectedMarkupId(null);
     setSelectedIssueId(null);
     setMeasureOpen(false);
     setPendingPin({ point, coord_space: coordSpace });
-  }, [coordSpace]);
+  }, [canEdit, coordSpace]);
 
   async function createIssueFromPin(input: { title: string; type: string; category: string; assignee: string }) {
-    if (!pendingPin || !fileId) return;
+    if (!canEdit || !pendingPin || !fileId) return;
     try {
       const created = await createIssue({
         title: input.title,
@@ -285,6 +289,9 @@ export default function SheetViewerShell({
   }
 
   function selectTool(tool: MarkupTool) {
+    // 렌즈2 MAJOR-1: 캔버스 드로잉은 activeTool로만 열린다. 툴레일 disabled에 더해
+    // 여기서도 뷰어의 작성 도구 진입을 차단(방어심화 — 미래 단축키/프리셋 fail-open 예방).
+    if (!canEdit && tool !== "선택") return;
     setActiveTool(tool);
     setPendingPin(null);
     if (tool === "측정") {
@@ -459,6 +466,7 @@ export default function SheetViewerShell({
           ) : selectedIssue ? (
             <IssueDetailPanel
               issue={selectedIssue}
+              canEdit={canEdit}
               onChangeStatus={(status) => changeIssueStatus(selectedIssue.issue_id, status)}
               onDelete={() => removeIssue(selectedIssue.issue_id)}
               onClose={() => setSelectedIssueId(null)}
@@ -470,6 +478,7 @@ export default function SheetViewerShell({
               measurements={measurements}
               units={units}
               enabled={showVector}
+              canEdit={canEdit}
               disabledReason={
                 vectorCapable ? "래스터 엔진에서는 측정할 수 없습니다. 벡터로 전환하세요." : "측정은 DXF 벡터 시트 전용입니다(PDF 제외)."
               }
@@ -481,13 +490,14 @@ export default function SheetViewerShell({
           ) : selectedMarkup ? (
             <MarkupPropertyPanel
               markup={selectedMarkup}
+              canEdit={canEdit}
               onClose={() => setSelectedMarkupId(null)}
               onChange={(patch) => changeMarkup(selectedMarkup.markup_id, patch)}
               onDelete={() => removeMarkup(selectedMarkup.markup_id)}
             />
           ) : null)}
 
-        <MarkupToolRail activeTool={activeTool} onSelectTool={selectTool} />
+        <MarkupToolRail activeTool={activeTool} onSelectTool={selectTool} canEdit={canEdit} />
       </div>
 
       <footer className="sheet-filmstrip" aria-label="필름스트립">

@@ -9,12 +9,15 @@ export default function IssueDetailPanel({
   issue,
   onChangeStatus,
   onDelete,
-  onClose
+  onClose,
+  canEdit = true
 }: {
   issue: Issue;
   onChangeStatus: (status: IssueStatus) => void;
   onDelete: () => void;
   onClose: () => void;
+  // J7: 뷰어는 상태 변경·삭제 불가(조회만).
+  canEdit?: boolean;
 }) {
   const options = [issue.status, ...(ISSUE_STATUS_TRANSITIONS[issue.status] ?? [])].filter(
     (s) => s !== "삭제됨"
@@ -54,6 +57,8 @@ export default function IssueDetailPanel({
             name="issue-status"
             aria-label="이슈 상태"
             value={issue.status}
+            disabled={!canEdit}
+            title={canEdit ? undefined : "상태 변경 권한이 없습니다(뷰어)"}
             onChange={(e) => {
               const next = e.target.value as IssueStatus;
               if (next !== issue.status) onChangeStatus(next);
@@ -65,9 +70,11 @@ export default function IssueDetailPanel({
           </select>
         </label>
         {issue.description ? <p className="issue-detail-desc">{issue.description}</p> : null}
-        <button type="button" className="ghost-action issue-delete" onClick={onDelete}>
-          <Trash2 size={15} aria-hidden="true" /> 이슈 삭제
-        </button>
+        {canEdit ? (
+          <button type="button" className="ghost-action issue-delete" onClick={onDelete}>
+            <Trash2 size={15} aria-hidden="true" /> 이슈 삭제
+          </button>
+        ) : null}
       </div>
     </aside>
   );

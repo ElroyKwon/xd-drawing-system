@@ -2,7 +2,22 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-06-30, 세션 9 — S7 인증(로컬 모의)+RBAC 강제+구성원/프로젝트 영속 구현 DONE · 검증 부분완료 · 커밋)
+## 현재 상태 (2026-07-01, 세션 10 — S7 검증 마무리 DONE: J7 Build UI 게이팅 + 독립 3렌즈 + 결함 전량 수리 + 디바이스 e2e + reconcile)
+
+- **단계**: **S7 DONE.** 세션 9 이월분(3렌즈·reconcile·J7 Build 콘텐츠 UI 게이팅·J11 e2e 확장)을 전량 완결. acceptance **J1~J12 전부 MET**(NARROWED/UNMET 0), 세션9 NARROWED였던 **J11 device 해소**.
+- **J7 구현**: `canEdit = currentRole !== "뷰어"`를 App→BuildSheetsView→FilesView/IssuesView/SheetViewerShell(+MarkupToolRail/IssueDetailPanel/MarkupPropertyPanel/MeasurePanel)로 스레딩. 뷰어=업로드·폴더·마크업/측정/이슈 작성·수정·삭제 비활성/숨김 + 전역 `:disabled` 시각 처리. 게이팅 단위 6.
+- **독립 3렌즈 + 수리**: 렌즈1(백엔드 적대) **BLOCKER 2**(create_project 권한상승·시드 id 덮어쓰기)+**MAJOR 3**(이슈 실file 우회·마지막 관리자 강등/제거 락아웃) / 렌즈2(프론트) **MAJOR 2**(캔버스 단일의존 fail-open·FilesView 프로젝트 스코프 불일치) / 렌즈3(Done-When 비평). **전량 수리 + 회귀 테스트**(백엔드 4·프론트 6). 라이브 서버 재검증 403/400.
+- **e2e 추가 적발**: 새 프로젝트 생성 후 `me.roles` stale로 canManage 잠김 → `submitProject` getMe 재로드 수리·device 확인.
+- **게이트(전부 PASS)**: build · npm test **98** · pytest **78**(신규 게이팅6+수리회귀4, 회귀 0) · git diff clean.
+- **디바이스 e2e(콘솔0)**: J1 전환·J7 뷰어 게이팅(파일·이슈·툴레일 DOM disabled 확인)·J5 브라우저 403·J3 역할변경 영속·J2 프로젝트 영속·canManage 수리. `evidence/s7-03·05·06·07·08·10`.
+- **다음**: **S8 XD 온톨로지 + AI 분석**(도면 entity TypeDB 적재 + equipmentEntityId 바인딩, prompts/10 작성부터). **AI(LLM)=HUMAN_GATE**.
+
+### 세션 10 진입점
+- S7 DONE. 다음 = S8 메타프롬프트(prompts/10) 공동설계부터. 재기동법 세션6 블록과 동일(XD_STORE=auto/json, backend .venv python uvicorn 8000, npm run dev 5173).
+
+---
+
+## 이전 상태 (2026-06-30, 세션 9 — S7 인증(로컬 모의)+RBAC 강제+구성원/프로젝트 영속 구현 DONE · 검증 부분완료 · 커밋)
 
 - **단계**: **S7 구현 완료, 검증 부분완료(사용자 세션 종료 요청).** 메타프롬프트 `prompts/09-s7-auth-rbac-members.md` FROZEN(4결정: **로컬 모의 사용자 전환 · 백엔드 역할 기반 강제(403) · 구성원+프로젝트 둘 다 영속 · 정규화 역할 모델**). acceptance J1~J12.
 - **구현 요약**: 백엔드 `store.py`(member/project/project_member CRUD+current_user, seed-on-create), `auth.py` 신설(역할위계 뷰어<편집자<관리자 `require_role*`, 미구성 프로젝트 미강제=레거시 보존), `routes_auth.py` 신설(`/api/auth/me`·`/api/projects`·구성원 CRUD), 기존 mutation 라우트에 `require_role(편집자)` 적용, schema entity. 프론트 `api/admin.ts`, `App.tsx`(현재 사용자 로드·하드코딩 제거·사용자 전환 메뉴·프로젝트 백엔드·canManage), `ProjectAdminView`(구성원 백엔드+역할변경+게이트), `BuildManagementView` 실데이터.
@@ -138,9 +153,8 @@
 
 ## 다음 작업 — S1~S6 DONE, S7 구현완료(검증 이월), 다음은 S7 검증 마무리→S8
 
-**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(`83996d9`) · **S6**(`776ae88`) **DONE**. **S7 구현 완료**(prompts/09 FROZEN, 세션9 커밋, 검증 이월). 다음 진입:
-- **S7 검증 마무리**: 독립 3렌즈 → Done-When reconcile(J1~J12) → J7 Build 콘텐츠 UI 게이팅(currentRole를 Build 뷰로 thread해 뷰어 업로드/폴더/마크업/이슈 버튼 비활성) → J11 e2e 확장 → S7 DONE.
-- **S8 XD 온톨로지 + AI 분석**: 도면 entity TypeDB 적재 + equipmentEntityId 바인딩. **AI(LLM)=HUMAN_GATE**.
+**S1**(e146fc8+f7b1a99) · **S1.5**(`2284512`) · **S2**(`877518d`) · **S3**(`dbb1b6f`) · **S2.5**(`82ae45f`) · **S4**(`0051f87`) · **S5**(`83996d9`) · **S6**(`776ae88`) · **S7**(`d119178`+세션10 검증 마무리) **DONE**. 다음 진입:
+- **S8 XD 온톨로지 + AI 분석**: 도면 entity TypeDB 적재 + equipmentEntityId 바인딩(Study_TypeDB analysis_result 계승). **AI(LLM)=HUMAN_GATE**. prompts/10 공동설계부터.
 - (참고) S6 후속 부채: 홈 active vs 이슈탭 전체 카운트 차이(닫힘 전용뷰)·검색 퍼지/하이라이트/랭킹·차트 색맹 대응·구성원/작업/브리지/양식/날씨/진행률 백엔드.
 - (참고) S5 후속 부채: 삭제됨 이슈 편집·"열린 이슈" 탭 닫힘 노출·핀 색맹 대체·이슈 첨부/댓글/알림·TypeDB 그래프 직접쿼리화·권한 enforcement(S7).
 - (참고) S3 후속 부채: 설명 컬럼 실데이터·TypeDB folder 직접쿼리화·파일 단위 공유 override·인증/RBAC(S7). S2 후속: 멀티페이지 타이틀블록 강추출·빈 paperspace 자동분할.
