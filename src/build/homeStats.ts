@@ -9,6 +9,8 @@ export type HomeStats = {
   fileCount: number;
   folderCount: number;
   issueActiveCount: number;       // 열림+진행중+답변됨
+  issueTotalCount: number;        // 삭제됨 제외 전체 라이브 이슈
+  issueClosedCount: number;       // 닫힘
   issueByStatus: Record<string, number>;
   storageBytes: number;
   recentUploads: RecentUpload[];
@@ -67,11 +69,43 @@ export function computeHomeStats(drawings: Drawing[], issues: Issue[], folders: 
     fileCount,
     folderCount: folders.length,
     issueActiveCount,
+    issueTotalCount: liveIssues.length,
+    issueClosedCount: issueByStatus["닫힘"] ?? 0,
     issueByStatus,
     storageBytes,
     recentUploads,
     issuesByDate,
   };
+}
+
+export type ProgressComponent = { label: string; done: number; total: number; percent: number };
+export type ProjectProgress = {
+  percent: number;       // 전체 진행률(완료 항목 / 전체 항목)
+  doneItems: number;
+  totalItems: number;
+  components: ProgressComponent[];   // 작업·양식·이슈 구성별 내역(total>0 만)
+};
+
+function pct(done: number, total: number): number {
+  return total > 0 ? Math.round((done / total) * 100) : 0;
+}
+
+/**
+ * 일정 엔티티가 없으므로 진행률을 '작업 항목 처리율'로 산출한다(가짜 일정 배제).
+ * 완료 정의: 작업 done · 양식 완료 · 이슈 닫힘. 전체 = 각 항목 총계 합.
+ */
+export function computeProjectProgress(
+  tasks: { total: number; done: number } | null,
+  forms: { total: number; done: number } | null,
+  issues: { total: number; closed: number },
+): ProjectProgress {
+  const components: ProgressComponent[] = [];
+  if (tasks && tasks.total > 0) components.push({ label: "작업", done: tasks.done, total: tasks.total, percent: pct(tasks.done, tasks.total) });
+  if (forms && forms.total > 0) components.push({ label: "양식", done: forms.done, total: forms.total, percent: pct(forms.done, forms.total) });
+  if (issues.total > 0) components.push({ label: "이슈", done: issues.closed, total: issues.total, percent: pct(issues.closed, issues.total) });
+  const doneItems = components.reduce((n, c) => n + c.done, 0);
+  const totalItems = components.reduce((n, c) => n + c.total, 0);
+  return { percent: pct(doneItems, totalItems), doneItems, totalItems, components };
 }
 
 /** bytes → 사람이 읽는 용량(MB/GB). S2.5 storage_bytes 표시 계승. */

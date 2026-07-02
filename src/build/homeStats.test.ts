@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeHomeStats, formatBytes } from "./homeStats";
+import { computeHomeStats, computeProjectProgress, formatBytes } from "./homeStats";
 import type { Drawing, Folder, Issue } from "../api/drawings";
 
 function drawing(p: Partial<Drawing>): Drawing {
@@ -63,5 +63,39 @@ describe("computeHomeStats", () => {
     expect(formatBytes(0)).toBe("0 B");
     expect(formatBytes(5 * 1024 * 1024)).toBe("5.0 MB");
     expect(formatBytes(2 * 1024 * 1024 * 1024)).toBe("2.0 GB");
+  });
+
+  it("issueTotalCount/issueClosedCount를 라이브 기준으로 집계한다", () => {
+    const issues = [
+      issue({ issue_id: "a", status: "열림" }),
+      issue({ issue_id: "b", status: "닫힘" }),
+      issue({ issue_id: "c", status: "삭제됨" }), // 제외
+    ];
+    const stats = computeHomeStats([], issues, []);
+    expect(stats.issueTotalCount).toBe(2);
+    expect(stats.issueClosedCount).toBe(1);
+  });
+});
+
+describe("computeProjectProgress", () => {
+  it("작업·양식·이슈 처리율을 합산해 전체 진행률을 산출한다", () => {
+    const p = computeProjectProgress(
+      { total: 8, done: 2 },
+      { total: 5, done: 1 },
+      { total: 3, closed: 0 },
+    );
+    // 완료 3 / 전체 16 = 19%
+    expect(p.doneItems).toBe(3);
+    expect(p.totalItems).toBe(16);
+    expect(p.percent).toBe(19);
+    expect(p.components.map((c) => c.label)).toEqual(["작업", "양식", "이슈"]);
+    expect(p.components[0]).toMatchObject({ done: 2, total: 8, percent: 25 });
+  });
+
+  it("항목이 없으면 total 0 · 빈 구성", () => {
+    const p = computeProjectProgress(null, { total: 0, done: 0 }, { total: 0, closed: 0 });
+    expect(p.totalItems).toBe(0);
+    expect(p.percent).toBe(0);
+    expect(p.components).toEqual([]);
   });
 });

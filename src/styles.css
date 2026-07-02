@@ -3904,6 +3904,84 @@ select:disabled {
   line-height: 1.5;
 }
 
+/* S9(2c): 홈 프로젝트 진행률 위젯(작업·양식·이슈 처리율 기반) */
+.home-progress {
+  display: grid;
+  gap: 14px;
+}
+
+.home-progress-top {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-progress-percent {
+  font-size: 30px;
+  color: #17364d;
+}
+
+.home-progress-sub {
+  color: #6a7883;
+  font-size: 12.5px;
+}
+
+.home-progress-track {
+  height: 10px;
+  border-radius: 6px;
+  background: #e6edf2;
+  overflow: hidden;
+}
+
+.home-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1971c2, #2f9e44);
+}
+
+.home-progress-breakdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.home-progress-breakdown li {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #4a5a68;
+}
+
+.home-progress-blabel {
+  font-weight: 700;
+  color: #37474f;
+}
+
+.home-progress-btrack {
+  height: 6px;
+  border-radius: 4px;
+  background: #eef2f5;
+  overflow: hidden;
+}
+
+.home-progress-btrack > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #1971c2;
+}
+
+.home-progress-bvalue {
+  color: #6a7883;
+  white-space: nowrap;
+}
+
 .home-quicklinks {
   display: flex;
   gap: 28px;

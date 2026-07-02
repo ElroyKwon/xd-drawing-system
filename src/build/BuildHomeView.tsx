@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listDrawings, listFolders, listIssues, type Drawing, type Folder, type Issue } from "../api/drawings";
 import { taskSummary, type TaskSummary } from "../api/tasks";
 import { formSummary, type FormSummary } from "../api/forms";
-import { computeHomeStats, formatBytes, type IssueStatusDay } from "./homeStats";
+import { computeHomeStats, computeProjectProgress, formatBytes, type IssueStatusDay } from "./homeStats";
 
 type HomeTab = "개요" | "종합";
 
@@ -79,7 +79,7 @@ export default function BuildHomeView({
       </div>
 
       {activeTab === "개요" ? (
-        <HomeOverview stats={stats} tasks={tasks} onOpenSheets={onOpenSheets} onOpenIssues={onOpenIssues} onOpenFiles={onOpenFiles} onOpenTasks={onOpenTasks} />
+        <HomeOverview stats={stats} tasks={tasks} forms={formsSummary} onOpenSheets={onOpenSheets} onOpenIssues={onOpenIssues} onOpenFiles={onOpenFiles} onOpenTasks={onOpenTasks} />
       ) : (
         <HomeAnalytics issuesByDate={stats.issuesByDate} forms={formsSummary} />
       )}
@@ -90,6 +90,7 @@ export default function BuildHomeView({
 function HomeOverview({
   stats,
   tasks,
+  forms,
   onOpenSheets,
   onOpenIssues,
   onOpenFiles,
@@ -97,19 +98,48 @@ function HomeOverview({
 }: {
   stats: ReturnType<typeof computeHomeStats>;
   tasks: TaskSummary | null;
+  forms: FormSummary | null;
   onOpenSheets?: () => void;
   onOpenIssues?: () => void;
   onOpenFiles?: () => void;
   onOpenTasks?: () => void;
 }) {
+  const progress = computeProjectProgress(
+    tasks,
+    forms ? { total: forms.total, done: forms.done } : null,
+    { total: stats.issueTotalCount, closed: stats.issueClosedCount }
+  );
   return (
     <div className="home-overview-grid">
       <div className="home-overview-main">
         <section className="home-card home-progress-card" aria-label="프로젝트 진행률">
           <h2>프로젝트 진행률</h2>
-          <div className="home-onboarding-note">
-            프로젝트 일정이 구성되지 않았습니다. 일정을 추가하면 진행률이 여기에 표시됩니다.
-          </div>
+          {progress.totalItems === 0 ? (
+            <div className="home-onboarding-note">
+              작업·양식·이슈가 없습니다. 작업 항목을 추가하면 진행률이 여기에 집계됩니다.
+            </div>
+          ) : (
+            <div className="home-progress">
+              <div className="home-progress-top">
+                <strong className="home-progress-percent">{progress.percent}%</strong>
+                <span className="home-progress-sub">완료 {progress.doneItems} / 전체 {progress.totalItems} 항목 (작업·양식·이슈 처리 기준)</span>
+              </div>
+              <div className="home-progress-track" role="img" aria-label={`전체 진행률 ${progress.percent}%`}>
+                <span style={{ width: `${progress.percent}%` }} />
+              </div>
+              <ul className="home-progress-breakdown">
+                {progress.components.map((c) => (
+                  <li key={c.label}>
+                    <span className="home-progress-blabel">{c.label}</span>
+                    <span className="home-progress-btrack" aria-hidden="true">
+                      <span style={{ width: `${c.percent}%` }} />
+                    </span>
+                    <span className="home-progress-bvalue">{c.done}/{c.total} · {c.percent}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <div className="home-card-row">
@@ -164,7 +194,7 @@ function HomeOverview({
 
         <section className="home-card muted-card" aria-label="브리지">
           <h2>브리지</h2>
-          <p>콘텐츠 없음 · 추가 예정</p>
+          <p className="home-recent-empty">이 프로젝트에 연결된 브리지가 없습니다. 브리지는 다른 프로젝트·허브와 시트/파일을 공유합니다(교차-허브 연동 예정).</p>
         </section>
       </div>
 
