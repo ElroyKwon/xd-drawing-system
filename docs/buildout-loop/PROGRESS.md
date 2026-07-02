@@ -17,7 +17,18 @@
 
 ### 세션 12 진입점
 - 재기동: 백엔드 `XD_STORE=auto backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000` (⚠️ `--reload`는 backend/ 변경을 놓치는 사례 있음 — 라우트 추가 후엔 수동 재기동 권장) · 프론트 `npm run dev`(5173). 데모 재생성 = `PYTHONUTF8=1 backend/.venv/Scripts/python.exe scripts/seed_demo.py`.
-- 다음 = 제안서 PPTX 완성(사용자) 또는 트랙B 추가/S8 우선순위 확인.
+- **제안서 PPTX = 완료(사용자 진행 종결).**
+
+### ▶ 다음 세션 백로그 (사용자 확정 2026-07-02: "남은 것 전부 다음 세션에서")
+순서대로 진행. 각 기능은 store+routes+프론트+테스트+브라우저 e2e, 스테이지 완료 시 커밋.
+1. **정리(빠름)**: 테스트 프로젝트("x"·"S7 검증 현장"·"S7 canManage 검증") 삭제 → Hub 화면 클린. (프로젝트 삭제 API 필요 시 신설 — 파괴적이라 첫 착수 시 사용자 재확인 권장.)
+2. **트랙B 나머지 신규기능**:
+   - (a) **사진(Photos) 도구** — 업로드·갤러리·시트 연결 (작업/양식 패턴 미러링, 시각 임팩트 높음 → 우선).
+   - (b) **프로젝트 템플릿 워크플로우** — ACC B그룹 13화면(생성 2단계 모달·샘플 갤러리·템플릿 상세·구성원 시드·알림 매트릭스).
+   - (c) 홈 잔여 위젯(진행률=일정 기반 / 브리지). 날씨=외부 API=HUMAN_GATE 제외.
+3. **S8 — 사이드카 AI 챗**: `prompts/10-s8_0-sidecar-bootstrap.md` FROZEN 기준 S8.0 착수. ⚠️ **GATE-2**(프론트 격리 접점=App.tsx+BuildSheetsView 재기술)·**GATE-3**(owner 프라이버시)는 S8.3/S8.1 freeze 전 결정 필요. LLM egress=HUMAN_GATE.
+4. **S10 — XD 온톨로지**: 도면 entity TypeDB 실적재 + `equipmentEntityId` 바인딩(GATE-1에서 S8→S10 연기 확정). TypeDB 컨테이너 기동 필요(현재 Docker 미기동, json 폴백 중).
+5. (부채) 검색 퍼지/랭킹 · 색맹 대응 · 홈 active vs 이슈탭 카운트 정합.
 
 ---
 
