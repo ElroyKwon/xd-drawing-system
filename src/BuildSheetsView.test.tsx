@@ -36,6 +36,24 @@ vi.mock("./api/drawings", async (importActual) => {
   };
 });
 
+// S9/S9.1: 홈·작업·양식 뷰가 요약/목록을 조회한다. 라이브 백엔드 의존 회피 위해 빈 상태로 목킹.
+vi.mock("./api/tasks", async (importActual) => {
+  const actual = await importActual<typeof import("./api/tasks")>();
+  return {
+    ...actual,
+    listTasks: vi.fn().mockResolvedValue([]),
+    taskSummary: vi.fn().mockResolvedValue({ total: 0, open: 0, done: 0, by_status: {} }),
+  };
+});
+vi.mock("./api/forms", async (importActual) => {
+  const actual = await importActual<typeof import("./api/forms")>();
+  return {
+    ...actual,
+    listForms: vi.fn().mockResolvedValue([]),
+    formSummary: vi.fn().mockResolvedValue({ total: 0, open: 0, done: 0, avg_completion: 0, by_status: {} }),
+  };
+});
+
 function renderBuildSheets() {
   return {
     user: userEvent.setup(),
@@ -155,7 +173,8 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "양식" }));
     expect(screen.getByRole("heading", { name: "양식" })).toBeInTheDocument();
-    expect(screen.getByText("스크린샷 근거 보강 필요")).toBeInTheDocument();
+    // S9.1: 양식은 실데이터 fetch(이 테스트는 백엔드 미가동 → 빈 상태) + 작성 버튼.
+    expect(screen.getByRole("button", { name: "양식 작성" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "사진" }));
     expect(screen.getByRole("heading", { name: "사진" })).toBeInTheDocument();
@@ -244,14 +263,9 @@ describe("BuildSheetsView", () => {
     await user.click(screen.getByRole("button", { name: "홈" }));
     await user.click(screen.getByRole("tab", { name: "종합" }));
 
-    [
-      "작성 날짜별 이슈 상태",
-      "양식을 완료하는 데 걸리는 평균 시간",
-      "표시할 기한이 지난 양식",
-      "매일 완료하는 양식",
-    ].forEach((title) => {
-      expect(screen.getByRole("region", { name: title })).toBeInTheDocument();
-    });
+    // 이슈 차트는 항상. 양식 카드는 실데이터(백엔드 미가동 → '양식 분석' 빈 상태).
+    expect(screen.getByRole("region", { name: "작성 날짜별 이슈 상태" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "양식 분석" })).toBeInTheDocument();
   });
 
   it("toggles the sheet row export/share menu popover", async () => {

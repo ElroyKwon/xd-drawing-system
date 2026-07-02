@@ -181,6 +181,23 @@ class DrawingStore(ABC):
     @abstractmethod
     def delete_task(self, task_id: str) -> bool: ...
 
+    # --- S9.1: 양식(Forms) — 체크리스트 기반 점검표. 항목(items) 체크 상태 포함 ---
+    @abstractmethod
+    def add_form(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def list_forms(self, *, project_name: Optional[str] = None,
+                   status: Optional[str] = None, form_type: Optional[str] = None) -> list: ...
+
+    @abstractmethod
+    def get_form(self, form_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def update_form(self, form_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def delete_form(self, form_id: str) -> bool: ...
+
     # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자(로컬 모의) ---
     @abstractmethod
     def list_members(self) -> list: ...
@@ -231,6 +248,7 @@ class JsonDrawingStore(DrawingStore):
         self._measurements_path = Path(config.UPLOADS_DIR) / "_measurements.json"
         self._issues_path = Path(config.UPLOADS_DIR) / "_issues.json"
         self._tasks_path = Path(config.UPLOADS_DIR) / "_tasks.json"  # S9: 작업(Tasks)
+        self._forms_path = Path(config.UPLOADS_DIR) / "_forms.json"  # S9.1: 양식(Forms)
         # S7: 구성원·프로젝트·프로젝트-구성원·현재 사용자
         self._members_path = Path(config.UPLOADS_DIR) / "_members.json"
         self._projects_path = Path(config.UPLOADS_DIR) / "_projects.json"
@@ -249,6 +267,8 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._issues_path, {})
         if not self._tasks_path.exists():
             self._write_at(self._tasks_path, {})
+        if not self._forms_path.exists():
+            self._write_at(self._forms_path, {})
 
     def _read_at(self, path: Path) -> dict:
         try:
@@ -592,6 +612,51 @@ class JsonDrawingStore(DrawingStore):
                 return False
             del data[task_id]
             self._write_at(self._tasks_path, data)
+            return True
+
+    # --- S9.1: 양식(Forms) ---
+    def add_form(self, meta: dict) -> None:
+        with self._lock:
+            data = self._read_at(self._forms_path)
+            data[meta["form_id"]] = meta
+            self._write_at(self._forms_path, data)
+
+    def list_forms(self, *, project_name=None, status=None, form_type=None) -> list:
+        rows = list(self._read_at(self._forms_path).values())
+        if project_name is not None:
+            rows = [r for r in rows if r.get("project_name") == project_name]
+        if status is not None:
+            rows = [r for r in rows if r.get("status") == status]
+        if form_type is not None:
+            rows = [r for r in rows if r.get("form_type") == form_type]
+        # 미완료 우선 + 최신순(안정 정렬 2패스).
+        rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+        rows.sort(key=lambda r: r.get("status") == "완료")
+        return rows
+
+    def get_form(self, form_id: str) -> Optional[dict]:
+        return self._read_at(self._forms_path).get(form_id)
+
+    def update_form(self, form_id: str, **fields) -> Optional[dict]:
+        with self._lock:
+            data = self._read_at(self._forms_path)
+            row = data.get(form_id)
+            if not row:
+                return None
+            for k in ("title", "form_type", "status", "assignee", "due_date", "items"):
+                if k in fields and fields[k] is not None:
+                    row[k] = fields[k]
+            row["updated_at"] = datetime.now().isoformat()
+            self._write_at(self._forms_path, data)
+            return row
+
+    def delete_form(self, form_id: str) -> bool:
+        with self._lock:
+            data = self._read_at(self._forms_path)
+            if form_id not in data:
+                return False
+            del data[form_id]
+            self._write_at(self._forms_path, data)
             return True
 
     # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자 ---
@@ -972,6 +1037,22 @@ class TypeDBDrawingStore(DrawingStore):
 
     def delete_task(self, task_id: str) -> bool:
         return _MIRROR.delete_task(task_id)
+
+    # --- S9.1: 양식(Forms) — JSON 미러 SoT ---
+    def add_form(self, meta: dict) -> None:
+        _MIRROR.add_form(meta)
+
+    def list_forms(self, *, project_name=None, status=None, form_type=None) -> list:
+        return _MIRROR.list_forms(project_name=project_name, status=status, form_type=form_type)
+
+    def get_form(self, form_id: str) -> Optional[dict]:
+        return _MIRROR.get_form(form_id)
+
+    def update_form(self, form_id: str, **fields) -> Optional[dict]:
+        return _MIRROR.update_form(form_id, **fields)
+
+    def delete_form(self, form_id: str) -> bool:
+        return _MIRROR.delete_form(form_id)
 
 
 def _esc(s: str) -> str:

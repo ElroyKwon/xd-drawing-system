@@ -241,6 +241,38 @@ def seed_tasks():
             print(f"  + [{status}·{priority}] {title[:34]}")
 
 
+# ---------------------------------------------------------------------------
+# 5) 양식(Forms) — 전기 점검·안전·품질·검사 체크리스트
+# ---------------------------------------------------------------------------
+# (제목, 유형, 상태, 담당, 기한, [항목(체크여부)...])
+FORM_SPECS = [
+    ("수배전반 인수 점검표", "검사", "진행중", "전기 감리", "2026-07-12", [
+        ("외관 손상 여부", True), ("절연저항 측정", True),
+        ("결선 상태 확인", False), ("명판 사양 일치", False), ("보호계전기 정정값", False)]),
+    ("접지 시스템 시공 점검표", "점검", "완료", "시공 전기팀", "2026-06-28", [
+        ("접지극 매설 심도", True), ("접지저항 측정(≤10Ω)", True), ("본딩 연결 상태", True)]),
+    ("전기실 소방·안전 점검표", "안전", "미시작", "안전관리자", "2026-07-25", [
+        ("소화기 비치", False), ("피난 유도등", False), ("케이블 방화구획 관통부", False)]),
+    ("케이블 포설 품질 점검표", "품질", "진행중", "BIM 조정자", "2026-07-19", [
+        ("트레이 지지 간격", True), ("곡률 반경 준수", False), ("케이블 태그 부착", False)]),
+    ("비상발전기 시운전 점검표", "검사", "미시작", "시공 전기팀", "2026-07-24", [
+        ("연료 계통 점검", False), ("무부하 운전", False), ("ATS 절체 시험", False), ("부하 시험", False)]),
+]
+
+
+def seed_forms():
+    print("[5] 양식(Forms) 생성")
+    for f in (api("GET", "/api/forms?project_name=Study_Project") or []):
+        api("DELETE", f"/api/forms/{f['form_id']}")
+    for (title, ftype, status, assignee, due, items) in FORM_SPECS:
+        r = api("POST", "/api/forms", {
+            "title": title, "form_type": ftype, "status": status,
+            "assignee": assignee, "due_date": due,
+            "items": [{"label": lbl, "checked": chk} for (lbl, chk) in items]})
+        if r:
+            print(f"  + [{status}·{ftype}] {title}  (완료율 {r.get('completion')}%)")
+
+
 def main():
     me = api("GET", "/api/auth/me")
     if not me:
@@ -252,9 +284,11 @@ def main():
     created = seed_issues(drawings)
     seed_markups(created)
     seed_tasks()
+    seed_forms()
     issues = api("GET", "/api/issues") or []
     tasks = api("GET", "/api/tasks?project_name=Study_Project") or []
-    print(f"\n완료: 활성 이슈 {len(issues)}건 (핀 {sum(1 for i in issues if i.get('pin'))}건) · 작업 {len(tasks)}건")
+    forms = api("GET", "/api/forms?project_name=Study_Project") or []
+    print(f"\n완료: 활성 이슈 {len(issues)}건 (핀 {sum(1 for i in issues if i.get('pin'))}건) · 작업 {len(tasks)}건 · 양식 {len(forms)}건")
 
 
 if __name__ == "__main__":

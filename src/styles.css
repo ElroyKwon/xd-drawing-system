@@ -3935,6 +3935,27 @@ select:disabled {
   font-size: 12px;
 }
 
+/* S9.1: 양식 분석 카드 실데이터 지표 */
+.home-analytics-metric {
+  display: grid;
+  gap: 4px;
+  place-content: center;
+  min-height: 130px;
+  text-align: center;
+}
+
+.home-analytics-metric strong {
+  color: #1971c2;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.home-analytics-metric span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .home-chart {
   display: grid;
   gap: 10px;
@@ -4416,6 +4437,62 @@ select:disabled {
   color: #495b6b;
   font-size: 13px;
   line-height: 1.5;
+}
+
+/* S9.1: 양식(Forms) 완료율 진행바 + 체크리스트 */
+.form-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.form-progress-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e9ecef;
+  overflow: hidden;
+}
+
+.form-progress-bar span {
+  display: block;
+  height: 100%;
+  background: #2f9e44;
+  transition: width 0.2s ease;
+}
+
+.form-progress-label {
+  font-size: 12px;
+  color: #495b6b;
+  white-space: nowrap;
+}
+
+.form-checklist {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-checklist li label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #33475b;
+  cursor: pointer;
+}
+
+.form-checklist li input:disabled {
+  cursor: default;
+}
+
+.form-checklist li span.checked {
+  text-decoration: line-through;
+  color: var(--muted);
 }
 
 .issue-delete {

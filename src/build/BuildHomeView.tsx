@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { listDrawings, listFolders, listIssues, type Drawing, type Folder, type Issue } from "../api/drawings";
 import { taskSummary, type TaskSummary } from "../api/tasks";
+import { formSummary, type FormSummary } from "../api/forms";
 import { computeHomeStats, formatBytes, type IssueStatusDay } from "./homeStats";
 
 type HomeTab = "개요" | "종합";
@@ -31,21 +32,24 @@ export default function BuildHomeView({
   const [issues, setIssues] = useState<Issue[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tasks, setTasks] = useState<TaskSummary | null>(null);
+  const [formsSummary, setFormsSummary] = useState<FormSummary | null>(null);
 
-  // 홈 진입 시 실데이터 집계 로드(시트/파일/폴더/이슈/작업). 정적 하드코딩 대체.
+  // 홈 진입 시 실데이터 집계 로드(시트/파일/폴더/이슈/작업/양식). 정적 하드코딩 대체.
   useEffect(() => {
     let alive = true;
     Promise.all([
       listDrawings(projectName).catch(() => [] as Drawing[]),
       listIssues({ projectName }).catch(() => [] as Issue[]),
       listFolders(projectName).catch(() => [] as Folder[]),
-      taskSummary(projectName).catch(() => null)
-    ]).then(([d, i, f, t]) => {
+      taskSummary(projectName).catch(() => null),
+      formSummary(projectName).catch(() => null)
+    ]).then(([d, i, f, t, fm]) => {
       if (!alive) return;
       setDrawings(d);
       setIssues(i);
       setFolders(f);
       setTasks(t);
+      setFormsSummary(fm);
     });
     return () => {
       alive = false;
@@ -77,7 +81,7 @@ export default function BuildHomeView({
       {activeTab === "개요" ? (
         <HomeOverview stats={stats} tasks={tasks} onOpenSheets={onOpenSheets} onOpenIssues={onOpenIssues} onOpenFiles={onOpenFiles} onOpenTasks={onOpenTasks} />
       ) : (
-        <HomeAnalytics issuesByDate={stats.issuesByDate} />
+        <HomeAnalytics issuesByDate={stats.issuesByDate} forms={formsSummary} />
       )}
     </section>
   );
@@ -184,12 +188,14 @@ function HomeOverview({
   );
 }
 
-function HomeAnalytics({ issuesByDate }: { issuesByDate: IssueStatusDay[] }) {
-  const formCards = [
-    { id: "form-avg", title: "양식을 완료하는 데 걸리는 평균 시간" },
-    { id: "form-overdue", title: "표시할 기한이 지난 양식" },
-    { id: "form-daily", title: "매일 완료하는 양식" }
-  ];
+function HomeAnalytics({ issuesByDate, forms }: { issuesByDate: IssueStatusDay[]; forms: FormSummary | null }) {
+  const formCards: Array<{ id: string; title: string; value: string; hint: string }> = forms && forms.total > 0
+    ? [
+        { id: "form-total", title: "등록된 양식", value: `${forms.total}건`, hint: `진행 중 ${forms.open} · 완료 ${forms.done}` },
+        { id: "form-avg", title: "양식 평균 완료율", value: `${forms.avg_completion}%`, hint: "체크리스트 항목 기준" },
+        { id: "form-open", title: "미완료 양식", value: `${forms.open}건`, hint: "미시작 + 진행 중" }
+      ]
+    : [];
   return (
     <div className="home-analytics-grid">
       <section className="home-analytics-card home-analytics-wide" aria-label="작성 날짜별 이슈 상태">
@@ -199,17 +205,29 @@ function HomeAnalytics({ issuesByDate }: { issuesByDate: IssueStatusDay[] }) {
         <IssueStatusChart issuesByDate={issuesByDate} />
       </section>
 
-      {formCards.map((card) => (
-        <section className="home-analytics-card" key={card.id} aria-label={card.title}>
+      {formCards.length === 0 ? (
+        <section className="home-analytics-card" aria-label="양식 분석">
           <header className="home-analytics-head">
-            <h2>{card.title}</h2>
+            <h2>양식 분석</h2>
           </header>
           <div className="home-analytics-empty">
             <strong>표시할 양식 데이터가 없습니다.</strong>
-            <span>양식 기능은 추가 예정입니다.</span>
+            <span>양식을 작성하면 완료율이 여기에 집계됩니다.</span>
           </div>
         </section>
-      ))}
+      ) : (
+        formCards.map((card) => (
+          <section className="home-analytics-card" key={card.id} aria-label={card.title}>
+            <header className="home-analytics-head">
+              <h2>{card.title}</h2>
+            </header>
+            <div className="home-analytics-metric">
+              <strong>{card.value}</strong>
+              <span>{card.hint}</span>
+            </div>
+          </section>
+        ))
+      )}
     </div>
   );
 }
