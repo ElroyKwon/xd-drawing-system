@@ -2,7 +2,24 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-01, 세션 11 — S8 설계 v2 격리형 사이드카 FROZEN)
+## 현재 상태 (2026-07-02, 세션 12 — GATE-1 해소 + 데모 실데이터 + S9 작업 도구)
+
+사용자 3갈래 요청(개발 확대+문서화 / 현실적 이슈+마크업 / S8 병행)에 대해 4결정 freeze 후 자율 실행. **추천대로 진행 + 미커밋 커밋** 승인.
+
+- **미커밋 정리**: 세션11 S8 설계 4렌즈 검수분·HUMAN_GATE·s7 evidence 커밋(`0e97fea`).
+- **GATE-1 RESOLVED (결정 ii)**: 온톨로지 바인딩 → **S10 연기**. `LOOP.md` Done-When NARROWED(연기처 S10), `PLAN.md` S8=사이드카 AI 챗 재정의 + S10 신설, `HUMAN_GATE.md` RESOLVED (`e25187f`). **S8 DONE 전제에서 온톨로지 제외 확정.**
+- **트랙A — 데모 실데이터**(`b20977f`): 테스트 산물 이슈·junk 도면 정리 + 현실적 전기설계 이슈 **12건(핀 11)**을 단선결선도/배치 DWG(world)/BESS 8p에 분산 + 리비전 클라우드·실무 라벨 마크업. `scripts/seed_demo.py`(재현 산출물, uploads/ gitignore 대응). **사용자 피드백("안 이쁨") 반영**: 시트당 1~3개 분산·의미 라벨·겹침 제거.
+- **마크업 가독성**(`1edb6af`): VectorCanvas 흰 배경 박스 + MarkupCanvas SVG 흰 외곽선(halo) → 도면 위 라벨 가독. build+test 98.
+- **트랙B S9 — 작업(Tasks) 도구**(`a2c1f6a`): 홈 '작업 상태' 빈 상태 → 실데이터. 신규 Task 엔티티 CRUD(`store.py`·`routes_task.py`·`/api/tasks`+`/summary`) + RBAC(편집자) + `api/tasks.ts`·`BuildTasksView`(IssuesView 톤) + '작업' 네비 + 홈 위젯 딥링크. 시드 작업 8건. **build · vitest 103 · pytest 82** · 브라우저 e2e(작업뷰 8건·홈 6진행/2완료·콘솔0). *구현+자체검증(독립 3렌즈는 미실시).*
+- **다음 후보**: 트랙B 추가 기능(양식/템플릿/사진 — 사용자 미확답 멀티셀렉트) · 트랙C 문서 3종(제안서 PPTX+매뉴얼/설명서 MD) · S8.0 사이드카(GATE-2/3은 S8.3/S8.1 前). 테스트 프로젝트("x"·S7검증*) 정리는 보류(파괴적·미확인).
+
+### 세션 12 진입점
+- 재기동: 백엔드 `XD_STORE=auto backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000 --reload` · 프론트 `npm run dev`(5173). 데모 데이터 재생성 = `PYTHONUTF8=1 backend/.venv/Scripts/python.exe scripts/seed_demo.py`.
+- 다음 = 사용자에게 트랙B 추가/트랙C 문서/S8 중 우선순위 확인 후 진행.
+
+---
+
+## 이전 상태 (2026-07-01, 세션 11 — S8 설계 v2 격리형 사이드카 FROZEN)
 
 - **단계**: **S8 설계 FROZEN(구현 전).** 초안(v1 통합형)을 사용자 지시("기존과 별개로 동작")로 **완전 격리형 사이드카**로 재설계 → `docs/buildout-loop/S8-ai-chat-design.md` **STATUS: v2 FROZEN**.
 - **공동설계 9결정 확정**: 핵심4(tool-use 그라운딩·제공자 로컬기본·프로젝트+사용자 대화·읽기 Q&A+딥링크) + **격리4**(별도 8001 프로세스·8000 공개 HTTP만 호출[기존 import 0]·src/ai 격리+BuildShell 1곳 마운트+킬스위치·강한 격리 불변식) + **OPEN-1=(a) 순수 클라이언트**(8000 완전 무수정, 장비-그래프 Q&A는 v1 밖).
