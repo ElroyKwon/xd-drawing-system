@@ -595,11 +595,13 @@ function drawMarkup(ctx: CanvasRenderingContext2D, m: Markup, sx: Proj, sy: Proj
     ctx.font = "14px 'Malgun Gothic', sans-serif";
     const text = m.text || "텍스트";
     const w = ctx.measureText(text).width;
-    ctx.globalAlpha = 0.15;
-    ctx.fillRect(x - 4, y - 18, w + 8, 22);
+    // 가독성: 도면 위에서도 읽히도록 흰 배경 박스 + 얇은 색 테두리 위에 색 텍스트
     ctx.globalAlpha = m.style?.opacity ?? 1;
-    ctx.fillText(text, x, y - 2);
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.fillRect(x - 4, y - 18, w + 8, 22);
     ctx.strokeRect(x - 4, y - 18, w + 8, 22);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y - 2);
   } else if (m.kind === "도형") {
     const r = rectFrom(pts[0], pts[1] || pts[0], sx, sy);
     ctx.strokeRect(r.x, r.y, r.w, r.h);

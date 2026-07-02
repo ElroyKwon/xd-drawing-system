@@ -49,7 +49,9 @@ function MarkupGlyph({ markup, selected }: { markup: Markup; selected: boolean }
 
   if (markup.kind === "텍스트") {
     return (
-      <text x={scaled[0][0]} y={scaled[0][1]} fill={color} fontSize="3" style={{ paintOrder: "stroke" }}>
+      <text x={scaled[0][0]} y={scaled[0][1]} fill={color} fontSize="3"
+        stroke="#fff" strokeWidth={1} strokeLinejoin="round"
+        style={{ paintOrder: "stroke" }}>
         {markup.text || "텍스트"}
       </text>
     );
