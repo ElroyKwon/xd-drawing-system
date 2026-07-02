@@ -230,7 +230,7 @@ export default function BuildSheetsView({ project = selectedBuildProject, canEdi
         ) : activeSection === "양식" ? (
           <FormsView projectName={project.name} canEdit={canEdit} />
         ) : activeSection === "사진" ? (
-          <PhotosView />
+          <PhotosView projectName={project.name} sheets={projectSheets} canEdit={canEdit} />
         ) : (
           <BuildManagementView section={activeSection} projectName={project.name} />
         )}

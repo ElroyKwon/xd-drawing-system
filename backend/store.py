@@ -198,6 +198,23 @@ class DrawingStore(ABC):
     @abstractmethod
     def delete_form(self, form_id: str) -> bool: ...
 
+    # --- S9.2: 사진(Photos) — 업로드 이미지 + 선택적 시트 연결. 메타만 store, 파일은 uploads/ ---
+    @abstractmethod
+    def add_photo(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def list_photos(self, *, project_name: Optional[str] = None,
+                    sheet_id: Optional[str] = None) -> list: ...
+
+    @abstractmethod
+    def get_photo(self, photo_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def update_photo(self, photo_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def delete_photo(self, photo_id: str) -> bool: ...
+
     # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자(로컬 모의) ---
     @abstractmethod
     def list_members(self) -> list: ...
@@ -253,6 +270,7 @@ class JsonDrawingStore(DrawingStore):
         self._issues_path = Path(config.UPLOADS_DIR) / "_issues.json"
         self._tasks_path = Path(config.UPLOADS_DIR) / "_tasks.json"  # S9: 작업(Tasks)
         self._forms_path = Path(config.UPLOADS_DIR) / "_forms.json"  # S9.1: 양식(Forms)
+        self._photos_path = Path(config.UPLOADS_DIR) / "_photos.json"  # S9.2: 사진(Photos)
         # S7: 구성원·프로젝트·프로젝트-구성원·현재 사용자
         self._members_path = Path(config.UPLOADS_DIR) / "_members.json"
         self._projects_path = Path(config.UPLOADS_DIR) / "_projects.json"
@@ -273,6 +291,8 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._tasks_path, {})
         if not self._forms_path.exists():
             self._write_at(self._forms_path, {})
+        if not self._photos_path.exists():
+            self._write_at(self._photos_path, {})
 
     def _read_at(self, path: Path) -> dict:
         try:
@@ -661,6 +681,48 @@ class JsonDrawingStore(DrawingStore):
                 return False
             del data[form_id]
             self._write_at(self._forms_path, data)
+            return True
+
+    # --- S9.2: 사진(Photos) ---
+    def add_photo(self, meta: dict) -> None:
+        with self._lock:
+            data = self._read_at(self._photos_path)
+            data[meta["photo_id"]] = meta
+            self._write_at(self._photos_path, data)
+
+    def list_photos(self, *, project_name=None, sheet_id=None) -> list:
+        rows = list(self._read_at(self._photos_path).values())
+        if project_name is not None:
+            rows = [r for r in rows if r.get("project_name") == project_name]
+        if sheet_id is not None:
+            rows = [r for r in rows if r.get("sheet_id") == sheet_id]
+        # 최신 업로드 우선.
+        rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+        return rows
+
+    def get_photo(self, photo_id: str) -> Optional[dict]:
+        return self._read_at(self._photos_path).get(photo_id)
+
+    def update_photo(self, photo_id: str, **fields) -> Optional[dict]:
+        with self._lock:
+            data = self._read_at(self._photos_path)
+            row = data.get(photo_id)
+            if not row:
+                return None
+            for k in ("title", "caption", "sheet_id"):
+                if k in fields and fields[k] is not None:
+                    row[k] = fields[k]
+            row["updated_at"] = datetime.now().isoformat()
+            self._write_at(self._photos_path, data)
+            return row
+
+    def delete_photo(self, photo_id: str) -> bool:
+        with self._lock:
+            data = self._read_at(self._photos_path)
+            if photo_id not in data:
+                return False
+            del data[photo_id]
+            self._write_at(self._photos_path, data)
             return True
 
     # --- S7: 구성원 · 프로젝트 · 프로젝트-구성원(역할) · 현재 사용자 ---
@@ -1076,6 +1138,22 @@ class TypeDBDrawingStore(DrawingStore):
 
     def delete_form(self, form_id: str) -> bool:
         return _MIRROR.delete_form(form_id)
+
+    # --- S9.2: 사진(Photos) — JSON 미러 SoT ---
+    def add_photo(self, meta: dict) -> None:
+        _MIRROR.add_photo(meta)
+
+    def list_photos(self, *, project_name=None, sheet_id=None) -> list:
+        return _MIRROR.list_photos(project_name=project_name, sheet_id=sheet_id)
+
+    def get_photo(self, photo_id: str) -> Optional[dict]:
+        return _MIRROR.get_photo(photo_id)
+
+    def update_photo(self, photo_id: str, **fields) -> Optional[dict]:
+        return _MIRROR.update_photo(photo_id, **fields)
+
+    def delete_photo(self, photo_id: str) -> bool:
+        return _MIRROR.delete_photo(photo_id)
 
 
 def _esc(s: str) -> str:

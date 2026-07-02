@@ -178,10 +178,9 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "사진" }));
     expect(screen.getByRole("heading", { name: "사진" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "앨범", selected: true })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "갤러리" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "맵" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "미디어 추가" })).toBeInTheDocument();
+    // S9.2: 사진은 실데이터 갤러리(백엔드 미가동 → 빈 상태) + 업로드 버튼 + 검색.
+    expect(screen.getByRole("button", { name: "사진 추가" })).toBeInTheDocument();
+    expect(screen.getByLabelText("사진 검색")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "구성원" }));
     expect(screen.getByRole("heading", { name: "Build 구성원" })).toBeInTheDocument();

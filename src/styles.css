@@ -2373,6 +2373,123 @@ select:disabled {
   color: #263a4c;
 }
 
+/* S9.2: 사진 갤러리 그리드 */
+.photo-grid {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.photo-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid #dbe2e8;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eef2f5;
+  cursor: pointer;
+  aspect-ratio: 4 / 3;
+}
+
+.photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-card:hover,
+.photo-card:focus-visible {
+  border-color: var(--blue);
+  box-shadow: 0 2px 10px rgba(15, 79, 122, 0.18);
+}
+
+.photo-card-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  gap: 4px;
+  padding: 20px 10px 8px;
+  text-align: left;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+}
+
+.photo-card-meta strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #d7ecff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 사진 라이트박스 */
+.photo-lightbox {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  max-width: 1040px;
+  width: 92vw;
+  max-height: 88vh;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.photo-lightbox-image {
+  display: grid;
+  place-items: center;
+  background: #101418;
+  min-height: 300px;
+}
+
+.photo-lightbox-image img {
+  max-width: 100%;
+  max-height: 88vh;
+  object-fit: contain;
+}
+
+.photo-lightbox-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.photo-lightbox-side h2 {
+  margin: 0;
+  font-size: 17px;
+  padding-right: 28px;
+}
+
+.photo-lightbox .modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  color: #263a4c;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+}
+
 .sheet-open-button {
   width: fit-content;
   padding: 0;

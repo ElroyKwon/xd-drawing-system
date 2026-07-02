@@ -273,6 +273,76 @@ def seed_forms():
             print(f"  + [{status}·{ftype}] {title}  (완료율 {r.get('completion')}%)")
 
 
+# ---------------------------------------------------------------------------
+# 6) 사진(Photos) — 현장/검수 사진 (PIL로 생성한 라벨 플레이스홀더 이미지)
+# ---------------------------------------------------------------------------
+# (제목, 캡션, 배경색, 도면키|None, 시트idx) — 도면키가 있으면 해당 시트에 연결.
+PHOTO_SPECS = [
+    ("수배전반 반입 현장", "지하 전기실 수배전반 반입 및 위치 확인", (37, 73, 110), "single_line", 0),
+    ("접지극 매설", "기초 접지극 매설 심도 확인(검수)", (46, 125, 74), "single_line", 0),
+    ("케이블 트레이 시공", "3층 천장 케이블 트레이(300W) 포설", (176, 92, 12), "dwg_panel", 0),
+    ("변압기 설치", "TR-1 유입식 변압기 설치 완료", (112, 72, 232), "bess", 0),
+    ("비상발전기 반입", "옥외 비상발전기 반입·기초 앵커링", (25, 113, 194), "bess", 1),
+    ("현장 전경", "타워동 전기 시공 전반 현황(주간)", (64, 80, 92), None, 0),
+]
+
+
+def _make_image(title: str, color: tuple) -> bytes:
+    """제목 라벨이 들어간 640x480 플레이스홀더 이미지 PNG 바이트."""
+    from io import BytesIO
+    from PIL import Image, ImageDraw
+    img = Image.new("RGB", (640, 480), color)
+    d = ImageDraw.Draw(img)
+    # 단순 프레임 + 대각 그라디언트 느낌의 사각형 몇 개(사진처럼 보이게)
+    d.rectangle([0, 0, 639, 479], outline=(255, 255, 255), width=6)
+    d.rectangle([40, 40, 600, 300], outline=(255, 255, 255), width=2)
+    d.text((48, 400), title, fill=(255, 255, 255))
+    d.text((48, 430), "XD 현장 사진 (데모)", fill=(220, 230, 240))
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _upload_photo(fields: dict, filename: str, data: bytes):
+    """multipart/form-data 로 /api/photos 업로드(urllib, JSON api 헬퍼로는 불가)."""
+    import uuid as _uuid
+    boundary = "----xdseed" + _uuid.uuid4().hex
+    parts = []
+    for k, v in fields.items():
+        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode())
+    parts.append(
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\n"
+        f"Content-Type: image/png\r\n\r\n".encode() + data + b"\r\n")
+    parts.append(f"--{boundary}--\r\n".encode())
+    body = b"".join(parts)
+    req = urllib.request.Request(BASE + "/api/photos", data=body, method="POST",
+                                 headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        print(f"  ! POST /api/photos -> {e.code} {e.read().decode()[:200]}")
+        return None
+
+
+def seed_photos(drawings):
+    print("[6] 사진(Photos) 생성")
+    # 멱등: 기존 사진 전부 삭제 후 재생성.
+    for p in (api("GET", "/api/photos?project_name=Study_Project") or []):
+        api("DELETE", f"/api/photos/{p['photo_id']}")
+    for i, (title, caption, color, dkey, sidx) in enumerate(PHOTO_SPECS):
+        sheet_id = ""
+        if dkey:
+            _, sid, _ = find_sheet(drawings, KEY_MAP[dkey], sidx)
+            sheet_id = sid or ""
+        data = _make_image(title, color)
+        fields = {"project_name": "Study_Project", "title": title,
+                  "caption": caption, "sheet_id": sheet_id, "uploaded_by": "현장 담당자"}
+        r = _upload_photo(fields, f"site_{i+1}.png", data)
+        if r:
+            print(f"  + {title}{'  (시트 연결)' if sheet_id else '  (미연결)'}")
+
+
 def main():
     me = api("GET", "/api/auth/me")
     if not me:
@@ -285,10 +355,12 @@ def main():
     seed_markups(created)
     seed_tasks()
     seed_forms()
+    seed_photos(drawings)
     issues = api("GET", "/api/issues") or []
     tasks = api("GET", "/api/tasks?project_name=Study_Project") or []
     forms = api("GET", "/api/forms?project_name=Study_Project") or []
-    print(f"\n완료: 활성 이슈 {len(issues)}건 (핀 {sum(1 for i in issues if i.get('pin'))}건) · 작업 {len(tasks)}건 · 양식 {len(forms)}건")
+    photos = api("GET", "/api/photos?project_name=Study_Project") or []
+    print(f"\n완료: 활성 이슈 {len(issues)}건 (핀 {sum(1 for i in issues if i.get('pin'))}건) · 작업 {len(tasks)}건 · 양식 {len(forms)}건 · 사진 {len(photos)}장")
 
 
 if __name__ == "__main__":
