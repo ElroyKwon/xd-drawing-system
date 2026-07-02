@@ -13,7 +13,7 @@
   - **(i) 공식 폐기** — 온톨로지 바인딩을 loop 산출물에서 제거. → `LOOP.md` L34·`PLAN.md` L48 개정 + 사유 기록.
   - **(ii) 후속 스테이지로 연기** — 예: **S10 온톨로지**. → LOOP Done-When에 NARROWED+연기처+등급 기록.
   - **(iii) S8로 재편입** — S8.0~S8.5에 온톨로지 적재/바인딩 스테이지 추가(사이드카는 읽기 그라운딩용 온톨로지 read API 필요 → OPEN-1 (b) 재검토 연동).
-- **상태**: **OPEN.** 세션 12 진입 시 최우선 결정.
+- **상태**: **RESOLVED (2026-07-02, 결정 (ii) S10 연기).** 온톨로지 적재/바인딩을 신설 **S10 온톨로지** 스테이지로 연기. `LOOP.md` Done-When 해당 항목 NARROWED+연기처(S10) 표기, `PLAN.md` S8→사이드카 AI 챗으로 재정의 + S10 신설. S8 DONE 전제에서 온톨로지 제외 확정.
 
 ### GATE-2 [MAJOR·S8.3 FROZEN 전] — 프론트 격리 아키텍처 재설계 (BuildShell 허상)
 - **문제**: S8 설계가 "유일 접점"으로 못박은 `BuildShell.tsx`가 **존재하지 않음**. 실제 셸=`App.tsx`(6개 activeView), Build 뷰=`BuildSheetsView.tsx`(네비 상태 `openSheet`/`searchOpenIssue`/`searchOpenFolder`가 그 안 private useState). 딥링크는 두 컴포넌트의 사적 상태를 건드려야 함 → 설계의 "무수정·단일 접점·어느 화면에서든" **3자 모순**. (참고: `GlobalSearch`가 이미 props로 딥링크 패턴 구현 → 재사용 후보.)

@@ -45,8 +45,11 @@
 ### S7 — 인증/RBAC + 프로젝트/구성원 영속
 **목표**: 로컬 인증 + 역할(관리자·편집자·뷰어). `projectAdminData` 정적 → 영속. 프로젝트 생성/구성원 접근이 권한 반영. (프로덕션 auth는 HUMAN_GATE — 로컬 범위로.)
 
-### S8 — XD 고유: 온톨로지 바인딩 + AI 분석
-**목표**: 도면 entity TypeDB 적재 + `equipmentEntityId` 바인딩 동작(Study_TypeDB `analysis_result`·multi-agent 계승). 장비 온톨로지 해석. AI 분석(LLM)은 게이트 확인 후.
+### S8 — 사이드카 AI 챗 어시스턴트
+**목표**: 8000 무수정·신규 라우트 0의 사이드카(8001) AI 챗. 읽기 그라운딩 기반 Q&A/요약. AI 분석(LLM egress)은 HUMAN_GATE 확인 후. (온톨로지 바인딩은 S10으로 연기 — 아래 참조.)
+
+### S10 — XD 고유: 온톨로지 바인딩 (S8에서 연기)
+**목표**: 도면 entity TypeDB 적재 + `equipmentEntityId` 바인딩 동작(Study_TypeDB `analysis_result`·multi-agent 계승). 장비 온톨로지 해석. **GATE-1 RESOLVED(2026-07-02): 당초 S8 전제였으나 S10으로 연기**.
 
 ## 마일스톤 체크리스트
 
