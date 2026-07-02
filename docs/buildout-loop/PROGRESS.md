@@ -10,7 +10,13 @@
 - **백로그 2a — 사진(Photos) 도구(DONE, 커밋 `a9f9b3f`)**: 정적 플레이스홀더 → 실기능. store Photo 엔티티(add/list[project·sheet]/get/update/delete) + `routes_photo.py`(`/api/photos` 멀티파트 업로드·목록·/summary·PATCH·DELETE, RBAC 편집자·이미지검증·traversal방어·삭제시 파일정리) + `/files` static 서빙. 프론트 `api/photos.ts`·PhotosView 재작성(갤러리 그리드·다중 업로드·연결/미연결 필터·검색·라이트박스[캡션·시트연결 select·삭제], 게이팅) + BuildSheetsView 배선 + CSS. seed_demo `seed_photos()`(PIL 라벨 6장, 5연결·1미연결, 멱등). **pytest 92(사진 5)·vitest 108·build**. device: 갤러리 6장·연결5·라이트박스(백엔드 이미지·연결시트·캡션·select·삭제)·미연결 필터 1장·콘솔0. evidence/s9_2-photos-*.png.
 - **백로그 2b — 프로젝트 템플릿 워크플로우(DONE, 커밋 `79fe995`)**: 허브 템플릿 로컬상태 → 백엔드 영속 엔티티 + **생성 시 템플릿 폴더·구성원 자동 시드**. store Template 엔티티(list/add/get/delete + 허브 기본 2종 시드, Json·TypeDB미러) + `routes_template.py`(`/api/templates` GET·POST[blank/existing-copy]·DELETE + `apply_template_to_project`[폴더 dedup·구성원 생성자 skip]) + create_project 적용. 프론트 `api/templates.ts` + App(백엔드 로드/낙관적 생성/삭제·2단계 모달 원본 프로젝트 select·생성 모달 허브 템플릿 optgroup). **pytest 97(템플릿 5)·vitest 108·build**. device: 생성 모달서 '표준 프로젝트 템플릿' 선택→생성→Project Admin 구성원 3명(reviewer 편집자·viewer 뷰어 시드)+폴더(시방서/제출물/회의록) 확인·콘솔0. **스코프: 알림 매트릭스·샘플 갤러리 상세 13화면 = UI 장식성으로 후순위 연기.** evidence/s9_3-template-applied-members.png.
 - **백로그 2c — 홈 진행률 위젯 + 브리지(DONE, 커밋 `cba6551`)**: 일정 엔티티 부재 → 진행률을 '작업 항목 처리율'로 산출(가짜 일정 배제). `homeStats.computeProjectProgress`(작업 done+양식 완료+이슈 닫힘/총계) + BuildHomeView 진행률 카드(전체%+구성별 내역바·빈상태) + 브리지 정직한 빈 상태(교차-허브 연동 예정). 날씨=외부API=HUMAN_GATE 제외. **vitest 111(진행률 3)·build**. device: Study_Project 홈 12%(완료 3/25=작업2/8·양식1/5·이슈0/12)·콘솔0. evidence/s9_2c-home-progress.png. **⚠️ 프론트 단위 스위트는 오프라인 전제(라이브 백엔드 뜨면 App 템플릿 테스트가 백엔드 시드 로드로 실패 — vitest는 백엔드 내리고 실행).**
-- **✅ 트랙B 전부 완료(2a·2b·2c).** **다음 = 체크포인트(HUMAN_GATE)**: S8 사이드카 AI[GATE-2 프론트 격리 접점·GATE-3 owner 프라이버시·**LLM egress**]·S10 온톨로지[**Docker/TypeDB 컨테이너 기동 필요**]. 둘 다 사용자 결정/인프라 선행 필요 → 자율 진행 중단, 결정 대기. 재기동법 세션6 블록(⚠️ 라우트 추가 후 uvicorn 수동 재기동).
+- **✅ 트랙B 전부 완료(2a·2b·2c).**
+- **백로그 5(부채) — 이슈 카운트 정합(DONE, 커밋 `dbd1235`)**: '열린 이슈' 탭이 삭제됨 제외 전부(닫힘 포함)를 보여 홈 active 카운트와 어긋나던 것을 수정. IssuesView showDeleted→view(open|closed|deleted) 3-세그먼트, open=active(홈 정합)·closed=닫힘·deleted=삭제됨, ACTIVE_STATUSES를 homeStats와 공유. **vitest 111·build**. device: 열린 이슈 12=홈 active 12 → 1건 닫힘 → 열린 11·홈 11·닫힌뷰 1·진행률 이슈 1/12·8% 동시 정합·콘솔0. evidence/s9_debt-issue-count-reconciled.png.
+- **⏸ 다음 = 체크포인트(HUMAN_GATE, 세션13 AskUserQuestion 타임아웃/AFK로 미응답)**:
+  - **S8 사이드카 AI** — LLM egress=명시적 HUMAN_GATE + GATE-2(프론트 격리 접점)·GATE-3(owner 프라이버시) 사용자 결정 필요. Mock/로컬만으로 S8.0~S8.3 착수는 가능하나 핵심 가치(실 LLM)가 게이트라 AFK 상태 자율 착수 보류.
+  - **S10 온톨로지** — Docker 미기동 확인(`docker ps` 실패, npipe 없음) → TypeDB 실적재 불가, json 폴백 유지. Docker Desktop 기동 후 가능.
+  - **잔여 부채**: 검색 퍼지/랭킹 · 색맹 대응(상태 색상 단독 의존). (카운트 정합은 이번 세션 해소.)
+- **세션13 총평**: 5 마일스톤 커밋(1 정리·2a 사진·2b 템플릿·2c 홈위젯·5 카운트정합). pytest **97** · vitest **111** · build 전부 GREEN. 재기동법 세션6 블록(⚠️ 라우트 추가 후 uvicorn 수동 재기동, **프론트 vitest는 백엔드 내리고 실행**).
 
 ---
 
