@@ -6,11 +6,14 @@ CORS origin은 자체 상수 — backend.config import 금지(격리 불변식, 
 """
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
 
 
 def _load_dotenv() -> None:
@@ -31,8 +34,23 @@ def _load_dotenv() -> None:
 
 _load_dotenv()
 
-from health import router as health_router
-from routes_chat import router as chat_router
+import egress  # noqa: E402  (dotenv 주입 후 import — 부팅 키 검증에 env 필요)
+from health import router as health_router  # noqa: E402
+from routes_chat import router as chat_router  # noqa: E402
+from routes_egress import router as egress_router  # noqa: E402
+
+
+def _validate_key_at_boot() -> None:
+    """부팅 시 키 존재/형식을 검증하고 **마스킹된 형태로만** 로깅(원문 0)."""
+    st = egress.status()
+    if not st["key_present"]:
+        logger.warning("OPENAI_API_KEY 미설정 — 실 LLM 불가, mock 폴백(mode=%s)", st["current_mode"])
+    else:
+        logger.info("egress 준비: key=%s provider_default=%s mode=%s model=%s",
+                    st["key_masked"], st["provider_default"], st["current_mode"], st["model"])
+
+
+_validate_key_at_boot()
 
 # 프론트 dev origin만 자체 상수로 허용(실사용 CORS/소비자는 S8.3).
 _CORS_ORIGINS = [
@@ -51,6 +69,7 @@ app.add_middleware(
 )
 app.include_router(health_router)
 app.include_router(chat_router)
+app.include_router(egress_router)
 
 
 @app.get("/")

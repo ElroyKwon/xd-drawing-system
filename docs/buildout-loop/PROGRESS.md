@@ -292,3 +292,15 @@
 
 - 외관 17화면 브라우저 스크린샷 전수 점검은 fork가 미완(audit 폴더 빈 상태). 외관 자체는 appearance-loop에서 DONE·52 test PASS·전 항목 MET로 검증됨. 사용자가 원하면 직접 재점검 가능.
 - 마일스톤 체크리스트는 `PLAN.md` 참조. S1만 메타프롬프트 작성, S2~S8은 해당 마일스톤 진입 시 작성.
+
+---
+
+## 세션 17 (2026-07-03) — S8.4 egress 감사/게이트 DONE  ⬅ 최신(상단 세션16 블록은 이것으로 갱신 대체)
+
+**S8.4 DONE.** `prompts/12-s8_4-egress-audit.md` FROZEN(3결정 공동설계: 감사=메타데이터만·킬스위치=런타임 API 토글·키=마스킹+유출가드+상태). 독립 적대 검증자(general-purpose) **M1~M9 PASS·M10 MET·BLOCKER/MAJOR 코드결함 0 → DONE 선언 가능**. reconcile 전항목 MET(NARROWED/UNMET 0). **미푸시 커밋 누적 — push 미결.**
+
+- 신설: `egress.py`(mode 플래그·effective_provider 킬스위치·mask_key/masked_preview 유출가드·record/read 메타데이터 감사·status, backend import 0), `routes_egress.py`(`POST /api/egress/mode`·`GET /status`·`GET /audit`), `tests/test_egress.py`(10건). 배선: `routes_chat.py`(킬스위치 effective_provider + 턴당 감사 record) · `main_ai.py`(라우터 등록 + 부팅 키 마스킹 검증).
+- 자체검증: 사이드카 pytest **36**(26→+10)·backend **97**·vitest **116**·npm build ✓·격리 8000 diff 0. 라이브 device(단일 클린 8001): status 키 마스킹 `sk-…SF8A`·킬스위치 ON→챗 actual provider=mock(egress0)·감사 메타데이터만(본문·키 없음)·잘못된 mode 400·openai 복귀.
+- **검증자 환경지적 처분**: 8001에 이전 세션 잔류 uvicorn이 남아 신규와 레이스(라이브 킬스위치 교차검증 훼손 + 그 사이 실 GPT egress 1~2회 청구) → 잔류 종료·단일 클린 재기동·device 재검증. 코드는 단일 프로세스 설계(Q2) 전제라 무결. 증거 `EVIDENCE.md` S8.4 블록.
+- **병행**: 사용자 자동 데모 시스템(`demo/`) 개발/테스트와 병행. 나는 별도 Chrome(포트 9223·독립 프로필)를 제로설치 Node CDP 드라이버(`scratchpad/cdp.js`)로 몰며 옆에서 검증(허브 렌더 확인). 데모는 세션 중 사용자가 종료.
+- **다음 = S8.5**(S8.1/8.3/8.4 독립 3렌즈 consolidated + S8 전체 Done-When reconcile → S8 DONE 게이트). 이후 S10 온톨로지. 미푸시 커밋 push 결정 대기.

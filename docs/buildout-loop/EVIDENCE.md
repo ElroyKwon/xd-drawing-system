@@ -609,3 +609,42 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 
 - **참고**: freeze 당시 baseline(pytest 78·test 98)은 세션12·13 증가로 현재 97·111. 회귀 0 불변식 충족.
 - **GATE 상태**: GATE-1 RESOLVED(S10). GATE-2(S8.3)·GATE-3(S8.1) OPEN — S8.0 무관.
+
+---
+
+## S8.4 — egress 감사/게이트 정식화 (prompts/12 FROZEN, 세션17 2026-07-03)
+
+> R4(egress 감사로그·킬스위치 없음) 해소. 실 gpt-5.5 egress 위 운영 안전장치만. 자체검증 GREEN + 독립 적대 검증자(general-purpose) M1~M9 PASS·M10 부분(프론트 무변경) + 단일 프로세스 라이브 device 재검증.
+
+### 구현 (전부 `backend/ai/`, 기존 8000 무수정 — 격리 유지)
+- 신설: `egress.py`(mode 플래그·`effective_provider` 킬스위치·`mask_key`/`masked_preview` 유출가드·`record`/`read` 메타데이터 감사·`status`·`token_estimate`; backend import 0)·`routes_egress.py`(`POST /api/egress/mode`·`GET /status`·`GET /audit`)·`tests/test_egress.py`(10건).
+- 배선: `routes_chat.py`(`make_provider(egress.effective_provider(...))` 킬스위치 + 턴당 감사 record[성공·실패])·`main_ai.py`(egress 라우터 등록 + `_validate_key_at_boot` 마스킹 로깅).
+
+### Acceptance checklist 채점 (독립 검증자 + 자체 라이브)
+| # | 항목 | 판정 | 증거등급 | 근거 |
+|---|---|---|---|---|
+| M1 | egress.py API + backend import 0 | PASS | static/unit | Grep 0·`test_isolation` AST |
+| M2 | mode 토글 + 400 + GET 반영 | PASS | device | 라이브 mock 200·gpt4/빈값 400·status 반영 |
+| M3 | 킬스위치 ON → chat mock 강제(egress 0) | PASS | device | **단일 프로세스** 재검증: mode=mock→챗 actual provider=mock·감사 egress:false |
+| M4 | 감사 메타데이터만·턴당 1건·본문/키 부재 | PASS | device/unit | 라이브 레코드 화이트리스트 필드만·침입필드(message·api_key) 직렬화 탈락(unit) |
+| M5 | audit 최신순 + limit | PASS | device | limit 반영·최신순·`ge=1,le=1000` 방어 |
+| M6 | status 키 마스킹(원문 미노출) | PASS | device | 라이브 `key_masked:"sk-…SF8A"`·원문 미노출 |
+| M7 | mask_key 유출가드(실 키 포맷) | PASS | unit | sk-proj-·sk-svcacct- 하이픈 토큰까지 마스킹 |
+| M8 | 부팅 키 검증 마스킹 로깅 | PASS | unit/device | `_validate_key_at_boot` 무예외·마스킹만 |
+| M9 | 격리 불변식(import0·8000 diff0·프론트 무변경) | PASS | static | `git diff --stat` 8000·프론트 공백 |
+| M10 | 회귀 0 | MET | mixed | 사이드카 pytest **36**(검증자 확인)·backend **97**(검증자 확인)·vitest **116**·`npm build` ✓(자체 실행). 프론트 diff 0 |
+
+### Done-When(S8.4) reconcile (신선 관점 — 독립 검증자)
+- (a) egress 감사로그 메타데이터만 → **MET (device)**: ts·provider·model·conversation_id·project·tool_names·token_estimate·egress·ok. 본문·키 부재.
+- (b) 런타임 킬스위치 → **MET (device)**: `POST /api/egress/mode` 재기동 없이 즉시 mock 강제, 챗 반영. 재기동 시 env 기본값 복귀(설계).
+- (c) 키 마스킹·상태 → **MET (device)**: status 마스킹 미리보기만·원문 유출 0·부팅 마스킹 로깅.
+- (d) 신규 라우트 3종 등록 → **MET (device)**: /mode·/status·/audit 라이브 200.
+- (e) 격리 + 회귀 0 → **MET**: 8000 import0·diff0·프론트 무변경·전 스위트 GREEN.
+- **NARROWED/UNMET: 0.** 독립 검증자 총평: "S8.4 DONE 선언 가능, BLOCKER/MAJOR 코드 결함 0."
+
+### 검증자 지적 처분 (환경 MINOR — 코드 결함 아님)
+- 8001 포트에 이전 세션 잔류 uvicorn 1개가 남아 신규 프로세스와 레이스 → 라이브 킬스위치 교차검증 훼손 + 그 사이 실 GPT egress 1~2회 청구. **처분**: 잔류 프로세스 종료 → 단일 클린 프로세스 재기동 → 킬스위치 device 재검증(위 M3). 코드는 단일 프로세스 설계(Q2 런타임 메모리 플래그) 전제라 무결.
+- 감사 append는 프로세스 내 `threading.Lock` — 단일 프로세스 전제에서 정합. 다중 프로세스 영속 락은 범위 밖(후속).
+
+### 남은 것
+- S8.1/8.3/8.4 **독립 3렌즈 consolidated + S8 전체 Done-When reconcile → S8.5**(S8 DONE 게이트). S8.4 자체는 위로 닫힘.

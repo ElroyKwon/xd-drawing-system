@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import ai_store
+import egress
 from agent import run_chat
 from client import BackendError, get_me
 from provider import make_provider
@@ -57,12 +58,31 @@ async def chat(body: ChatRequest):
                for m in conv["messages"] if m["role"] in ("user", "assistant")]
 
     ai_store.append_message(conv["id"], "user", body.message)
-    provider = make_provider(body.provider)
+    # 킬스위치 반영: mode=mock이면 요청/기본 provider와 무관하게 mock 강제(외부 전송 0).
+    provider = make_provider(egress.effective_provider(body.provider))
     try:
         result = run_chat(body.project, body.message, history=history, provider=provider)
     except Exception as e:
         logger.exception("chat 실행 실패")
+        # 실패도 egress 감사 대상(무엇이·언제·어느 provider로 시도했는지).
+        egress.record({
+            "provider": provider.name, "model": egress.status()["model"],
+            "conversation_id": conv["id"], "project": body.project,
+            "tool_names": [], "token_estimate": egress.token_estimate(body.message),
+            "egress": provider.name == "openai", "ok": False, "error": str(e)[:200],
+        })
         raise HTTPException(502, f"LLM 실행 실패: {e}")
+
+    # egress 감사(메타데이터만 — 본문·키 미기록).
+    egress.record({
+        "provider": result.get("provider") or provider.name,
+        "model": egress.status()["model"],
+        "conversation_id": conv["id"], "project": body.project,
+        "tool_names": [c.get("name") for c in result.get("tool_calls", []) if c.get("name")],
+        "token_estimate": egress.token_estimate(body.message, result.get("answer")),
+        "egress": (result.get("provider") or provider.name) == "openai",
+        "ok": True,
+    })
 
     ai_store.append_message(conv["id"], "assistant", result["answer"],
                             tool_calls=result.get("tool_calls"),
