@@ -1,8 +1,15 @@
 // AI 챗 드로어 (S8.3) — 격리 사이드카(8001) 소비자. Build에서 단일 마운트.
 // src/ai/**는 앱 다른 모듈을 import하지 않는다(프론트 격리 불변식).
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Send, Loader2, AlertTriangle } from "lucide-react";
-import { sendChat, aiHealth, type ChatToolCall } from "./aiClient";
+import { Sparkles, X, Send, Loader2, AlertTriangle, Plus, History } from "lucide-react";
+import {
+  sendChat,
+  aiHealth,
+  listConversations,
+  getConversation,
+  type ChatToolCall,
+  type ConversationSummary,
+} from "./aiClient";
 import { renderRichText } from "./markdown";
 import "./chat.css";
 
@@ -17,6 +24,19 @@ interface Props {
   project: string;
 }
 
+function formatWhen(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("ko-KR", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function ChatDrawer({ project }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -25,8 +45,50 @@ export default function ChatDrawer({ project }: Props) {
   const [degraded, setDegraded] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [width, setWidth] = useState<number | null>(null); // null = CSS 기본(400px)
+  const [showList, setShowList] = useState(false);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  async function refreshList() {
+    try {
+      setConversations(await listConversations(project));
+    } catch {
+      setConversations([]);
+    }
+  }
+
+  function toggleList() {
+    const next = !showList;
+    setShowList(next);
+    if (next) refreshList();
+  }
+
+  async function openConversation(cid: string) {
+    try {
+      const conv = await getConversation(cid);
+      setMessages(
+        conv.messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            tools: m.tool_calls,
+          })),
+      );
+      setConversationId(conv.id);
+      setShowList(false);
+    } catch {
+      /* 목록 유지 */
+    }
+  }
+
+  function newConversation() {
+    setMessages([]);
+    setConversationId(undefined);
+    setShowList(false);
+    inputRef.current?.focus();
+  }
 
   // 왼쪽 가장자리 드래그로 폭 조절(드로어는 우측 고정 → 폭 = 창너비 - 마우스X).
   function startResize(e: React.MouseEvent) {
@@ -136,9 +198,30 @@ export default function ChatDrawer({ project }: Props) {
         <span className="ai-drawer-title">
           <Sparkles size={16} /> AI 어시스턴트
         </span>
-        <button type="button" className="ai-icon-btn" aria-label="닫기" onClick={() => setOpen(false)}>
-          <X size={16} />
-        </button>
+        <div className="ai-drawer-actions">
+          <button
+            type="button"
+            className="ai-icon-btn"
+            aria-label="새 대화"
+            title="새 대화"
+            onClick={newConversation}
+          >
+            <Plus size={16} />
+          </button>
+          <button
+            type="button"
+            className={`ai-icon-btn${showList ? " ai-icon-btn-on" : ""}`}
+            aria-label="대화 목록"
+            title="대화 목록"
+            aria-pressed={showList}
+            onClick={toggleList}
+          >
+            <History size={16} />
+          </button>
+          <button type="button" className="ai-icon-btn" aria-label="닫기" onClick={() => setOpen(false)}>
+            <X size={16} />
+          </button>
+        </div>
       </header>
 
       {degraded ? (
@@ -147,6 +230,31 @@ export default function ChatDrawer({ project }: Props) {
         </div>
       ) : null}
 
+      {showList ? (
+        <div className="ai-conv-list">
+          <button type="button" className="ai-conv-new" onClick={newConversation}>
+            <Plus size={14} /> 새 대화 시작
+          </button>
+          {conversations.length === 0 ? (
+            <p className="ai-conv-empty">저장된 대화가 없습니다.</p>
+          ) : (
+            <ul>
+              {conversations.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    className={`ai-conv-item${c.id === conversationId ? " ai-conv-item-on" : ""}`}
+                    onClick={() => openConversation(c.id)}
+                  >
+                    <span className="ai-conv-when">{formatWhen(c.updated_at)}</span>
+                    <span className="ai-conv-meta">메시지 {c.message_count}개</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
       <div className="ai-messages" ref={scrollRef} aria-live="polite">
         {messages.length === 0 ? (
           <div className="ai-empty">
@@ -182,6 +290,7 @@ export default function ChatDrawer({ project }: Props) {
           </div>
         ) : null}
       </div>
+      )}
 
       <div className="ai-input-row">
         <textarea

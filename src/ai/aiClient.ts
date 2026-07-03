@@ -34,6 +34,45 @@ export async function sendChat(
   return res.json();
 }
 
+export interface ConversationSummary {
+  id: string;
+  project: string;
+  owner?: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface ConversationMessage {
+  role: "user" | "assistant" | string;
+  content: string;
+  ts?: string;
+  tool_calls?: ChatToolCall[];
+}
+
+export interface Conversation {
+  id: string;
+  project: string;
+  owner?: string;
+  created_at: string;
+  updated_at: string;
+  messages: ConversationMessage[];
+}
+
+export async function listConversations(project: string): Promise<ConversationSummary[]> {
+  const res = await fetch(
+    `${AI_BASE}/api/chat/conversations?project=${encodeURIComponent(project)}`,
+  );
+  if (!res.ok) throw new Error(`대화 목록 ${res.status}`);
+  return res.json();
+}
+
+export async function getConversation(cid: string): Promise<Conversation> {
+  const res = await fetch(`${AI_BASE}/api/chat/conversations/${encodeURIComponent(cid)}`);
+  if (!res.ok) throw new Error(`대화 조회 ${res.status}`);
+  return res.json();
+}
+
 export interface AiHealth {
   ok: boolean;
   backend_8000: { reachable: boolean; current_user?: string };

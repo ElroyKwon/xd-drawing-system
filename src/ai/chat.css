@@ -65,6 +65,11 @@
   font-weight: 700;
   color: #1f2b38;
 }
+.ai-drawer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
 .ai-icon-btn {
   border: none;
   background: transparent;
@@ -72,7 +77,54 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }
+.ai-icon-btn:hover { background: #eef2f6; color: #1f2b38; }
+.ai-icon-btn-on { background: #e7f0f7; color: #1a73e8; }
+
+/* 대화 목록 패널 (S8.3-폴리시) */
+.ai-conv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+.ai-conv-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #1a73e8;
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ai-conv-new:hover { background: #1666d0; }
+.ai-conv-empty { color: #7a8794; font-size: 13px; text-align: center; padding: 20px 0; }
+.ai-conv-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ai-conv-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  border: 1px solid #e6eaee;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ai-conv-item:hover { background: #f6f8fa; border-color: #cfd8e0; }
+.ai-conv-item-on { border-color: #1a73e8; background: #f0f6fe; }
+.ai-conv-when { font-size: 13px; font-weight: 600; color: #1f2b38; }
+.ai-conv-meta { font-size: 11.5px; color: #7a8794; }
 .ai-icon-btn:hover { background: #eef2f6; }
 
 .ai-degraded {
