@@ -18,6 +18,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+import notifications
 from auth import require_role, require_role_for_file, require_role_for_issue
 from store import get_store
 
@@ -182,6 +183,12 @@ async def create_issue(body: IssueCreate):
     store.add_issue(meta)
     logger.info("issue created %s (%s, %s, pin=%s)", meta["issue_id"], body.title.strip(),
                 body.status, bool(pin))
+    # S12: 이슈 생성 알림(구독자 mock 발송). 생성자 본인 제외. 실패해도 생성은 성공 유지.
+    try:
+        notifications.notify_issue_event(
+            "created", meta, body.project_name, actor=store.get_current_user())
+    except Exception:  # noqa: BLE001
+        logger.exception("이슈 생성 알림 실패(무시)")
     return meta
 
 
@@ -215,6 +222,14 @@ async def patch_issue(issue_id: str, body: IssuePatch):
     updated = store.update_issue(issue_id, **fields)
     if not updated:
         raise HTTPException(404, f"이슈 없음: {issue_id}")
+    # S12: 상태 변경 시 알림(실제로 바뀐 경우만). 실패해도 변경은 성공 유지.
+    if "status" in fields and fields["status"] != current.get("status"):
+        try:
+            notifications.notify_issue_event(
+                "status_changed", updated, updated.get("project_name") or "",
+                actor=store.get_current_user())
+        except Exception:  # noqa: BLE001
+            logger.exception("이슈 상태변경 알림 실패(무시)")
     return updated
 
 
