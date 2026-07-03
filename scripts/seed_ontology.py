@@ -6,8 +6,12 @@
 
 사용: backend/.venv/Scripts/python.exe scripts/seed_ontology.py
 """
+import os
 import sys
 from pathlib import Path
+
+# 시드는 TypeDB 권위에 직접 쓴다(서버는 미러 읽기라 이 플래그 없음).
+os.environ["XD_ONTOLOGY_DIRECT_TYPEDB"] = "1"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 

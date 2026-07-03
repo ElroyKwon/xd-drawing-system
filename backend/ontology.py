@@ -30,6 +30,15 @@ class OntologyStore:
     def __init__(self):
         self._driver = None
         self._db = config.TYPEDB_DB
+        # 안정성: TypeDB Python 드라이버가 이 Windows 호스트에서 간헐적으로
+        # "overflow subtracting durations" 패닉(프로세스 abort, Python 미포착)을 낸다.
+        # 8000 서버는 기본적으로 TypeDB에 직접 연결하지 않고 **JSON 미러**(add_equipment가
+        # TypeDB와 동시 기록 → 항상 동기)에서 읽어 크래시를 원천 차단한다. 시드/적재 등
+        # TypeDB 권위 쓰기가 필요한 프로세스만 XD_ONTOLOGY_DIRECT_TYPEDB=1로 직접 연결한다.
+        if os.environ.get("XD_ONTOLOGY_DIRECT_TYPEDB") != "1":
+            logger.info("Ontology: 미러 읽기 모드(서버 안정성 — TypeDB 직접연결 비활성)")
+            self._driver = None
+            return
         # 기존 store가 TypeDB 드라이버를 이미 열었으면 **재사용**(2개 native 연결 시 드라이버
         # 패닉 "overflow subtracting durations" 회피). 없으면 자체 연결.
         try:
