@@ -2,15 +2,19 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-03, 세션 14 — S8.0 AI 사이드카 부트스트랩 DONE)
+## 현재 상태 (2026-07-03, 세션 14 — S8 AI 챗 사이드카 실동작: S8.0·S8.1·S8.3 DONE + 실 GPT-5.5)
 
-**S8.0 DONE** (커밋 예정). `prompts/10` FROZEN 기준 격리형 AI 사이드카 골격 구현 + K1~K10 실측 채점.
+**AI 챗 어시스턴트가 앱에서 실 GPT로 동작한다.** 사이드카 골격(S8.0) → LLM 두뇌·대화영속(S8.1) → 앱 챗 드로어 UI(S8.3)까지 실동작. 커밋 7건(아래).
 
-- **구현**(전부 신규 `backend/ai/`, 기존 8000 **무수정**): `main_ai.py`(FastAPI 8001·CORS 자체상수) · `client.py`(httpx lazy read-only·`XD_BACKEND_BASE`·`BackendError`) · `tools.py`(`search`·`list_sheets` 8000 GET 그라운딩) · `health.py`(`GET /api/chat/health` 연결성만) · `conftest.py` · 자체 `requirements.txt`(uvicorn plain — httptools C++ 빌드 회피) · `.gitignore`·`README.md`·`run.ps1`·`smoke_live.py`·`tests/`(격리2+respx6).
-- **검증(K1~K10 MET)**: 사이드카 pytest **8 PASS**(격리 AST import0 + respx 스모크 + degraded). 라이브: `tools.list_sheets(Study_Project)=15 == 8000 raw 15`(하드코딩 아님), health reachable(current_user=member-owner)/degraded(죽은포트 200 무크래시). 회귀 0 — `npm build`·`npm test` **111**·backend `pytest` **97**·K7 기존코드 diff 0(`git status`=backend/ai 신규만). 증거 `EVIDENCE.md` S8.0 블록.
-- **GATE**: GATE-1 RESOLVED(S10 연기). GATE-2(프론트 드로어, S8.3)·GATE-3(owner 프라이버시, S8.1) OPEN — S8.0 무관.
-- **재기동 (8001 신규)**: `backend/ai` 에서 `.venv/Scripts/python.exe -m uvicorn main_ai:app --host 127.0.0.1 --port 8001`(또는 `./run.ps1`). 8000과 별개 프로세스. 최초 1회 `python -m venv .venv` + `pip install -r requirements.txt`. `XD_BACKEND_BASE`로 8000 URL 재정의(기본 8000).
-- **다음**: LLM provider 방향(로컬/Mock 추천)·S8.1 ai_store+provider. **사용자 세션14 추가 요청**: ① 평가판 배너/XD 제품리스트 전화면 숨김(최우선) ② docs/product 스크린샷 재촬영(G: 보고서 샷 기준, 기존=이전버전 표시) ③ Docker/TypeDB 기동됨 → 실 AI 채팅 기록.
+- **S8.0 DONE**(`e6309c1`, `prompts/10` FROZEN, K1~K10 MET): 격리형 8001 사이드카(`backend/ai/`, 기존 8000 **무수정**) — `main_ai`·`client`(httpx lazy)·`tools`(search·list_sheets 8000 GET 그라운딩)·`health`. 격리 불변식 자동검사(AST import 0, 기존코드 diff 0). 자체 venv·requirements(uvicorn plain). 사이드카 pytest 8·라이브 스모크(`list_sheets=15==8000 raw`). 증거 `EVIDENCE.md` S8.0.
+- **S8.1 DONE**(`beb56c9` + `12096f1`): 챗 두뇌. `provider.py`(OpenAIProvider **Responses API**+MockProvider egress0), `agent.py`(tool-use 루프: LLM→툴콜→8000 HTTP 실행→그라운딩 답), `ai_store.py`(대화 영속 `_ai_data/`, 원자적write, owner=표시용), `routes_chat.py`(POST /api/chat + 대화 목록/상세), `.env` 로더. **LLM 확정: OpenAI `gpt-5.5` + reasoning effort `low`, Responses API 필수**(chat.completions는 함수툴+effort 미지원 400). 키=`backend/ai/.env`(gitignore). 사이드카 pytest **12**. **실 GPT 라이브 실증** `evidence/s8_1-real-gpt-transcript.md`(5턴, TypeDB 백엔드, 스스로 툴선택·다중턴 컨텍스트·환각0).
+- **S8.3 DONE**(`d6e8b8b`): 앱 챗 드로어 UI. `src/ai/`(격리: `aiClient`·`ChatDrawer`[FAB+패널·버블·툴칩·ESC·aria-live]·`chat.css`, 앱모듈 미의존) + BuildSheetsView **단일 마운트** + 킬스위치 `VITE_AI_ENABLED`. device e2e: FAB→드로어→실 GPT 답변+툴칩, 콘솔0(`evidence/s8_3-chat-drawer.png`). vitest **111** 회귀0.
+- **UI 정리**(`0060c44`): 평가판 배너("N일 남음"/"지금 구입")·"더 많은 XD 제품" 스트립·Build 평가판 배너 **전 화면 제거**. `docs/product/screenshots` 10장 재촬영(2560×1362, 기존=`이전버전_2026-07-02/`).
+- **데이터 프리뷰**(`d9d4b5d`): 실 데이터 Q&A 기록(TypeDB 그라운딩) — `s8_1-real-gpt-transcript.md`가 대체.
+- **GATE 처분**: GATE-1 RESOLVED(온톨로지→S10). **GATE-2 RESOLVED**(프론트 격리 = Build 스코프 드로어·단일 접점). **GATE-3 RESOLVED**(owner=표시용 하향). **egress**: 대화·툴결과 OpenAI 전송=사용자 승인(GPT API 선택). provider=mock이면 egress 0.
+- **인프라**: TypeDB 3.7.3 Docker 기동(`store_backend=typedb` 실동작) → **S10 온톨로지 착수 가능**. Ollama 미기동·로컬모델 없음.
+- **재기동 (8001 신규)**: `backend/ai`에서 `.venv/Scripts/python.exe -m uvicorn main_ai:app --host 127.0.0.1 --port 8001`(`./run.ps1`). 최초 1회 `python -m venv .venv`+`pip install -r requirements.txt`. `.env`에 `OPENAI_API_KEY`·`XD_AI_MODEL=gpt-5.5`·`XD_AI_EFFORT=low`. 프론트 `VITE_AI_BASE`(기본 8001). ⚠️ **vitest는 8000 내리고 실행**.
+- **다음 = ai-loop 이어가기**: 통합 로드맵·검수 `docs/buildout-loop/ROADMAP.md` 참조. 남은 스테이지 **S8.2**(전체 툴 카탈로그+골든 이밸/환각 적대) · **S8.4**(egress 감사로그/게이트 정식화) · **S8.5**(3렌즈 검수+격리 불변식 reconcile) · **S8.3 폴리시**(마크다운 렌더·대화이력 UI·딥링크 xd:navigate) · **S10**(온톨로지 적재+바인딩). 각 스테이지 메타프롬프트는 다음 세션 착수 시 공동설계·freeze.
 
 ---
 

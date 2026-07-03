@@ -19,12 +19,17 @@
 - **문제**: S8 설계가 "유일 접점"으로 못박은 `BuildShell.tsx`가 **존재하지 않음**. 실제 셸=`App.tsx`(6개 activeView), Build 뷰=`BuildSheetsView.tsx`(네비 상태 `openSheet`/`searchOpenIssue`/`searchOpenFolder`가 그 안 private useState). 딥링크는 두 컴포넌트의 사적 상태를 건드려야 함 → 설계의 "무수정·단일 접점·어느 화면에서든" **3자 모순**. (참고: `GlobalSearch`가 이미 props로 딥링크 패턴 구현 → 재사용 후보.)
 - **추가**: 프론트 격리 불변식("flag off → 100% 동일")에 **채점 항목 없음**(백엔드 diff=0/import 0만 있음). S8.3에 프론트 스냅샷 무변화 테스트 + `src/build/**`가 `src/ai/**` import 0 정적 검사(K6의 프론트 미러) 필요.
 - **사용자 결정 필요**: v1 드로어 범위 = **Build 내부 한정**(단일 접점 모델 유지) vs **전역(어느 화면에서든)**(App 상태 리프트=2번째 접점 문서화). 어느 쪽이든 딥링크 접점을 실제 파일(`BuildSheetsView.tsx`/`App.tsx`)로 재기술.
-- **상태**: **OPEN.** S8.3 메타프롬프트 공동설계 시 확정. S8.0 무관.
+- **상태**: **RESOLVED (2026-07-03, 세션14 — Build 스코프 드로어).** v1 드로어를 **Build 내부 한정·단일 접점**으로 구현(`src/ai/ChatDrawer`를 `BuildSheetsView.tsx` 1곳에서만 마운트, `src/ai/**`는 앱 모듈 미의존). 프론트 격리 불변식은 grep로 확인(src/ai→앱 import 0, src/build→src/ai 단일 접점). 딥링크 브리지(xd:navigate)는 S8.3-폴리시로 이월. 전역 리프트는 후속 여지.
 
 ### GATE-3 [MAJOR·S8.1 FROZEN 전] — 대화 owner-scoping 프라이버시 한계
 - **문제**: 설계가 "사용자 A는 B의 대화를 못 본다(scope 강제)"라 했으나, S7 `current_user`는 **세션 없는 서버 전역 가변** 사용자(`PUT /api/auth/me`로 누구나 아무 member로 전환). → 보안 경계 아님 + 교차 프로세스 레이스(전환이 8001 owner 귀속 중 끼어들면 오귀속).
 - **사용자 결정/보강**: 설계 문구를 "owner=표시용, S7 로컬 모의 한계상 프라이버시 보장 아님"으로 하향(§8 "실제 인증=S7 로컬 모의 유지"와 일관). S8.1에 owner를 **메시지 전송 시점 요청 컨텍스트에서 고정**(별도 `/auth/me` 재조회 아님) + 전환-중-전송 레이스 테스트 추가.
-- **상태**: **OPEN.** S8.1 메타프롬프트 공동설계 시 확정. S8.0 무관.
+- **상태**: **RESOLVED (2026-07-03, 세션14 — owner=표시용 하향).** `ai_store` owner를 전송 시점 `get_me().member_id`로 고정(`routes_chat._current_owner`), 프라이버시 경계 아님을 문서화(`ai_store.py` 독스트링). 프로젝트 스코프 격리만 강제(대화의 project≠요청 project=400). 전환-중-전송 레이스 정식 테스트는 S8.5 검수로 이월.
+
+### GATE-4 [egress·S8.1 실 provider 前] — LLM 외부 전송 (RESOLVED)
+- **문제**: 실 LLM(클라우드) 사용 시 프로젝트 도면/이슈 텍스트가 외부(OpenAI)로 전송됨.
+- **상태**: **RESOLVED (2026-07-03, 세션14 — 사용자 승인).** 사용자가 **OpenAI gpt-5.5 API**를 명시 선택 → egress 승인. 키=`backend/ai/.env`(gitignore). `provider=mock`이면 egress 0(폴백·테스트). **미완=S8.4**: egress 감사로그·킬스위치·게이트 정식화(승인은 됐으나 운영 감사 인프라 미구축).
 
 ---
-> 갱신 규칙: 결정되면 해당 항목에 "RESOLVED (날짜·결정)"를 달고 관련 LOOP/PLAN/설계/EVIDENCE를 개정한다. 미해결 항목이 있는 한 S8 DONE 선언 금지.
+> 갱신 규칙: 결정되면 해당 항목에 "RESOLVED (날짜·결정)"를 달고 관련 LOOP/PLAN/설계/EVIDENCE를 개정한다.
+> **세션14 기준 GATE-1~4 전부 RESOLVED.** S8 DONE 선언은 S8.2·S8.4·S8.5 완료 + Done-When reconcile 후.

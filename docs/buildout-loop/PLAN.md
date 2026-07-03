@@ -45,8 +45,15 @@
 ### S7 — 인증/RBAC + 프로젝트/구성원 영속
 **목표**: 로컬 인증 + 역할(관리자·편집자·뷰어). `projectAdminData` 정적 → 영속. 프로젝트 생성/구성원 접근이 권한 반영. (프로덕션 auth는 HUMAN_GATE — 로컬 범위로.)
 
-### S8 — 사이드카 AI 챗 어시스턴트
-**목표**: 8000 무수정·신규 라우트 0의 사이드카(8001) AI 챗. 읽기 그라운딩 기반 Q&A/요약. AI 분석(LLM egress)은 HUMAN_GATE 확인 후. (온톨로지 바인딩은 S10으로 연기 — 아래 참조.)
+### S8 — 사이드카 AI 챗 어시스턴트 (하위 스테이지 S8.0~S8.5)
+**목표**: 8000 무수정·신규 라우트 0의 사이드카(8001) AI 챗. 읽기 그라운딩 기반 Q&A. LLM egress=사용자 승인(OpenAI gpt-5.5). (온톨로지 바인딩은 S10 연기.)
+- **S8.0 DONE**(`e6309c1`): 격리 8001 부트스트랩 + 8000 HTTP 데이터경로 + 격리 불변식(import0·diff0). `prompts/10` FROZEN.
+- **S8.1 DONE**(`beb56c9`+`12096f1`): provider(OpenAI **Responses API**+Mock)·tool-use 루프·대화영속. **LLM=gpt-5.5·effort low** 확정. 실 GPT 라이브 실증.
+- **S8.2 TODO**: 전체 툴 카탈로그(`get_project_summary`·`get_sheet`·`list_issues`·`get_issue`·`list_files`) + 그라운딩 골든 이밸 + 환각 적대 테스트. (현재 툴 2종=search·list_sheets.)
+- **S8.3 DONE**(`d6e8b8b`): 앱 챗 드로어 UI(`src/ai/` 격리·Build 단일 마운트·킬스위치). GATE-2=Build 스코프로 처분.
+  - **S8.3-폴리시 TODO**: 답변 마크다운 렌더(현재 `**` raw)·대화 목록/이력 UI·딥링크 브리지(xd:navigate — 답의 sheet_id/issue_id로 시트 이동).
+- **S8.4 TODO**: 클라우드 provider egress **감사로그 + 게이트 정식화**(openai 동작하나 감사·킬스위치·게이트 분리 미완). API 키 관리.
+- **S8.5 TODO**: 3렌즈 독립 검수 + 격리 불변식(백엔드 import0/diff0 · 프론트 src/ai 미의존) 재확인 + Done-When reconcile.
 
 ### S10 — XD 고유: 온톨로지 바인딩 (S8에서 연기)
 **목표**: 도면 entity TypeDB 적재 + `equipmentEntityId` 바인딩 동작(Study_TypeDB `analysis_result`·multi-agent 계승). 장비 온톨로지 해석. **GATE-1 RESOLVED(2026-07-02): 당초 S8 전제였으나 S10으로 연기**.
@@ -60,8 +67,15 @@
 - [x] S4 마크업·측정·비교 실연산+영속 (벡터 world+PDF 정규화 이중트랙·DXF 실척 측정·클라 색상오버레이+백엔드 픽셀 diff, E1~E13 MET)
 - [x] S5 이슈 영속+핀 연계 (독립 Issue 엔티티·ACC식 상태4종+메타·양방향 딥링크·핀 선택적[DXF world/PDF image], H1~H13 MET, 3렌즈+e2e[DWG·PDF·무핀]·MAJOR-1 수리)
 - [x] S6 Build 홈 위젯 실데이터+검색 (홈 집계 실데이터+정직한 빈 상태+이슈 분석 차트[의존성0] + 백엔드 /api/search 4종 교차+상단 전역검색+딥링크, I1~I14 MET, 3렌즈+e2e·seed 부작용 수리)
-- [~] S7 인증/RBAC+프로젝트/구성원 영속 — **구현 DONE · 자동게이트 GREEN(test 92·pytest 74)·RBAC 라이브 403 + 핵심 UI e2e, 검증 마무리(3렌즈·reconcile·J7 Build UI 게이팅·e2e 확장) 이월** (로컬 모의 인증·역할 강제·정규화 모델, prompts/09 FROZEN)
-- [ ] S8 XD 온톨로지 바인딩+AI 분석
+- [x] S7 인증/RBAC+프로젝트/구성원 영속 (로컬 모의 인증·역할 강제 403·정규화 모델, J1~J12 MET, prompts/09 FROZEN, 세션10 검증 마무리)
+- [x] S8.0 사이드카 부트스트랩 (격리 8001+8000 데이터경로, K1~K10 MET, prompts/10 FROZEN)
+- [x] S8.1 챗 두뇌 (provider OpenAI[Responses API]+Mock·tool-use 루프·대화영속, 실 GPT-5.5 라이브 실증)
+- [x] S8.3 앱 챗 드로어 UI (src/ai 격리·Build 단일 마운트·킬스위치, device e2e 콘솔0)
+- [ ] S8.2 전체 툴 카탈로그 + 골든 이밸/환각 적대
+- [ ] S8.3-폴리시 마크다운 렌더·대화이력 UI·딥링크 xd:navigate
+- [ ] S8.4 egress 감사로그/게이트 정식화
+- [ ] S8.5 3렌즈 검수 + 격리 불변식 reconcile
+- [ ] S10 XD 온톨로지 적재 + equipmentEntityId 바인딩 (TypeDB 기동됨 → 착수 가능)
 
 ## 순서 근거 / 조정 여지
 
