@@ -41,14 +41,33 @@ curl http://127.0.0.1:8001/api/chat/health
 .venv/Scripts/python.exe -m pytest tests -q
 ```
 
-## 엔드포인트 (S8.0)
+## 엔드포인트
 
 - `GET /` — 서비스 식별.
-- `GET /api/chat/health` — 8001 상태 + 8000 도달성/현재 사용자(연결성만, 그라운딩 데이터 아님).
+- `GET /api/chat/health` — 8001 상태 + 8000 도달성/현재 사용자(연결성만). *(S8.0)*
+- `POST /api/chat` — 한 턴 챗(신규/기존 대화). 실 LLM tool-use 그라운딩. *(S8.1)*
+  - body: `{project, message, conversation_id?, provider?}` (provider: `openai`|`mock`)
+- `GET /api/chat/conversations?project=` — 대화 목록(요약). *(S8.1)*
+- `GET /api/chat/conversations/{id}` — 대화 상세(메시지 포함). *(S8.1)*
 
-## 툴 (S8.0, 오직 HTTP 그라운딩)
+## 툴 (오직 HTTP 그라운딩)
 
 - `tools.search(project, query)` → `GET /api/search`
 - `tools.list_sheets(project, discipline=None)` → `GET /api/drawings`
 
-전체 툴 카탈로그·대화 영속·provider·프론트 UI는 후속 스테이지(S8.1~).
+## LLM provider (S8.1)
+
+- **openai** (실 LLM, 기본): `.env`에 키/모델 설정. **외부 egress**(도면/이슈 데이터가
+  OpenAI로 전송됨 — 사용자 승인 2026-07-03).
+- **mock**: 외부 전송 0. 결정적 규칙으로 툴 선택(오프라인 테스트·키 부재 폴백).
+
+### `.env` (gitignore — 커밋 안 됨)
+
+```
+OPENAI_API_KEY=sk-...
+XD_AI_MODEL=gpt-5.5-fast
+XD_AI_PROVIDER=openai
+```
+
+`backend/ai/.env`에 위를 저장 후 8001 재기동하면 실 LLM 챗이 동작한다.
+키가 없으면 자동으로 mock으로 폴백한다.
