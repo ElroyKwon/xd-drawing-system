@@ -53,7 +53,8 @@ def create_conversation(project: str, owner: Optional[str]) -> dict:
 
 
 def append_message(cid: str, role: str, content: str,
-                   tool_calls: Optional[list] = None) -> Optional[dict]:
+                   tool_calls: Optional[list] = None,
+                   references: Optional[list] = None) -> Optional[dict]:
     with _LOCK:
         data = _load()
         conv = data["conversations"].get(cid)
@@ -62,6 +63,8 @@ def append_message(cid: str, role: str, content: str,
         msg = {"role": role, "content": content, "ts": _now()}
         if tool_calls:
             msg["tool_calls"] = tool_calls
+        if references:
+            msg["references"] = references
         conv["messages"].append(msg)
         conv["updated_at"] = _now()
         _save(data)

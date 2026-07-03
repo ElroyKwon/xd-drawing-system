@@ -134,6 +134,38 @@ TOOLS_SCHEMA = [
 ]
 
 
+def _collect_refs(name: str, result: dict, sheets: dict, issues: dict) -> None:
+    """툴 결과에서 딥링크용 참조(시트·이슈 id→라벨)를 수집한다. 프론트가 '열기'로 사용."""
+    if not isinstance(result, dict):
+        return
+    if name == "list_sheets":
+        for s in result.get("sheets") or []:
+            if s.get("sheet_id"):
+                sheets[s["sheet_id"]] = s.get("number") or s.get("title") or s["sheet_id"]
+    elif name == "get_sheet" and result.get("found"):
+        sheets[result["sheet_id"]] = result.get("number") or result.get("title") or result["sheet_id"]
+    elif name == "list_issues":
+        for it in result.get("issues") or []:
+            if it.get("issue_id"):
+                issues[it["issue_id"]] = it.get("title") or it["issue_id"]
+    elif name == "get_issue" and result.get("found"):
+        issues[result["issue_id"]] = result.get("title") or result["issue_id"]
+    elif name == "search":
+        for s in result.get("sheets") or []:
+            if s.get("sheet_id"):
+                sheets[s["sheet_id"]] = s.get("number") or s.get("title") or s["sheet_id"]
+        for it in result.get("issues") or []:
+            if it.get("issue_id"):
+                issues[it["issue_id"]] = it.get("title") or it["issue_id"]
+
+
+def _build_references(sheets: dict, issues: dict, cap: int = 6) -> list[dict]:
+    return (
+        [{"type": "sheet", "id": k, "label": v} for k, v in list(sheets.items())[:cap]]
+        + [{"type": "issue", "id": k, "label": v} for k, v in list(issues.items())[:cap]]
+    )
+
+
 def _dispatch(name: str, args: dict, project: str) -> dict:
     """툴 이름 → S8.0 툴 실행(project 주입)."""
     if name == "search":
@@ -171,6 +203,8 @@ def run_chat(
     messages.append({"role": "user", "content": message})
 
     trace: list[dict] = []
+    ref_sheets: dict = {}
+    ref_issues: dict = {}
     for _ in range(_MAX_STEPS):
         out = provider.complete(messages, TOOLS_SCHEMA)
         calls = out.get("tool_calls") or []
@@ -178,6 +212,7 @@ def run_chat(
             return {
                 "answer": out.get("content") or "",
                 "tool_calls": trace,
+                "references": _build_references(ref_sheets, ref_issues),
                 "provider": provider.name,
             }
         # assistant 툴콜 메시지(OpenAI 재공급 포맷).
@@ -196,6 +231,7 @@ def run_chat(
             except json.JSONDecodeError:
                 args = {}
             result = _dispatch(c["name"], args, project)
+            _collect_refs(c["name"], result, ref_sheets, ref_issues)
             trace.append({"name": c["name"], "arguments": args,
                           "result_summary": _summarize(c["name"], result)})
             messages.append({
@@ -205,7 +241,8 @@ def run_chat(
             })
     # 스텝 초과 — 마지막 응답 유도(툴 없이).
     out = provider.complete(messages, [])
-    return {"answer": out.get("content") or "", "tool_calls": trace, "provider": provider.name}
+    return {"answer": out.get("content") or "", "tool_calls": trace,
+            "references": _build_references(ref_sheets, ref_issues), "provider": provider.name}
 
 
 def _summarize(name: str, result: dict) -> str:

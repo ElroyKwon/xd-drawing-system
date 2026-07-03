@@ -189,6 +189,28 @@
 .ai-spin { animation: ai-spin 1s linear infinite; }
 @keyframes ai-spin { to { transform: rotate(360deg); } }
 
+/* 딥링크 참조 칩 (S8.3-폴리시) — 답의 시트/이슈를 클릭해 앱에서 열기 */
+.ai-refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; max-width: 88%; }
+.ai-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #cfe0ee;
+  background: #f2f8fd;
+  color: #1a5c8a;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-ref:hover { background: #e2f0fb; border-color: #1a73e8; }
+.ai-ref-issue { border-color: #f0d2b8; background: #fdf5ec; color: #9a5b18; }
+.ai-ref-issue:hover { background: #fbebd8; border-color: #d98a2b; }
+
 .ai-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .ai-tool-chip {
   font-size: 11px;

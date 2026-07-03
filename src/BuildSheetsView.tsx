@@ -126,6 +126,18 @@ export default function BuildSheetsView({ project = selectedBuildProject, canEdi
     setFilesFocusFolderId(folderId);
   }
 
+  // AI 챗 딥링크 — 답의 시트/이슈를 여기서 연다(격리: src/ai와 이벤트로만 결합).
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type?: string; id?: string } | undefined;
+      if (!detail?.id) return;
+      if (detail.type === "sheet") searchOpenSheet(detail.id);
+      else if (detail.type === "issue") searchOpenIssue(detail.id);
+    };
+    window.addEventListener("xd:navigate", onNav as EventListener);
+    return () => window.removeEventListener("xd:navigate", onNav as EventListener);
+  }, [projectSheets]);
+
   const emptyMessage = projectSheets.length === 0 ? "아직 등록된 시트가 없습니다." : "검색 결과가 없습니다.";
 
   return (

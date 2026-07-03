@@ -65,11 +65,13 @@ async def chat(body: ChatRequest):
         raise HTTPException(502, f"LLM 실행 실패: {e}")
 
     ai_store.append_message(conv["id"], "assistant", result["answer"],
-                            tool_calls=result.get("tool_calls"))
+                            tool_calls=result.get("tool_calls"),
+                            references=result.get("references"))
     return {
         "conversation_id": conv["id"],
         "answer": result["answer"],
         "tool_calls": result.get("tool_calls", []),
+        "references": result.get("references", []),
         "provider": result.get("provider"),
     }
 

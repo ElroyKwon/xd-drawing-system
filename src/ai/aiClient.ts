@@ -10,10 +10,17 @@ export interface ChatToolCall {
   result_summary: string;
 }
 
+export interface ChatReference {
+  type: "sheet" | "issue";
+  id: string;
+  label: string;
+}
+
 export interface ChatResponse {
   conversation_id: string;
   answer: string;
   tool_calls: ChatToolCall[];
+  references: ChatReference[];
   provider: string;
 }
 
@@ -48,6 +55,7 @@ export interface ConversationMessage {
   content: string;
   ts?: string;
   tool_calls?: ChatToolCall[];
+  references?: ChatReference[];
 }
 
 export interface Conversation {

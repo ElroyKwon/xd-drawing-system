@@ -8,6 +8,7 @@ import {
   listConversations,
   getConversation,
   type ChatToolCall,
+  type ChatReference,
   type ConversationSummary,
 } from "./aiClient";
 import { renderRichText } from "./markdown";
@@ -17,7 +18,13 @@ interface Msg {
   role: "user" | "assistant";
   content: string;
   tools?: ChatToolCall[];
+  refs?: ChatReference[];
   error?: boolean;
+}
+
+// 답의 시트/이슈를 앱이 열도록 전역 이벤트 발행(격리: 앱 모듈 미의존, 이벤트로만 결합).
+function navigateTo(ref: ChatReference) {
+  window.dispatchEvent(new CustomEvent("xd:navigate", { detail: { type: ref.type, id: ref.id } }));
 }
 
 interface Props {
@@ -74,6 +81,7 @@ export default function ChatDrawer({ project }: Props) {
             role: m.role as "user" | "assistant",
             content: m.content,
             tools: m.tool_calls,
+            refs: m.references,
           })),
       );
       setConversationId(conv.id);
@@ -142,7 +150,7 @@ export default function ChatDrawer({ project }: Props) {
       setConversationId(res.conversation_id);
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: res.answer, tools: res.tool_calls },
+        { role: "assistant", content: res.answer, tools: res.tool_calls, refs: res.references },
       ]);
     } catch (e) {
       setMessages((m) => [
@@ -280,6 +288,21 @@ export default function ChatDrawer({ project }: Props) {
             <div className="ai-bubble">
               {m.role === "assistant" && !m.error ? renderRichText(m.content) : m.content}
             </div>
+            {m.refs && m.refs.length > 0 ? (
+              <div className="ai-refs">
+                {m.refs.map((r, j) => (
+                  <button
+                    key={j}
+                    type="button"
+                    className={`ai-ref ai-ref-${r.type}`}
+                    onClick={() => navigateTo(r)}
+                    title={r.type === "sheet" ? "시트 열기" : "이슈 열기"}
+                  >
+                    {r.type === "sheet" ? "📄" : "⚠"} {r.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         ))}
         {loading ? (
