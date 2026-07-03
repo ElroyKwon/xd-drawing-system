@@ -13,6 +13,11 @@ import PhotosView from "./build/PhotosView";
 import SheetsListView, { type ViewMode } from "./build/SheetsListView";
 import SheetViewerShell from "./build/SheetViewerShell";
 import { primaryNav, secondaryNav, type BuildSection } from "./build/nav";
+// S8.3: 격리 AI 챗 드로어 — 유일한 프론트 마운트 접점(src/ai/**는 앱 모듈 미의존).
+import ChatDrawer from "./ai/ChatDrawer";
+
+// 킬스위치: VITE_AI_ENABLED=false면 챗 완전 비활성(기존 동작 100% 동일).
+const AI_ENABLED = (import.meta.env?.VITE_AI_ENABLED as string | undefined) !== "false";
 
 type BuildSheetsViewProps = {
   onBackToProjects: () => void;
@@ -234,6 +239,8 @@ export default function BuildSheetsView({ project = selectedBuildProject, canEdi
           <BuildManagementView section={activeSection} projectName={project.name} />
         )}
       </section>
+
+      {AI_ENABLED ? <ChatDrawer project={project.name} /> : null}
     </main>
   );
 }
