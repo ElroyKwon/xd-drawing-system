@@ -131,6 +131,36 @@ TOOLS_SCHEMA = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_equipment",
+            "description": "TypeDB 온톨로지에서 프로젝트(또는 특정 시트)의 장비 목록을 반환한다(각 장비의 tag·name·type·status와 바인딩된 시트 수). '이 프로젝트/도면에 어떤 장비/설비가 있나', '변압기/배터리/차단기 등 장비 알려줘' 같은 질문에 이 툴을 쓴다. 온톨로지에 없으면 count=0.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "sheet_id": {
+                        "type": "string",
+                        "description": "특정 시트에 바인딩된 장비만 필터. 생략 시 프로젝트 전체.",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_equipment",
+            "description": "장비 ID로 단건 조회(tag·name·type·status·바인딩 시트). 없으면 found=false.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment_id": {"type": "string", "description": "장비 ID(예: EQ-TR-01)."},
+                },
+                "required": ["equipment_id"],
+            },
+        },
+    },
 ]
 
 
@@ -182,6 +212,10 @@ def _dispatch(name: str, args: dict, project: str) -> dict:
         return tools.get_sheet(project, args.get("sheet_id", ""))
     if name == "list_files":
         return tools.list_files(project, args.get("folder"))
+    if name == "list_equipment":
+        return tools.list_equipment(project, args.get("sheet_id"))
+    if name == "get_equipment":
+        return tools.get_equipment(project, args.get("equipment_id", ""))
     return {"error": f"알 수 없는 툴: {name}"}
 
 
@@ -263,4 +297,8 @@ def _summarize(name: str, result: dict) -> str:
     if name == "get_project_summary":
         return (f"sheets={result.get('sheets')} open_issues={result.get('open_issues')} "
                 f"files={result.get('files')}")
+    if name == "list_equipment":
+        return f"count={result.get('count')}"
+    if name == "get_equipment":
+        return f"found={result.get('found')}"
     return "ok"

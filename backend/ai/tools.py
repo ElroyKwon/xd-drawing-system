@@ -160,3 +160,32 @@ def get_project_summary(project: str) -> dict:
         "open_issues": len(issues),
         "folders": len(folders),
     }
+
+
+def list_equipment(project: str, sheet_id: Optional[str] = None) -> dict:
+    """GET /api/ontology/equipment — TypeDB 온톨로지의 장비 목록(프로젝트·시트 스코프).
+
+    장비는 도면 시트에 바인딩(appears_on)돼 있다. 각 장비는 tag·name·type·status와
+    바인딩된 sheet_ids(딥링크용)를 갖는다. 온톨로지에 없으면 count=0.
+    """
+    params = {"project_name": project}
+    if sheet_id:
+        params["sheet_id"] = sheet_id
+    data = get("/api/ontology/equipment", params=params)
+    return {
+        "project": project,
+        "sheet_id": sheet_id,
+        "count": data.get("count", 0),
+        "equipment": data.get("equipment", []),
+    }
+
+
+def get_equipment(project: str, equipment_id: str) -> dict:
+    """GET /api/ontology/equipment/{id} — 장비 단건. 없으면 {"found": False}."""
+    try:
+        e = get(f"/api/ontology/equipment/{equipment_id}")
+    except Exception:  # noqa: BLE001 — 404 등은 not-found로 정직 반환
+        return {"found": False, "equipment_id": equipment_id}
+    if not e or e.get("project_name") != project:
+        return {"found": False, "equipment_id": equipment_id}
+    return {"found": True, **e}

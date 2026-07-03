@@ -1,0 +1,29 @@
+# XD Ontology Schema (S10) — equipment + 시트 바인딩
+# 기존 xd_drawings DB에 idempotent define로 추가(04-drawings 무파괴).
+# Study_TypeDB 01-equipment.tql(tag/name/status/discipline) 모델 이식 + drawing_sheet 바인딩.
+
+define
+
+attribute equipment_id, value string;
+attribute equip_tag, value string;
+attribute equip_name, value string;
+attribute equip_type, value string;
+attribute equip_status, value string;
+attribute equip_discipline, value string;
+
+entity equipment,
+    owns equipment_id @key,
+    owns equip_tag,
+    owns equip_name,
+    owns equip_type,
+    owns equip_status,
+    owns equip_discipline,
+    owns project_name,
+    plays appears_on:equip;
+
+# equipmentEntityId 바인딩(analysis_result 계승 개념): 장비가 어느 시트에 나타나는가.
+relation appears_on,
+    relates equip,
+    relates on_sheet;
+
+drawing_sheet plays appears_on:on_sheet;

@@ -681,3 +681,46 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 
 ### ✅ S8 DONE 선언
 **S8(AI 사이드카 챗) DONE.** S8.0~S8.4 구현 + S8.2·S8.5 독립검증 + S8.5 3렌즈(BLOCKER/MAJOR 0, a11y MAJOR 수리) + Done-When reconcile 전항목 MET(device). R1·R7 정산 완료. 프로세스 부채를 product DONE으로 반올림하지 않음 — 이제 검수 절차까지 실제로 완료됨.
+
+---
+
+## S10 — XD 온톨로지 적재 + equipment 바인딩 → DONE (prompts/14 FROZEN, 세션17 2026-07-03)
+
+> GATE-1 연기분(온톨로지→S10) 실현. TypeDB 3.7.3 위에 equipment 온톨로지 실적재 + 시트 바인딩(appears_on = equipmentEntityId 계승) + 사이드카 AI 그라운딩. 독립 검증자 O1~O8 전항목 PASS.
+
+### 구현
+- **스키마** `backend/schema/05-ontology.tql`: `equipment` 엔티티(equipment_id@key·tag·name·type·status·discipline·project_name) + `appears_on` 관계(equipment↔drawing_sheet). 기존 04-drawings의 `drawing_sheet`(L69)를 무파괴 확장(검증자 확인).
+- **`backend/ontology.py`**: OntologyStore — TypeDB 권위(실 READ 쿼리 `_query_equipment` ConceptRow 파싱)·**store 드라이버 재사용**(2연결 패닉 회피)·JSON 미러 폴백. add/list/get/clear.
+- **8000 라우트** `backend/routes_ontology.py`: `/api/ontology/equipment`(project·sheet 필터)·`/{id}`·`/status`. main.py 등록.
+- **시드** `scripts/seed_ontology.py`: 큐레이트 전기장비 10건(단선결선도 6·BESS 4), 런타임 시트 조회 바인딩, 멱등. "AI 추출 아닌 큐레이트 시드" 정직 표기.
+- **사이드카 툴** `list_equipment`·`get_equipment`(총 9종, `tools.py`+`agent.py`, 오직 8000 GET — 격리 유지).
+
+### 독립 검증자 채점 (O1~O8 전항목 PASS, BLOCKER/MAJOR 0)
+| O | 판정 | 근거 |
+|---|---|---|
+| O1 스키마 무파괴 | PASS | drawing_file=7·analysis_result 생존, backend 97 pass |
+| O2 TypeDB 실적재 | PASS | 직접 쿼리 equipment=10·appears_on=44(6×2+4×8) |
+| O3 실 READ 쿼리 | PASS | `_query_equipment` match/select+ConceptRow, TypeDB 성공 시 미러 미사용 |
+| O4 8000 라우트 | PASS | project/sheet 필터·단건·404·없는프로젝트 count=0 라이브 |
+| O5 시드 멱등·큐레이트 | PASS | 2회 실행 10 유지, 정직 표기 |
+| O6 사이드카 그라운딩·격리 | PASS | import0, 실 gpt-5.5 list_equipment 자율선택·없는장비 found=False 환각0 |
+| O7 진실성 4중 일치 | PASS | TypeDB 10=route 10=미러 10=시드(6+4) 10 |
+| O8 회귀0 | PASS | backend 97·사이드카 39·build·격리 |
+
+### Done-When(S10) reconcile
+| 요소 | 판정 | 등급 |
+|---|---|---|
+| equipment 온톨로지 TypeDB 실적재 | MET | device |
+| equipmentEntityId 바인딩(appears_on 시트↔장비) 동작 | MET | device(44 관계, sheet_id 필터 정확) |
+| TypeDB 권위 조회(미러 아님) | MET | device(실 READ 쿼리) |
+| 사이드카 AI 온톨로지 그라운딩 | MET | device(실 gpt-5.5 자율 툴선택+환각0) |
+| 데이터 진실성 | MET | device(4중 일치) |
+- **NARROWED/UNMET 0.** equipment 출처=큐레이트 시드는 freeze 공동설계 결정(AI 자동추출은 애초 별도 단계 — 침묵좁힘 아님).
+
+### MINOR 부채 (검증자, 라이브 재현불가·후속)
+- `get_equipment` 단건이 JSON 미러 역인덱스로 프로젝트 판별(미러 stale 시 이론상 None) — 미러 동시기록이라 재현불가.
+- `GET /equipment/{id}` route가 project_name 미파라미터(전역 @key) — 스코프는 사이드카 tools에서 강제, 데이터 오염 불가.
+- (S8.5 이월) 8000 `/api/folders` 비스코핑.
+
+### ✅ S10 DONE
+equipment 온톨로지가 TypeDB에 실적재·바인딩되고 AI가 TypeDB 그라운딩으로 장비를 답한다(XD 차별화 실증). GATE-1 연기분 실현.

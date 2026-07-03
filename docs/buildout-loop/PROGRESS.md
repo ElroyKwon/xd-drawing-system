@@ -313,3 +313,12 @@
 - 렌즈3 Done-When 비평: **product 4요소 전부 MET(device)·좁힘 0**(격리8001·8000HTTP그라운딩·실데이터·실gpt-5.5, 라이브 실 openai 1턴 실증).
 - 회귀 0: vitest **116**(8000 down 클린)·사이드카 **36**·backend **97**·build·격리 8000 diff0·src 변경 ChatDrawer 1파일. reconcile NARROWED/UNMET 0. 증거 `EVIDENCE.md` S8.5.
 - **밤샘 자율 모드**(사용자 확정: 비게이트 전부+신규 mock/설계·제한없이 끝까지): 다음 **S10 온톨로지**(실동작)→S11/S12(mock+egress게이트)→S13(설계+인증게이트). 게이트는 안 넘고 `HUMAN_GATE.md`에 남김.
+
+## 세션 17 (2026-07-03) — S10 온톨로지 적재+바인딩 DONE ✅ (밤샘 자율)
+
+**S10 DONE.** `prompts/14-s10-ontology.md` FROZEN(밤샘 자율=추천안: equipment 큐레이트시드·TypeDB권위+8000+사이드카툴). GATE-1 연기분 실현.
+- 신설: `backend/schema/05-ontology.tql`(equipment+appears_on)·`backend/ontology.py`(TypeDB권위·드라이버재사용·미러폴백·실 READ쿼리)·`backend/routes_ontology.py`·`scripts/seed_ontology.py`(큐레이트 전기장비10, 단선6·BESS4 바인딩, 멱등). 사이드카 `list_equipment`·`get_equipment`(9종). main.py 등록.
+- 독립 검증자 **O1~O8 전항목 PASS·BLOCKER/MAJOR 0**. 진실성 4중 일치(TypeDB10=route10=미러10=시드10), appears_on 44관계. 실 gpt-5.5가 자율 list_equipment 선택→"장비10개" 표(환각0). MINOR2 부채(get_equipment 미러역인덱스·단건라우트 비스코프).
+- 자율 해결 실이슈2: TypeDB 2드라이버연결 패닉→store 드라이버 재사용 / 시트바인딩0→drawing_sheet put 스텁.
+- 회귀0: backend **97**·사이드카 **39**·build·격리 import0·vitest 116(프론트 무변경). 증거 `EVIDENCE.md` S10.
+- **다음 = S11 이메일 발송**(mock 인프라까지 자율, 실 SMTP/서비스 egress=HUMAN_GATE).

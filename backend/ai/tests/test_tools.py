@@ -131,3 +131,43 @@ def test_project_summary_composes_counts():
     assert out["sheets"] == 2              # 완료 도면의 시트 총수
     assert out["open_issues"] == 2         # /api/issues 반환(삭제됨 제외)
     assert out["folders"] == 2
+
+
+# ── S10 온톨로지 툴(list_equipment·get_equipment) respx 매핑 ──────────
+_EQUIP = {
+    "project_name": "Study_Project", "sheet_id": None, "count": 2,
+    "equipment": [
+        {"equipment_id": "EQ-TR-01", "tag": "TR-01", "name": "주변압기", "type": "transformer",
+         "status": "ACTIVE", "discipline": "E", "project_name": "Study_Project", "sheet_ids": ["s1"]},
+        {"equipment_id": "EQ-PCS-01", "tag": "PCS-01", "name": "전력변환장치", "type": "pcs",
+         "status": "ACTIVE", "discipline": "E", "project_name": "Study_Project", "sheet_ids": ["s2", "s3"]},
+    ],
+}
+
+
+@respx.mock
+def test_list_equipment_maps():
+    respx.get(f"{BASE}/api/ontology/equipment").mock(return_value=httpx.Response(200, json=_EQUIP))
+    out = tools.list_equipment("Study_Project")
+    assert out["count"] == 2
+    assert out["equipment"][0]["tag"] == "TR-01"
+    assert out["equipment"][1]["sheet_ids"] == ["s2", "s3"]
+
+
+@respx.mock
+def test_get_equipment_found_and_scope():
+    e = {"equipment_id": "EQ-TR-01", "tag": "TR-01", "name": "주변압기", "type": "transformer",
+         "status": "ACTIVE", "project_name": "Study_Project", "sheet_ids": ["s1"]}
+    respx.get(f"{BASE}/api/ontology/equipment/EQ-TR-01").mock(return_value=httpx.Response(200, json=e))
+    out = tools.get_equipment("Study_Project", "EQ-TR-01")
+    assert out["found"] is True and out["tag"] == "TR-01"
+    # 프로젝트 스코프 불일치 → not-found(타 프로젝트 장비 누출 방지)
+    out2 = tools.get_equipment("Other_Project", "EQ-TR-01")
+    assert out2["found"] is False
+
+
+@respx.mock
+def test_get_equipment_404_honest():
+    respx.get(f"{BASE}/api/ontology/equipment/EQ-NOPE").mock(return_value=httpx.Response(404, json={"detail": "없음"}))
+    out = tools.get_equipment("Study_Project", "EQ-NOPE")
+    assert out["found"] is False and out["equipment_id"] == "EQ-NOPE"
