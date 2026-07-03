@@ -22,6 +22,7 @@ from routes_template import router as template_router
 from routes_markup import router as markup_router
 from routes_search import router as search_router
 from routes_ontology import router as ontology_router
+from routes_email import router as email_router
 from store import get_store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -48,6 +49,7 @@ app.include_router(photo_router)
 app.include_router(template_router)
 app.include_router(search_router)
 app.include_router(ontology_router)
+app.include_router(email_router)
 app.include_router(auth_router)
 
 

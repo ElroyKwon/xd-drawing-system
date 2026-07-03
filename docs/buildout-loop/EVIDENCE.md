@@ -724,3 +724,44 @@ Study_Project에 제주 68p 업로드 후 시트/파일 뷰 검증(스크린샷 
 
 ### ✅ S10 DONE
 equipment 온톨로지가 TypeDB에 실적재·바인딩되고 AI가 TypeDB 그라운딩으로 장비를 답한다(XD 차별화 실증). GATE-1 연기분 실현.
+
+---
+
+## S11 — 이메일 발송 인프라(mock + 실 egress 게이트) → DONE (prompts/15 FROZEN, 세션17 2026-07-03)
+
+> 신규 스코프. 밤샘 자율: mock 수준까지 구현, 실 SMTP egress=HUMAN_GATE(GATE-5). S8.4 egress 패턴 재사용. 독립 검증자 P1~P6 PASS + 발견 MINOR 2건 수리.
+
+### 구현
+- `backend/email_service.py`: EmailProvider 추상화(Mock=outbox·발송0 / Smtp=미구성 raise) + `make_email_provider`(env `XD_EMAIL_PROVIDER` 기본 mock) + 템플릿(generic·issue_created·issue_status_changed) + 감사(메타데이터만·본문 미기록) + 런타임 킬스위치.
+- `backend/routes_email.py`: `POST /send`(RBAC 편집자)·`GET /outbox`(프로젝트 스코프+RBAC)·`GET /status`(smtp 구성여부만)·`POST /mode`(RBAC). main.py 등록.
+- `HUMAN_GATE.md` GATE-5: 실 이메일 egress(SMTP 서비스·자격증명 사용자 결정) 미해결.
+
+### 독립 검증자 채점 (P1~P6 전항목 PASS, 외부 egress 0 실증)
+| P | 판정 | 근거 |
+|---|---|---|
+| P1 provider 추상화 | PASS | mock 폴백·Smtp 미구성 raise(GATE-5) |
+| P2 템플릿 안전 | PASS | 주입 3종(`{__class__}` 등) 문자열 그대로·크래시0 |
+| P3 감사 메타데이터만 | PASS | `_email_audit.jsonl` body 부재 |
+| P4 라우트 | PASS | 4종 + status 자격증명 미노출 |
+| P5 외부 egress 0 | PASS | 기본 mock + HOST 미구성 폴백 + GATE-5 이중차단 |
+| P6 회귀0 | PASS | backend 104·사이드카 격리 무영향 |
+
+### 발견 MINOR 2건 → **수리**(egress 안전 본질 직결·저비용)
+- **MINOR-2 수리**: `GET /outbox` 무인증+`read_outbox` project 미필터 → 타 프로젝트 본문 교차노출. → outbox에 project 저장 + `read_outbox` 스코프 필터 + `require_role` + project_name 필수(422). 테스트 `test_outbox_project_scoped`.
+- **MINOR-1 수리**: `POST /mode` 킬스위치 무인증 → 뷰어 토글 가능. → `require_role(project_name, 편집자)` 추가.
+
+### Done-When(S11) reconcile
+| 요소 | 판정 | 등급 |
+|---|---|---|
+| provider 추상화(mock/smtp) | MET | device |
+| 템플릿 | MET | device |
+| 감사 메타데이터만+킬스위치 | MET | device |
+| 라우트 4종 | MET | device |
+| 기본 외부 egress 0 + GATE-5 | MET | device(실증) |
+| 회귀0 | MET | backend 104·build |
+- **NARROWED/UNMET 0.** 실 SMTP 전송은 애초 out-of-scope(GATE-5) — 침묵좁힘 아님.
+
+### 부수: S10 온톨로지 서버 안정화(TypeDB 드라이버 패닉 회피)
+- TypeDB Python 드라이버가 이 Windows 호스트에서 간헐 "overflow subtracting durations" 패닉(프로세스 abort, Python 미포착) → 서버 크래시. **8000 서버는 온톨로지를 JSON 미러에서 읽도록**(add_equipment가 TypeDB+미러 동시기록 → 항상 동기) 하드닝. TypeDB=시드 쓰기 권위 유지(`XD_ONTOLOGY_DIRECT_TYPEDB=1`), 읽기 능력은 S10 검증자 O3로 입증됨. 데이터 동일(4중 일치). 서버 크래시 제거 확인.
+
+### ✅ S11 DONE (mock 수준). 실 이메일 egress = GATE-5(사용자 결정 대기).

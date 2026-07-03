@@ -33,3 +33,11 @@
 ---
 > 갱신 규칙: 결정되면 해당 항목에 "RESOLVED (날짜·결정)"를 달고 관련 LOOP/PLAN/설계/EVIDENCE를 개정한다.
 > **세션14 기준 GATE-1~4 전부 RESOLVED.** S8 DONE 선언은 S8.2·S8.4·S8.5 완료 + Done-When reconcile 후.
+
+---
+
+### GATE-5 [신규·S11 이메일 실 egress] — 실제 이메일 발송 (미해결)
+- **문제**: S11에서 이메일 발송 인프라(provider 추상화·템플릿·감사·킬스위치)를 구현했으나, **실제 외부 메일 전송은 외부 egress**라 자율 진행 금지. 어느 SMTP/메일 서비스·발신 자격증명·발신 주소를 쓸지는 사용자 결정.
+- **현 상태(자율 구현분)**: 기본 `mock` provider(발송 0, `_email_outbox.json`에 기록). 실 `SmtpEmailProvider`는 `XD_SMTP_HOST` 등 자격증명 **미구성 시 발송 안 함**(mock 폴백). 즉 기본 동작으로 **외부 메일 0**.
+- **사용자 결정 필요**: ① 메일 서비스(자체 SMTP / SendGrid·SES·Postmark 등 / 사내 릴레이) ② 발신 자격증명·발신 주소(예: no-reply@…) ③ egress 승인(도면/이슈 정보가 이메일 본문으로 외부 전송). 결정 시 `.env`에 `XD_SMTP_*` 구성 + `XD_EMAIL_PROVIDER=smtp` + 킬스위치 운영.
+- **의존**: S12(이슈 이메일 알림)는 이 인프라 위. mock 수준까지는 S12에서 자율 구현하되, 실 발송은 본 게이트 해소 후.

@@ -322,3 +322,9 @@
 - 자율 해결 실이슈2: TypeDB 2드라이버연결 패닉→store 드라이버 재사용 / 시트바인딩0→drawing_sheet put 스텁.
 - 회귀0: backend **97**·사이드카 **39**·build·격리 import0·vitest 116(프론트 무변경). 증거 `EVIDENCE.md` S10.
 - **다음 = S11 이메일 발송**(mock 인프라까지 자율, 실 SMTP/서비스 egress=HUMAN_GATE).
+
+## 세션 17 (2026-07-03) — S11 이메일 인프라 DONE ✅ + S10 서버 안정화 (밤샘 자율)
+
+**S11 DONE(mock 수준).** `prompts/15` FROZEN. `email_service.py`(provider 추상화·템플릿·감사 메타데이터만·킬스위치)+`routes_email.py`(4라우트, RBAC)+GATE-5(실 이메일 egress=사용자 결정). 독립 검증자 **P1~P6 PASS·외부 egress 0 실증**, 발견 MINOR2(outbox 교차본문노출·mode 무인증)→**수리**(스코프필터+RBAC). backend **104**·build.
+- **S10 안정화**: TypeDB Python 드라이버 간헐 패닉(overflow subtracting durations, 프로세스 abort)이 서버 크래시 유발 → 8000은 온톨로지를 **JSON 미러 읽기**(TypeDB+미러 동시기록 동기), TypeDB=시드 쓰기 권위(`XD_ONTOLOGY_DIRECT_TYPEDB=1`). 서버 크래시 제거.
+- **다음 = S12 이슈 이메일 알림**(이슈 생성/상태변경 훅→구독자 mock 발송, S11 위). 실 발송은 GATE-5 후.
