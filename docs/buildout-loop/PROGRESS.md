@@ -2,7 +2,21 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-03, 세션 14 — S8 AI 챗 사이드카 실동작: S8.0·S8.1·S8.3 DONE + 실 GPT-5.5)
+## 현재 상태 (2026-07-03, 세션 15 — S8.2 툴 카탈로그 + 그라운딩/환각 골든 이밸 DONE)
+
+**AI 챗 툴이 7종으로 확장되고, 실 gpt-5.5가 TypeDB에 그라운딩해 환각 없이 답함을 골든 이밸로 라이브 입증.** `prompts/11-s8_2-tool-catalog-eval.md` FROZEN(3결정 공동설계: 툴세트 ROADMAP 5종·이밸 라이브만 90%·환각 표준기준). 독립 검증자 L1~L10 전항목 PASS.
+
+- **S8.2 DONE**(커밋 예정, `prompts/11` FROZEN, L1~L10 MET): 읽기 툴 **5종 추가**(총 7종) — `get_project_summary`(drawings·issues·folders 실 GET 조합)·`get_sheet(sheet_id)`·`list_issues(status·category 필터)`·`get_issue(issue_id)`·`list_files(folder 필터+파일별 sheet_count)`. **오직 8000 HTTP GET**(격리 import 0). not-found는 `{"found": False}` 정직 반환. `agent.py` TOOLS_SCHEMA·_dispatch·_summarize 7종 등록(project 서버주입). 사이드카 pytest **22**(신규 11).
+- **골든 라이브 이밸 15/15 = 100%**(`evidence/s8_2-golden-eval.md`, 세트 `backend/ai/eval/golden.json`, 러너 `run_golden.py`): 그라운딩 10 + 환각 적대 5. **이밸이 실오답 2건 조기 적발** — 1차 13/15(G5 제주BESS "1페이지" 환각·G4 clash 2/3 불완전) → 근본원인 수리(list_issues category 필터 + list_files sheet_count + 프롬프트 라우팅 지침, **8000 무수정·격리 유지**) → 3차 15/15. 환각 5문항 전부 '없음' 정직 응답.
+- **정답 근거 순환성 검증**(사용자 지적 반영): 골든 정답이 8000(TypeDB)=LLM 소스와 동일한 순환 위험을 **8000 밖 3층 독립대조**로 해소 — JSON 원자료(`_issues.json` 필터=12·`_index.json`=8·`_folders.json`=14 = API 일치=미러 정합) + 원본 PDF fitz(`제주 original.pdf page_count=8` = G5 정답 독립 참). 남은 민감점: 시트15=버전이력 포함(최신만 13)·디스크 고아파일 5개. 데이터 진실성 체계검증은 S10.
+- **실 TypeDB 라이브 앱 시연**(`evidence/s8_2-chat-typedb-live.png`): `XD_STORE=typedb` 강제(폴백 raise), 로그 `TypeDB connected 1729/xd_drawings`. 앱 드로어→"이 프로젝트 요약+제주BESS 페이지"→툴칩(get_project_summary sheets=15 open_issues=12 files=8·list_files files=8 folders=14)→답변(파일8·시트15·이슈12·폴더14·제주BESS 8페이지), 콘솔0. **TypeDB 드라이버 패닉("overflow subtracting durations")은 컨테이너 장시간 기동 타이밍버그 → 재시작으로 해소.**
+- **회귀 0**: `npm build`·vitest **111**·backend pytest **97**·사이드카 pytest **22**·격리 import0·8000 tracked diff0.
+- **독립 검증자**(general-purpose, 156s): L1~L10 전항목 PASS, 반례 탐색에도 답변/툴콜 불일치 0, 수리 이력을 `results_run1/run2.json`로 실재 확인(위조 아님).
+- **다음 = S8.3-폴리시**(마크다운 렌더[답변 `**` raw 노출]·대화이력 UI·딥링크 xd:navigate) → S8.4(egress 감사) → S8.5(3렌즈+reconcile→S8 DONE) → S10(온톨로지). 재기동법 아래 세션6 블록(⚠️ 8001 라우트 추가 후 수동 재기동·vitest는 8000 내리고).
+
+---
+
+## 이전 상태 (2026-07-03, 세션 14 — S8 AI 챗 사이드카 실동작: S8.0·S8.1·S8.3 DONE + 실 GPT-5.5)
 
 **AI 챗 어시스턴트가 앱에서 실 GPT로 동작한다.** 사이드카 골격(S8.0) → LLM 두뇌·대화영속(S8.1) → 앱 챗 드로어 UI(S8.3)까지 실동작. 커밋 7건(아래).
 

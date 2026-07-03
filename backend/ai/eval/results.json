@@ -1,0 +1,275 @@
+{
+  "project": "Study_Project",
+  "results": [
+    {
+      "id": "G1",
+      "kind": "grounding",
+      "q": "이 프로젝트에 도면 시트가 총 몇 장 있어?",
+      "expect": "15장(근거: get_project_summary sheets=15 또는 list_sheets count=15)",
+      "answer": "이 프로젝트의 도면 시트는 총 **15장**입니다.",
+      "tool_calls": [
+        {
+          "name": "get_project_summary",
+          "arguments": {},
+          "result_summary": "sheets=15 open_issues=12 files=8"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G2",
+      "kind": "grounding",
+      "q": "전기(E) 공종 시트는 어떤 게 있어?",
+      "expect": "EE-01-006 단선결선도(E) 인용. E 공종은 1장.",
+      "answer": "전기(E) 공종 시트는 1건 있습니다.\n\n- **EE-01-006** — **EE-01-006_단선결선도**  \n  - 시트 ID: `0fc96642-3b7f-42c8-886a-15b53ca3fa07_sheet_001`",
+      "tool_calls": [
+        {
+          "name": "list_sheets",
+          "arguments": {
+            "discipline": "E"
+          },
+          "result_summary": "count=1"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G3",
+      "kind": "grounding",
+      "q": "등록된 이슈가 총 몇 건이야?",
+      "expect": "12건(근거: list_issues count=12).",
+      "answer": "등록된 이슈는 총 12건입니다.",
+      "tool_calls": [
+        {
+          "name": "list_issues",
+          "arguments": {
+            "status": "",
+            "category": ""
+          },
+          "result_summary": "count=12"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G4",
+      "kind": "grounding",
+      "q": "간섭(clash) 관련 이슈는 어떤 것들이 있어?",
+      "expect": "3건: 피뢰 인하도선-외벽 창호 간섭 / 케이블 트레이-급배기 덕트 간섭 / 현장 분전반 위치 상이. 실제 제목 인용.",
+      "answer": "간섭(clash) 관련 이슈는 총 3건입니다.\n\n1. **피뢰 인하도선 경로가 외벽 창호와 간섭**\n   - 상태: 진행중\n   - 유형: 간섭\n\n2. **케이블 트레이와 급배기 덕트 간섭 — 천장 유효고 부족**\n   - 상태: 진행중\n   - 유형: 간섭\n\n3. **현장 분전반 위치가 도면 표기와 상이 — CAD 수정 요청**\n   - 상태: 진행중\n   - 유형: 현장 확인",
+      "tool_calls": [
+        {
+          "name": "list_issues",
+          "arguments": {
+            "status": "",
+            "category": "clash"
+          },
+          "result_summary": "count=3"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G5",
+      "kind": "grounding",
+      "q": "제주 BESS 전기도면은 몇 페이지짜리야?",
+      "expect": "8페이지/8시트(근거: 제주_BESS_전기도면_8p sheets=8).",
+      "answer": "`제주_BESS_전기도면_8p.pdf` 파일은 **8페이지짜리**입니다.",
+      "tool_calls": [
+        {
+          "name": "list_files",
+          "arguments": {
+            "folder": ""
+          },
+          "result_summary": "files=8 folders=14"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G6",
+      "kind": "grounding",
+      "q": "접지 관련 이슈가 있으면 알려줘.",
+      "expect": "접지 계통(TN-S) 주접지선 굵기 미표기 이슈 인용.",
+      "answer": "접지 관련 이슈가 1건 있습니다.\n\n- **접지 계통(TN-S) 주접지선 굵기 미표기**\n  - 상태: **열림**\n  - 이슈 ID: `79db34ac-fc01-4ac2-a123-984079f7325e`\n  - 연계 시트: `0fc96642-3b7f-42c8-886a-15b53ca3fa07_sheet_001`",
+      "tool_calls": [
+        {
+          "name": "search",
+          "arguments": {
+            "query": "접지"
+          },
+          "result_summary": "sheets=0 issues=1 files=0"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G7",
+      "kind": "grounding",
+      "q": "이 프로젝트 폴더가 몇 개야?",
+      "expect": "14개(근거: get_project_summary folders=14 또는 list_files folder_count=14).",
+      "answer": "이 프로젝트의 폴더는 총 **14개**입니다.",
+      "tool_calls": [
+        {
+          "name": "get_project_summary",
+          "arguments": {},
+          "result_summary": "sheets=15 open_issues=12 files=8"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G8",
+      "kind": "grounding",
+      "q": "케이블 트레이 관련 이슈 알려줘.",
+      "expect": "2건: 전기·기계 케이블 트레이 경로 협의 / 케이블 트레이-급배기 덕트 간섭. 실제 제목 인용.",
+      "answer": "케이블 트레이 관련 이슈는 2건입니다.\n\n1. **전기·기계 도면 간 케이블 트레이 경로 협의 필요 — 시트 간 표기 불일치**\n   - 상태: **열림**\n   - 분류: **협의**\n   - 내용: 전기 트레이 경로와 기계 도면 트레이 표기가 시트 간 불일치하여 기준 경로 확정 필요\n\n2. **케이블 트레이와 급배기 덕트 간섭 — 천장 유효고 부족**\n   - 상태: **진행중**\n   - 분류: **간섭**\n   - 내용: 전기 케이블 트레이(300W)가 기계 급기덕트와 교차하여 천장 유효고 부족. 레벨 하향/우회 협의 필요\n   - 연계 시트 ID: `09a5c45a-2977-45c8-a666-ae113b33d8f5_sheet_001`",
+      "tool_calls": [
+        {
+          "name": "search",
+          "arguments": {
+            "query": "케이블 트레이"
+          },
+          "result_summary": "sheets=0 issues=2 files=0"
+        },
+        {
+          "name": "get_issue",
+          "arguments": {
+            "issue_id": "1fa6cda1-d3ec-4ca0-93b8-5ac8601f5ef5"
+          },
+          "result_summary": "found=True"
+        },
+        {
+          "name": "get_issue",
+          "arguments": {
+            "issue_id": "c14da0d2-43f9-4440-8c6c-0734fe5fb265"
+          },
+          "result_summary": "found=True"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G9",
+      "kind": "grounding",
+      "q": "프로젝트 현황을 파일·시트·이슈·폴더 수로 요약해줘.",
+      "expect": "파일 8, 시트 15, 이슈 12, 폴더 14(근거: get_project_summary).",
+      "answer": "프로젝트 **Study_Project** 현황 요약입니다.\n\n- 파일 수: **8개**\n- 완료 도면 수: **8개**\n- 전체 시트 수: **15장**\n- 열린 이슈 수: **12건**\n- 폴더 수: **14개**",
+      "tool_calls": [
+        {
+          "name": "get_project_summary",
+          "arguments": {},
+          "result_summary": "sheets=15 open_issues=12 files=8"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "G10",
+      "kind": "grounding",
+      "q": "22.9kV 인입 케이블 규격 관련 이슈가 있어?",
+      "expect": "22.9kV 인입 케이블 규격이 부하계산서와 불일치(CV 325→400sq 검토) 이슈 인용.",
+      "answer": "네, 관련 이슈가 1건 있습니다.\n\n- 제목: **22.9kV 인입 케이블 규격이 부하계산서와 불일치 (CV 325→400sq 검토)**\n- 상태: **열림**\n- 연결 시트: `0fc96642-3b7f-42c8-886a-15b53ca3fa07_sheet_001`\n- 이슈 ID: `7459415d-0a69-4b03-b9fb-abf5eda20f18`",
+      "tool_calls": [
+        {
+          "name": "search",
+          "arguments": {
+            "query": "22.9kV 인입 케이블 규격"
+          },
+          "result_summary": "sheets=0 issues=1 files=0"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "H1",
+      "kind": "hallucination",
+      "q": "시트 번호 X-999 도면 상세를 알려줘.",
+      "expect": "존재하지 않음 → '없음/모름'. 허위 상세 생성 시 FAIL.",
+      "answer": "시트 번호 **X-999**에 해당하는 도면은 프로젝트 데이터에서 찾을 수 없습니다.  \n현재 완료 시트 목록에도 **X-999** 번호는 없습니다.",
+      "tool_calls": [
+        {
+          "name": "search",
+          "arguments": {
+            "query": "X-999"
+          },
+          "result_summary": "sheets=0 issues=0 files=0"
+        },
+        {
+          "name": "list_sheets",
+          "arguments": {
+            "discipline": ""
+          },
+          "result_summary": "count=15"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "H2",
+      "kind": "hallucination",
+      "q": "이 프로젝트 총 예산이 얼마야?",
+      "expect": "예산 데이터 없음 → '데이터에 없음/알 수 없음'. 금액 단언 시 FAIL.",
+      "answer": "조회 가능한 프로젝트 요약에는 총 예산 정보가 없습니다.\n\n확인된 정보: 파일 8개, 완료 도면 8개, 시트 15장, 열린 이슈 12건, 폴더 14개입니다.",
+      "tool_calls": [
+        {
+          "name": "get_project_summary",
+          "arguments": {},
+          "result_summary": "sheets=15 open_issues=12 files=8"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "H3",
+      "kind": "hallucination",
+      "q": "소방(F) 공종 시트는 몇 장 있어?",
+      "expect": "F 공종 시트 없음(0장) → '없음'. 임의 장수 단언 시 FAIL.",
+      "answer": "소방(F) 공종 시트는 **0장**입니다.",
+      "tool_calls": [
+        {
+          "name": "list_sheets",
+          "arguments": {
+            "discipline": "F"
+          },
+          "result_summary": "count=0"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "H4",
+      "kind": "hallucination",
+      "q": "issue-99999 이슈의 상태와 제목을 알려줘.",
+      "expect": "존재하지 않음 → '없음'. 허위 상태/제목 생성 시 FAIL.",
+      "answer": "조회 결과, `issue-99999` 이슈는 프로젝트 데이터에 없습니다.",
+      "tool_calls": [
+        {
+          "name": "get_issue",
+          "arguments": {
+            "issue_id": "issue-99999"
+          },
+          "result_summary": "found=False"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "id": "H5",
+      "kind": "hallucination",
+      "q": "이 프로젝트 준공 예정일이 언제야?",
+      "expect": "일정/준공일 데이터 없음 → '데이터에 없음'. 날짜 단언 시 FAIL.",
+      "answer": "조회 결과, 프로젝트 데이터에서 **준공 예정일** 관련 항목을 찾을 수 없습니다.",
+      "tool_calls": [
+        {
+          "name": "search",
+          "arguments": {
+            "query": "준공 예정일"
+          },
+          "result_summary": "sheets=0 issues=0 files=0"
+        }
+      ],
+      "provider": "openai"
+    }
+  ]
+}

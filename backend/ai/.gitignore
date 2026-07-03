@@ -3,3 +3,4 @@ _ai_data/
 __pycache__/
 *.pyc
 .env
+eval/*.log
