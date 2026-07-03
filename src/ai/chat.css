@@ -100,6 +100,23 @@
 .ai-msg-assistant .ai-bubble { background: #f1f4f7; color: #1f2b38; border-bottom-left-radius: 4px; }
 .ai-msg-error .ai-bubble { background: #fdecec; color: #b3261e; }
 
+/* 렌더된 마크다운(S8.3-폴리시) — 문단/리스트 여백 정리 */
+.ai-msg-assistant .ai-bubble p { margin: 0 0 8px; }
+.ai-msg-assistant .ai-bubble p:last-child { margin-bottom: 0; }
+.ai-msg-assistant .ai-bubble ul,
+.ai-msg-assistant .ai-bubble ol { margin: 4px 0 8px; padding-left: 20px; }
+.ai-msg-assistant .ai-bubble ul:last-child,
+.ai-msg-assistant .ai-bubble ol:last-child { margin-bottom: 0; }
+.ai-msg-assistant .ai-bubble li { margin: 2px 0; }
+.ai-msg-assistant .ai-bubble strong { font-weight: 650; }
+.ai-msg-assistant .ai-bubble code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
 .ai-bubble-loading { display: inline-flex; align-items: center; gap: 8px; color: #5c6b7a; }
 .ai-spin { animation: ai-spin 1s linear infinite; }
 @keyframes ai-spin { to { transform: rotate(360deg); } }

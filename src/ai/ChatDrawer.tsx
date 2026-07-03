@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, X, Send, Loader2, AlertTriangle } from "lucide-react";
 import { sendChat, aiHealth, type ChatToolCall } from "./aiClient";
+import { renderRichText } from "./markdown";
 import "./chat.css";
 
 interface Msg {
@@ -137,7 +138,9 @@ export default function ChatDrawer({ project }: Props) {
                 ))}
               </div>
             ) : null}
-            <div className="ai-bubble">{m.content}</div>
+            <div className="ai-bubble">
+              {m.role === "assistant" && !m.error ? renderRichText(m.content) : m.content}
+            </div>
           </div>
         ))}
         {loading ? (
