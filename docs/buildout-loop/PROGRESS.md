@@ -2,7 +2,26 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-03, 세션 16 — S8.2 DONE + S8.3-폴리시 4종 DONE 전부 커밋)
+## 현재 상태 (2026-07-06, 세션 18 — 실 청주 데이터 교체 + MCP 에이전트 로드맵 설계) ⬅ 최신
+
+빌드아웃 루프 S1~S13은 세션17에 DONE·push 완료. 세션18은 두 갈래.
+
+**① 데모 데이터 → 실제 청주 전기도면 전면 교체 + AI 검증(DONE)**
+- 이전 예시(제주 BESS·plan_a/b·original.dwg·테스트 잔재) 전량 삭제. 프로젝트 **Study_Project → "LS 청주사업장"** 개명(id "project-study" 유지, _projects·_project_members 마이그레이션, 구성원·인증 보존).
+- `D:\_Project\Data_Knowledge_Studio\data\raw\청주사업장신축\전기도면` **40 PDF**(EE-00-001~EE-05-005) 라이브 업로드→**변환 40/40**, 시트번호 100% 추출·전부 공종 E, **TypeDB 실적재 40건**. (DWG는 손대지 않음 — 폴더에 PDF만.)
+- `scripts/seed_ontology.py` 청주 실계통 재큐레이트(장비 15·바인딩 33, BESS 제거). 데모 재시드(이슈10·작업6·양식4·사진4).
+- **AI 검증(실 gpt-5.5)**: 그라운딩·온톨로지·이슈 실데이터 PASS, 환각 probe 정직 "없음". 상세 [[project_cheongju_real_data]].
+- ⚠️ **커밋된 코드 변경은 `seed_ontology.py`뿐**(도면/이슈/온톨로지 데이터는 gitignore된 `backend/uploads/`). 재현 스크립트=scratchpad. 서버 3종 가동 중(8000 typedb·8001·TypeDB 1729).
+
+**② "대화로 일하는" MCP 에이전트 로드맵(설계·계획 DONE, 구현 미착수)**
+- brainstorming→writing-plans 공동설계. 큰 로드맵 **P1~P5**(P1 앱내 대화형 액션·P2 안전·P3 읽기MCP·P4 실인증[GATE-6]·P5 MCP write+이메일[GATE-5]).
+- 첫 조각 **P1+P2 설계 freeze**: AI(8001)는 이슈생성·상태변경·작업생성을 **제안만**, 사용자 확인 카드 [실행] 시 프론트가 기존 8000 라우트 실행(사이드카 격리 보존)·RBAC·감사·휴먼인더루프.
+- 문서: 설계 `docs/superpowers/specs/2026-07-06-conversational-actions-mcp-roadmap-design.md` · 계획(8태스크 TDD) `docs/superpowers/plans/2026-07-06-conversational-actions-p1p2.md`.
+- **다음 세션 = P1+P2 구현**(subagent-driven-development 권장, 계획 그대로). 미푸시 3커밋(gitignore·seed·설계·계획) push 사용자 승인 대기.
+
+---
+
+## 이전 상태 (2026-07-03, 세션 16 — S8.2 DONE + S8.3-폴리시 4종 DONE 전부 커밋)
 
 **AI 챗이 앱에서 실 gpt-5.5 + TypeDB 그라운딩으로 완전 동작하고, S8.3-폴리시(마크다운·리사이즈·대화목록·딥링크)까지 커밋 완료.** 로컬 `main`은 `origin/main`(`d6e8b8b`)보다 **6커밋 ahead, 아직 push 안 함**.
 
