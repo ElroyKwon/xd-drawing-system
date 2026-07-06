@@ -1,9 +1,12 @@
 import {
-  ChevronDown, Download, Eye, Filter, Folder, FolderPlus, History, Loader2,
+  Boxes, ChevronDown, Download, Eye, Filter, Folder, FolderPlus, History, Loader2,
   Maximize2, MonitorUp, MoreVertical, Pencil, Search, Share2, Trash2, Upload, UploadCloud, X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useModalDismiss } from "../hooks/useModalDismiss";
+import PublishSetModal from "./package/PublishSetModal";
+import SheetSourceMapper from "./package/SheetSourceMapper";
+import { listPackages, type Package } from "../api/packages";
 import {
   addDrawingVersion, createFolder, deleteDrawing, deleteFolder, downloadUrl, getDrawing,
   listDrawings, listDrawingVersions, listFolders, sheetImageUrl, updateFolder, uploadDrawing,
@@ -59,6 +62,11 @@ export default function FilesView({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  // S14: 발행 세트 목록(진행 중 draft 재오픈·발행분 확인). mapperPkgId 설정 시 매핑 화면 재진입.
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [showPkgList, setShowPkgList] = useState(false);
+  const [mapperPkgId, setMapperPkgId] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -72,6 +80,14 @@ export default function FilesView({
       setFolders(await listFolders(PROJECT));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function refreshPackages() {
+    try {
+      setPackages(await listPackages(PROJECT));
+    } catch {
+      /* 세트 목록 실패는 무시(부가 기능) */
     }
   }
 
@@ -89,6 +105,7 @@ export default function FilesView({
 
   useEffect(() => {
     void refreshFolders();
+    void refreshPackages();
   }, [projectName]);
 
   // S6: 전역 검색 딥링크 — 대상 폴더(또는 루트)를 선택.
@@ -333,6 +350,55 @@ export default function FilesView({
               <span>파일 업로드</span>
               <ChevronDown size={15} aria-hidden="true" />
             </button>
+            <button
+              className="secondary-action files-publish-set-button"
+              type="button"
+              disabled={!canEdit}
+              title={canEdit ? "DWG+PDF를 한 세트로 제출하고 시트에 소스 DWG를 매핑" : "발행 권한이 없습니다(뷰어)"}
+              onClick={() => setIsPublishOpen(true)}
+            >
+              <MonitorUp size={16} aria-hidden="true" />
+              <span>세트 발행</span>
+            </button>
+            <div className="files-package-list">
+              <button
+                className="secondary-action"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={showPkgList}
+                onClick={() => { setShowPkgList((v) => !v); void refreshPackages(); }}
+              >
+                <Boxes size={16} aria-hidden="true" />
+                <span>세트 목록{packages.length ? ` (${packages.length})` : ""}</span>
+              </button>
+              {showPkgList ? (
+                <ul className="row-menu files-package-menu" role="menu">
+                  {packages.length === 0 ? (
+                    <li className="files-package-empty">아직 발행 세트가 없습니다.</li>
+                  ) : (
+                    packages.map((p) => (
+                      <li key={p.package_id}>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={p.status === "draft" && !canEdit}
+                          onClick={() => {
+                            setShowPkgList(false);
+                            if (p.status === "draft") setMapperPkgId(p.package_id);
+                          }}
+                        >
+                          <Boxes size={14} aria-hidden="true" />
+                          <span>{p.title}</span>
+                          <span className={`share-chip share-${p.status === "published" ? "shared" : "private"}`}>
+                            {p.status === "published" ? "발행됨" : "작성 중"}
+                          </span>
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
+            </div>
             <div className="files-breadcrumb" aria-live="polite">
               {currentFolder ? (
                 <>
@@ -556,6 +622,23 @@ export default function FilesView({
           folderId={selectedFolderId}
           onClose={() => setIsUploadOpen(false)}
           onUploaded={() => void refreshDrawings(selectedFolderId)}
+        />
+      ) : null}
+
+      {isPublishOpen ? (
+        <PublishSetModal
+          projectName={PROJECT}
+          folderId={selectedFolderId}
+          onClose={() => setIsPublishOpen(false)}
+          onDone={() => { void refreshDrawings(selectedFolderId); void refreshPackages(); }}
+        />
+      ) : null}
+
+      {mapperPkgId ? (
+        <SheetSourceMapper
+          packageId={mapperPkgId}
+          onClose={() => setMapperPkgId(null)}
+          onPublished={() => { void refreshDrawings(selectedFolderId); void refreshPackages(); }}
         />
       ) : null}
 

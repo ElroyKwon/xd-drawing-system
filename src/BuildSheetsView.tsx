@@ -213,6 +213,7 @@ export default function BuildSheetsView({ project = selectedBuildProject, canEdi
             focusIssueId={focusIssue?.issue_id ?? null}
             focusPin={focusIssue?.pin?.coord_space === "world" ? focusIssue.pin.point : null}
             onBack={() => { setSelectedSheet(null); setFocusIssue(null); }}
+            onOpenSheet={openSheet}
           />
         ) : activeSection === "홈" ? (
           <BuildHomeView

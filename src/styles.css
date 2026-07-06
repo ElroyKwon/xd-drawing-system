@@ -2207,6 +2207,17 @@ select:disabled {
 .files-row-menu-cell {
   position: relative;
 }
+/* S14: 소스 DWG 열기 팝오버(뷰어 헤더) — row-menu 앵커. */
+.source-dwg-open { position: relative; }
+.source-dwg-menu { top: 40px; min-width: 180px; }
+
+/* S14: 세트 목록 드롭다운(Files 액션바) — row-menu 앵커. */
+.files-package-list { position: relative; }
+.files-package-menu { left: 0; right: auto; top: 40px; min-width: 240px; max-height: 320px; overflow-y: auto; }
+.files-package-menu li button { justify-content: flex-start; }
+.files-package-menu li button span:nth-child(2) { flex: 1; text-align: left; }
+.files-package-empty { padding: 8px 10px; font-size: 12px; color: var(--muted, #64748b); }
+
 .row-menu {
   position: absolute;
   right: 8px;

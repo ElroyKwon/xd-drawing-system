@@ -51,6 +51,18 @@ attribute issue_status, value string;
 attribute issue_category, value string;
 attribute issue_assignee, value string;
 
+# S14: 발행분(package/transmittal) + 시트↔DWG 소스 링크 attributes.
+# 적재는 JSON 미러 SoT 위임(prompts/19 freeze) — 스키마는 문서적 완결성.
+attribute package_id, value string;
+attribute package_title, value string;
+attribute package_status, value string;
+attribute link_id, value string;
+attribute sheet_key, value string;
+attribute sheet_rev, value string;
+attribute sheet_number, value string;
+attribute dwg_links_json, value string;
+attribute is_current, value boolean;
+
 # ===========================
 # Entity Types
 # ===========================
@@ -114,6 +126,30 @@ entity issue,
     owns issue_category,
     owns issue_assignee,
     owns geometry_json,
+    owns created_at;
+
+# S14: 발행분(설계사가 DWG+PDF를 한 세트로 제출). status: draft|published.
+# 폴더·version_set과 직교(참조만) — package는 이미 업로드된 file_id를 귀속하는 얇은 레이어.
+entity package,
+    owns package_id @key,
+    owns project_name,
+    owns package_title,
+    owns package_status,
+    owns created_at;
+
+# S14: 시트(PDF)↔소스 DWG 링크. sheet_key=버전 가로지르는 영속 시트 정체성(시트번호는 라벨 스냅샷).
+# dwg_links_json = [{dwg_file_id, layout_name}] (N:M). is_current=같은 sheet_key 중 최신 rev만 true.
+entity sheet_source,
+    owns link_id @key,
+    owns sheet_key,
+    owns sheet_rev,
+    owns package_id,
+    owns project_name,
+    owns file_id,
+    owns sheet_id,
+    owns sheet_number,
+    owns dwg_links_json,
+    owns is_current,
     owns created_at;
 
 # S7: 구성원·프로젝트·역할 attributes (JSON 미러 SoT, 직접쿼리화는 후속)

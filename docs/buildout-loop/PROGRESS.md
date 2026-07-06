@@ -2,7 +2,38 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-06, 세션 19 — 제안용 시나리오·AI 비전·데이터부록 + AI 챗 버그 2건 수리 + TypeDB 라이브 검증) ⬅ 최신
+## 현재 상태 (2026-07-06, 세션 20 — PDF↔DWG 매칭 **S14 구현 DONE**: 진단→인터뷰→FROZEN 프롬프트→ai-loop 풀루프) ⬅ 최신
+
+> 이 세션은 진단/인터뷰/프롬프트 freeze로 시작해 **ai-loop로 S14를 구현·검증·DONE까지 완주**했다.
+
+**S14 DONE (N1~N9 전항목 MET, 미커밋)**
+- **구현**: 백엔드 `store.py`(package/sheet_source CRUD·`next_rev` 프로젝트 스코프·rev 시퀀스 헬퍼)·`routes_package.py` 신설(`/api/packages`+`/api/sheet-sources`, hints=`_normalize` 재사용, publish=발급/계승·is_current 내림·loose 요약)·`main.py`·`schema/04-drawings.tql` entity 2종. 프론트 `src/api/packages.ts`·`src/build/package/`(mappingState·SheetSourceMapper[HTML5 DnD+a11y 버튼+힌트칩+계승 셀렉트+변환폴링]·PublishSetModal·package.css)·FilesView "세트 발행"+"세트 목록"(draft 재오픈)·SheetViewerShell "소스 DWG 열기"+`onOpenSheet`+renderEngine 리셋·BuildSheetsView 배선.
+- **게이트**: backend pytest **125**(S14 16)·frontend vitest **128**(S14 8)·build·diff-check clean.
+- **독립 3렌즈+수리**: 렌즈1 BLOCKER0·**MAJOR-1**(sheet_key 계승/next_rev/is_current 강등 프로젝트 경계 무시)+MINOR4 전량 수리(회귀6). 렌즈2 MAJOR0·MINOR5 수리. 렌즈3 N1~N9 MET·경계노트2 처리(계승 셀렉트 노출·"선재실패4건"=검증자가 8000 띄운 채 실행한 아티팩트로 확정). **자체 e2e 실버그2**(renderEngine stale·변환폴링) 적발수리.
+- **device e2e**(격리 임시 uploads·독립 Chrome 9223 CDP, **콘솔0**): 세트 2파일→패키지 / a11y 버튼 매핑→임시저장→재오픈 복원 / 발행 "링크1·미매핑1·미링크0" / PDF→소스 DWG 벡터 왕래(canvasCount 1). 증거 `evidence/s14-01~08.png`. reconcile=`EVIDENCE.md` S14 블록.
+
+### ▶ 다음 세션 진입점
+- **S14 커밋**(사용자 승인 대기 — 코드 + evidence 8장 미커밋) → 그다음 **S14 Phase 2**(supersede diff/verify·이슈↔해결버전 연결·재발행 종결게이트) 또는 **P1+P2 대화형 액션**(별도 트랙, 계획 freeze 완료 `docs/superpowers/plans/2026-07-06-conversational-actions-p1p2.md`).
+- 재기동: 백엔드 `XD_STORE=auto|json ... uvicorn main:app --app-dir backend --port 8000` · 프론트 `npm run dev`(5173). ⚠️ vitest는 8000 내리고 실행. 라우트 추가 후 uvicorn 수동 재기동. ODA 미설치 테스트는 **DXF 직접 업로드 우회**.
+
+---
+
+### (세션 20 초반 기록) PDF↔DWG 왕복 진단 + 현장 절차 인터뷰 + S14 FROZEN 프롬프트
+
+**코드 변경 0**(진단·설계·프롬프트만). 사용자 질문("이슈/관리가 PDF로만 되나, DWG 왕복은 하나도 없는 것 같다")에서 출발해 실제 코드를 2렌즈 조사 → **PDF↔DWG 링크·DWG→PDF 변환·시트 supersede·이슈↔수정도면 연결이 전무**(미구현 영역, 스텁 아님)임을 확정. DWG 벡터 뷰어 자체는 실재(DWG→ODA→DXF→ezdxf→canvas2D).
+
+**한 일**
+- **진단(2렌즈)**: 뷰어/버전관리 + 업로드/변환 파이프라인 독립 조사, 결론 일치. `version_set_id`는 같은 파일 바이트 버전일 뿐 PDF↔DWG 의미 없음. "내보내기" 버튼은 죽은 스텁.
+- **deep-interview 현장 절차 확정(D1~D8 freeze)**: DWG=정식 자산·세트 제출(DWG+PDF) 기본·매칭 N:M(1:N/2:N)·업로드 시 수동 매핑(파일명 규칙 제각각)·시트별 rev+발행분 이중버전·이슈 종결=연결+검증게이트·1차=토대·DWG→PDF 자동변환 제외(로드맵 유지).
+- **Plan 에이전트 코드기반 PLAN** → **`prompts/19-s14-pdf-dwg-matching.md` FROZEN**(2026-07-06, N1~N9 채점). `PLAN.md`에 S14 마일스톤 + 체크리스트 등록.
+
+**S14 Phase 1 범위**: ①Package/Transmittal(`_packages.json`) ②`sheet_key`(버전 가로지르는 영속 시트 정체성, 시트번호는 라벨) ③sheet_source 링크(`_sheet_sources.json`, N:M 수동 매핑) + 세트 업로드/매핑 UI + 시트→소스 DWG 벡터 뷰어 열기. **기존 drawing/sheet/folder/version_set 무변경**(시트가 drawing에 임베드돼 재변환 시 덮어써지므로 sheet_key는 외부 JSON 조인 필수). 변환 파이프라인 재사용. **Out of scope=Phase 2**: 자동변환·supersede diff·이슈↔해결버전+검증게이트.
+
+→ 위 "S14 DONE" 참조. (트랙 B[S14]를 이 세션에서 ai-loop로 완주. 트랙 A[P1+P2]는 별도 트랙으로 잔존.)
+
+---
+
+## 이전 상태 (2026-07-06, 세션 19 — 제안용 시나리오·AI 비전·데이터부록 + AI 챗 버그 2건 수리 + TypeDB 라이브 검증)
 
 세션18 다음. 제안서 산출물 제작 중 실사용 버그를 발견해 제품 코드도 수리. **다음 세션 = P1+P2 대화형 액션 구현**(계획 freeze, 착수만 남음).
 

@@ -285,6 +285,39 @@ class DrawingStore(ABC):
     @abstractmethod
     def set_current_user(self, member_id: str) -> None: ...
 
+    # --- S14: 발행분(Package/Transmittal) + 시트↔DWG 소스 링크(sheet_source) ---
+    # 기존 drawing/sheet/folder/version_set 무변경. 새 JSON 2개로 외부 조인(S5 이슈 선례).
+    @abstractmethod
+    def add_package(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def get_package(self, package_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def list_packages(self, *, project_name: Optional[str] = None) -> list: ...
+
+    @abstractmethod
+    def update_package(self, package_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def add_sheet_source(self, meta: dict) -> None: ...
+
+    @abstractmethod
+    def get_sheet_source(self, link_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def list_sheet_sources(self, *, project_name: Optional[str] = None,
+                           package_id: Optional[str] = None, sheet_key: Optional[str] = None,
+                           pdf_file_id: Optional[str] = None, sheet_id: Optional[str] = None) -> list: ...
+
+    @abstractmethod
+    def update_sheet_source(self, link_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def next_rev(self, sheet_key: str, project_name: Optional[str] = None) -> str:
+        """sheet_key의 다음 리비전 라벨(A→B→C…). 기존 링크 없으면 'A'.
+        project_name 지정 시 해당 프로젝트 링크만 센다(프로젝트 격리)."""
+
 
 class JsonDrawingStore(DrawingStore):
     """uploads/_index.json 단일 인덱스. 단일 프로세스 로컬 개발용."""
@@ -300,6 +333,8 @@ class JsonDrawingStore(DrawingStore):
         self._forms_path = Path(config.UPLOADS_DIR) / "_forms.json"  # S9.1: 양식(Forms)
         self._photos_path = Path(config.UPLOADS_DIR) / "_photos.json"  # S9.2: 사진(Photos)
         self._templates_path = Path(config.UPLOADS_DIR) / "_templates.json"  # S9.3: 프로젝트 템플릿
+        self._packages_path = Path(config.UPLOADS_DIR) / "_packages.json"  # S14: 발행분(package/transmittal)
+        self._sheet_sources_path = Path(config.UPLOADS_DIR) / "_sheet_sources.json"  # S14: 시트↔DWG 링크
         # S7: 구성원·프로젝트·프로젝트-구성원·현재 사용자
         self._members_path = Path(config.UPLOADS_DIR) / "_members.json"
         self._projects_path = Path(config.UPLOADS_DIR) / "_projects.json"
@@ -324,6 +359,10 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._photos_path, {})
         if not self._templates_path.exists():
             self._write_at(self._templates_path, {})
+        if not self._packages_path.exists():
+            self._write_at(self._packages_path, {})
+        if not self._sheet_sources_path.exists():
+            self._write_at(self._sheet_sources_path, {})
 
     def _read_at(self, path: Path) -> dict:
         try:
@@ -904,6 +943,81 @@ class JsonDrawingStore(DrawingStore):
         with self._lock:
             self._write_at(self._auth_path, {"current_user": member_id})
 
+    # --- S14: 발행분(Package) + 시트↔DWG 소스 링크 ---
+    def add_package(self, meta: dict) -> None:
+        with self._lock:
+            data = self._read_at(self._packages_path)
+            data[meta["package_id"]] = meta
+            self._write_at(self._packages_path, data)
+
+    def get_package(self, package_id: str) -> Optional[dict]:
+        return self._read_at(self._packages_path).get(package_id)
+
+    def list_packages(self, *, project_name=None) -> list:
+        rows = list(self._read_at(self._packages_path).values())
+        if project_name is not None:
+            rows = [r for r in rows if r.get("project_name") == project_name]
+        rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+        return rows
+
+    def update_package(self, package_id: str, **fields) -> Optional[dict]:
+        with self._lock:
+            data = self._read_at(self._packages_path)
+            row = data.get(package_id)
+            if not row:
+                return None
+            for k in ("title", "folder_id", "status", "published_at",
+                      "dwg_file_ids", "pdf_file_ids", "draft_mapping"):
+                if k in fields and fields[k] is not None:
+                    row[k] = fields[k]
+            self._write_at(self._packages_path, data)
+            return row
+
+    def add_sheet_source(self, meta: dict) -> None:
+        with self._lock:
+            data = self._read_at(self._sheet_sources_path)
+            data[meta["link_id"]] = meta
+            self._write_at(self._sheet_sources_path, data)
+
+    def get_sheet_source(self, link_id: str) -> Optional[dict]:
+        return self._read_at(self._sheet_sources_path).get(link_id)
+
+    def list_sheet_sources(self, *, project_name=None, package_id=None, sheet_key=None,
+                           pdf_file_id=None, sheet_id=None) -> list:
+        rows = list(self._read_at(self._sheet_sources_path).values())
+        if project_name is not None:
+            rows = [r for r in rows if r.get("project_name") == project_name]
+        if package_id is not None:
+            rows = [r for r in rows if r.get("package_id") == package_id]
+        if sheet_key is not None:
+            rows = [r for r in rows if r.get("sheet_key") == sheet_key]
+        if pdf_file_id is not None:
+            rows = [r for r in rows if r.get("pdf_file_id") == pdf_file_id]
+        if sheet_id is not None:
+            rows = [r for r in rows if r.get("sheet_id") == sheet_id]
+        rows.sort(key=lambda r: r.get("created_at", ""))
+        return rows
+
+    def update_sheet_source(self, link_id: str, **fields) -> Optional[dict]:
+        with self._lock:
+            data = self._read_at(self._sheet_sources_path)
+            row = data.get(link_id)
+            if not row:
+                return None
+            for k in ("sheet_key", "rev", "sheet_number", "dwg_links", "is_current"):
+                if k in fields and fields[k] is not None:
+                    row[k] = fields[k]
+            self._write_at(self._sheet_sources_path, data)
+            return row
+
+    def next_rev(self, sheet_key: str, project_name: Optional[str] = None) -> str:
+        # 렌즈1 MAJOR-1/MINOR-3: 같은 프로젝트의 sheet_key만 세고(프로젝트 격리),
+        # A~Z 소진 후 AA·AB…까지 스프레드시트식 시퀀스로 유일 rev를 보장.
+        revs = [r.get("rev", "") for r in
+                self.list_sheet_sources(sheet_key=sheet_key, project_name=project_name)]
+        idx = max((_rev_to_index(r) for r in revs), default=-1)
+        return _index_to_rev(idx + 1)
+
 
 class TypeDBDrawingStore(DrawingStore):
     """typedb-driver 적재. 04-drawings 온톨로지(이식). 미가동 시 생성에서 예외."""
@@ -1234,6 +1348,63 @@ class TypeDBDrawingStore(DrawingStore):
 
     def delete_template(self, template_id: str) -> bool:
         return _MIRROR.delete_template(template_id)
+
+    # --- S14: 발행분·시트소스 — JSON 미러 SoT 위임(직접쿼리화는 후속, prompts/19 freeze) ---
+    def add_package(self, meta: dict) -> None:
+        _MIRROR.add_package(meta)
+
+    def get_package(self, package_id: str) -> Optional[dict]:
+        return _MIRROR.get_package(package_id)
+
+    def list_packages(self, *, project_name=None) -> list:
+        return _MIRROR.list_packages(project_name=project_name)
+
+    def update_package(self, package_id: str, **fields) -> Optional[dict]:
+        return _MIRROR.update_package(package_id, **fields)
+
+    def add_sheet_source(self, meta: dict) -> None:
+        _MIRROR.add_sheet_source(meta)
+
+    def get_sheet_source(self, link_id: str) -> Optional[dict]:
+        return _MIRROR.get_sheet_source(link_id)
+
+    def list_sheet_sources(self, *, project_name=None, package_id=None, sheet_key=None,
+                           pdf_file_id=None, sheet_id=None) -> list:
+        return _MIRROR.list_sheet_sources(
+            project_name=project_name, package_id=package_id, sheet_key=sheet_key,
+            pdf_file_id=pdf_file_id, sheet_id=sheet_id)
+
+    def update_sheet_source(self, link_id: str, **fields) -> Optional[dict]:
+        return _MIRROR.update_sheet_source(link_id, **fields)
+
+    def next_rev(self, sheet_key: str, project_name: Optional[str] = None) -> str:
+        return _MIRROR.next_rev(sheet_key, project_name=project_name)
+
+
+_REV_SEQ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _rev_to_index(rev: str) -> int:
+    """리비전 라벨 → 0-기반 인덱스(A=0 … Z=25, AA=26 …). 비정상 라벨은 -1."""
+    r = (rev or "").strip().upper()
+    if not r or any(c not in _REV_SEQ for c in r):
+        return -1
+    idx = 0
+    for c in r:
+        idx = idx * 26 + (_REV_SEQ.index(c) + 1)
+    return idx - 1
+
+
+def _index_to_rev(idx: int) -> str:
+    """0-기반 인덱스 → 리비전 라벨(스프레드시트식 A…Z, AA…)."""
+    if idx < 0:
+        idx = 0
+    out = ""
+    idx += 1
+    while idx > 0:
+        idx, rem = divmod(idx - 1, 26)
+        out = _REV_SEQ[rem] + out
+    return out
 
 
 def _esc(s: str) -> str:

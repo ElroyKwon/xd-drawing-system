@@ -20,6 +20,7 @@ from routes_form import router as form_router
 from routes_photo import router as photo_router
 from routes_template import router as template_router
 from routes_markup import router as markup_router
+from routes_package import router as package_router, ss_router as sheet_source_router
 from routes_search import router as search_router
 from routes_ontology import router as ontology_router
 from routes_email import router as email_router
@@ -42,6 +43,8 @@ app.mount("/files", StaticFiles(directory=str(config.UPLOADS_DIR)), name="files"
 app.include_router(drawing_router)
 app.include_router(files_router)
 app.include_router(markup_router)
+app.include_router(package_router)
+app.include_router(sheet_source_router)
 app.include_router(issue_router)
 app.include_router(task_router)
 app.include_router(form_router)

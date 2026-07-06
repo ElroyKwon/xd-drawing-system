@@ -1,6 +1,7 @@
-import { ArrowLeft, Download, Grid2X2 } from "lucide-react";
+import { ArrowLeft, Download, FileStack, Grid2X2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Sheet } from "../buildSheetsData";
+import { listSheetSources, type DwgLink, type SheetSourceLink } from "../api/packages";
 import {
   createIssue,
   createMarkup,
@@ -52,7 +53,8 @@ export default function SheetViewerShell({
   canEdit = true,
   focusIssueId = null,
   focusPin = null,
-  onBack
+  onBack,
+  onOpenSheet
 }: {
   projectName: string;
   selectedSheet: Sheet;
@@ -62,6 +64,8 @@ export default function SheetViewerShell({
   focusIssueId?: string | null;
   focusPin?: Pt | null;
   onBack: () => void;
+  // S14: PDF 시트 → 연결된 소스 DWG 시트로 왕래(N:M). 없으면 소스 열기 미노출.
+  onOpenSheet?: (sheet: Sheet) => void;
 }) {
   const [activeTool, setActiveTool] = useState<MarkupTool>("선택");
   const [leftTab, setLeftTab] = useState<ViewerLeftTab>("마크업");
@@ -81,6 +85,9 @@ export default function SheetViewerShell({
   const [pendingPin, setPendingPin] = useState<{ point: Pt; coord_space: "world" | "image" } | null>(null);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [opError, setOpError] = useState<string | null>(null);
+  // S14: 이 PDF 시트에 연결된 소스 DWG 링크(있으면 "소스 DWG 열기" 노출).
+  const [sourceLinks, setSourceLinks] = useState<SheetSourceLink[]>([]);
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
 
   const fileId = selectedSheet.fileId;
   const sheetId = selectedSheet.id;
@@ -96,7 +103,11 @@ export default function SheetViewerShell({
   const showVector = vectorCapable && renderEngine === "vector";
 
   // 시트가 바뀌면 마크업/측정/이슈 로드(새로고침·재진입 복원 = E2/E6/H5).
+  // S14: 시트 전환(예: PDF→소스 DWG 왕래)이 셸을 remount하지 않으므로 렌더 엔진/도구를
+  // 새 시트 기준으로 리셋한다(래스터 상태가 벡터 시트로 새어들어 VectorCanvas 미마운트되던 버그).
   useEffect(() => {
+    setActiveTool("선택");
+    setRenderEngine(vectorCapable ? "vector" : "raster");
     setSelectedMarkupId(null);
     setSelectedIssueId(null);
     setPendingPin(null);
@@ -119,6 +130,39 @@ export default function SheetViewerShell({
       alive = false;
     };
   }, [fileId, sheetId, refreshCounts]);
+
+  // S14: PDF 시트면 소스 DWG 링크를 조회(왕래용). DWG 시트/무파일이면 조회 안 함.
+  useEffect(() => {
+    setSourceLinks([]);
+    setSourcePickerOpen(false);
+    if (!fileId || selectedSheet.source !== "pdf-page") return;
+    let alive = true;
+    listSheetSources(projectName, sheetId)
+      .then((links) => alive && setSourceLinks(links))
+      .catch(() => {/* 소스 링크 없음/실패는 무시(버튼 미노출) */});
+    return () => { alive = false; };
+  }, [fileId, sheetId, projectName, selectedSheet.source]);
+
+  // 연결된 DWG(레이아웃) 후보 평탄화 — 최신(is_current) 링크 우선. 중복(dwg+layout) 제거.
+  const sourceDwgLinks: DwgLink[] = Array.from(
+    new Map(
+      sourceLinks
+        .filter((l) => l.is_current)
+        .flatMap((l) => l.dwg_links)
+        .map((dl) => [`${dl.dwg_file_id}::${dl.layout_name ?? ""}`, dl] as const)
+    ).values()
+  );
+
+  function openSourceDwg(link: DwgLink) {
+    setSourcePickerOpen(false);
+    // 대상 DWG 시트를 프로젝트 시트 목록에서 찾는다(레이아웃명 = 시트 number, 없으면 파일 첫 시트).
+    const candidates = sheets.filter((s) => s.fileId === link.dwg_file_id);
+    const target =
+      (link.layout_name ? candidates.find((s) => s.number === link.layout_name) : undefined) ??
+      candidates[0];
+    if (target) onOpenSheet?.(target);
+    else setOpError("연결된 소스 DWG 시트를 찾을 수 없습니다(변환 미완 또는 삭제됨).");
+  }
 
   // 딥링크: 목록에서 핀 있는 이슈로 점프하면 이슈 탭+선택 활성(좌표 센터링은 VectorCanvas focusPin).
   // focusIssueId당 1회만 적용 — 이후 issues 변경(상태변경·새 핀 작성)이 선택을 되돌리지 않도록 가드.
@@ -340,6 +384,30 @@ export default function SheetViewerShell({
           <span>{projectName}</span>
         </div>
         <div className="viewer-header-actions">
+          {onOpenSheet && sourceDwgLinks.length > 0 ? (
+            <div className="source-dwg-open">
+              <button
+                className="secondary-action"
+                type="button"
+                aria-haspopup={sourceDwgLinks.length > 1 ? "menu" : undefined}
+                onClick={() => (sourceDwgLinks.length === 1 ? openSourceDwg(sourceDwgLinks[0]) : setSourcePickerOpen((v) => !v))}
+              >
+                <FileStack size={16} aria-hidden="true" />
+                소스 DWG 열기{sourceDwgLinks.length > 1 ? ` (${sourceDwgLinks.length})` : ""}
+              </button>
+              {sourcePickerOpen && sourceDwgLinks.length > 1 ? (
+                <ul className="row-menu source-dwg-menu" role="menu">
+                  {sourceDwgLinks.map((l) => (
+                    <li key={`${l.dwg_file_id}${l.layout_name ?? ""}`}>
+                      <button type="button" role="menuitem" onClick={() => openSourceDwg(l)}>
+                        <FileStack size={14} aria-hidden="true" /> {l.layout_name ?? l.dwg_file_id}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
           {fileId ? (
             <button className="secondary-action" type="button" onClick={() => setCompareOpen(true)}>
               <Grid2X2 size={16} aria-hidden="true" />

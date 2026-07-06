@@ -58,6 +58,9 @@
 ### S10 — XD 고유: 온톨로지 바인딩 (S8에서 연기)
 **목표**: 도면 entity TypeDB 적재 + `equipmentEntityId` 바인딩 동작(Study_TypeDB `analysis_result`·multi-agent 계승). 장비 온톨로지 해석. **GATE-1 RESOLVED(2026-07-02): 당초 S8 전제였으나 S10으로 연기**.
 
+### S14 — PDF 시트 ↔ DWG 소스 매칭 + 버전 기반 (Phase 1: 토대)
+**목표**: 실제 도면관리 왕복(이슈→수정→리턴 DWG→버전관리→신규 PDF로 시트 갱신)의 **1차 토대**. 현행 시스템은 PDF↔DWG 링크·supersede·이슈연결이 전무 → deep-interview(2026-07-06)로 현장 절차 확정. **세트 제출(DWG+PDF) 기본·수동 매핑·시트별 rev+발행분 이중버전·검증게이트**를 freeze. Phase 1 = ①Package/Transmittal 엔티티 ②`sheet_key`(버전 가로지르는 영속 시트 정체성, 시트번호는 라벨) ③sheet_source 링크(N:M 수동 매핑) + 세트 업로드·매핑 UI + 시트→소스 DWG 벡터 뷰어 열기. `prompts/19` FROZEN(2026-07-06), N1~N9 채점. **자동변환·supersede·이슈연결은 Phase 2**(Out of scope). 기존 drawing/sheet/folder/version_set 무변경 + 새 JSON 2개(`_packages.json`·`_sheet_sources.json`) 외부 조인.
+
 ## 마일스톤 체크리스트
 
 - [x] S1 업로드→변환→뷰어 (+ 렌더 bake-off S1.5: 2-way 승자=②벡터, ③APS 전략상 배제)
@@ -76,6 +79,7 @@
 - [ ] S8.4 egress 감사로그/게이트 정식화
 - [ ] S8.5 3렌즈 검수 + 격리 불변식 reconcile
 - [ ] S10 XD 온톨로지 적재 + equipmentEntityId 바인딩 (TypeDB 기동됨 → 착수 가능)
+- [x] S14 PDF↔DWG 매칭 + 버전 토대 Phase 1 (Package·sheet_key·sheet_source + 세트 업로드·수동 매핑 UI[HTML5 DnD+a11y 버튼+계승 셀렉트] + 소스 DWG 벡터 왕래, prompts/19 FROZEN, **N1~N9 전항목 MET**, 세션20. 3렌즈 BLOCKER0·MAJOR1[프로젝트 스코프 계승]+MINOR9 전량 수리, 자체 실버그2[renderEngine stale·변환폴링] e2e 적발수리. pytest 125·vitest 128·build·diff clean. device e2e 콘솔0 `evidence/s14-01~08`)
 
 ## 순서 근거 / 조정 여지
 
