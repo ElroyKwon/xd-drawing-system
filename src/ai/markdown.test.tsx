@@ -33,4 +33,44 @@ describe("renderRichText", () => {
     const { container } = render(<div>{renderRichText("첫 문단\n\n둘째 문단")}</div>);
     expect(container.querySelectorAll("p")).toHaveLength(2);
   });
+
+  it("GFM 표를 <table>로 렌더하고 raw 파이프를 노출하지 않는다", () => {
+    const md = [
+      "| 구분 | 태그 | 확인 도면 |",
+      "|---|---|---|",
+      "| 변압기 | MTR-1 | EE-01-001 |",
+      "| 차단기 | VCB-22.9kV | EE-01-001, EE-01-002 |",
+    ].join("\n");
+    const { container } = render(<div>{renderRichText(md)}</div>);
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
+    expect(container.querySelectorAll("thead th")).toHaveLength(3);
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(2);
+    expect(container.querySelectorAll("tbody tr")[0].querySelectorAll("td")).toHaveLength(3);
+    expect(table?.textContent).toContain("MTR-1");
+    // 구분자 행(---)과 파이프가 화면에 노출되지 않는다
+    expect(container.textContent).not.toContain("|");
+    expect(container.textContent).not.toContain("---");
+  });
+
+  it("표 셀 안의 **굵게**도 <strong>으로 렌더한다", () => {
+    const md = "| a | b |\n|---|---|\n| **굵은셀** | 일반 |";
+    const { container } = render(<div>{renderRichText(md)}</div>);
+    expect(container.querySelector("tbody td strong")?.textContent).toBe("굵은셀");
+    expect(container.textContent).not.toContain("**");
+  });
+
+  it("정렬 구분자(:--, --:, :-:)가 있는 표도 렌더한다", () => {
+    const md = "| 좌 | 중 | 우 |\n|:--|:-:|--:|\n| 1 | 2 | 3 |";
+    const { container } = render(<div>{renderRichText(md)}</div>);
+    expect(container.querySelector("table")).not.toBeNull();
+    expect(container.querySelectorAll("thead th")).toHaveLength(3);
+  });
+
+  it("## 제목을 헤딩 요소로 렌더하고 raw #을 노출하지 않는다", () => {
+    const { container } = render(<div>{renderRichText("## 설비 목록\n본문")}</div>);
+    const h = container.querySelector("h4");
+    expect(h?.textContent).toBe("설비 목록");
+    expect(container.textContent).not.toContain("#");
+  });
 });
