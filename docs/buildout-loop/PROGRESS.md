@@ -2,7 +2,36 @@
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 
-## 현재 상태 (2026-07-06, 세션 18 — 실 청주 데이터 교체 + MCP 에이전트 로드맵 설계) ⬅ 최신
+## 현재 상태 (2026-07-06, 세션 19 — 제안용 시나리오·AI 비전·데이터부록 + AI 챗 버그 2건 수리 + TypeDB 라이브 검증) ⬅ 최신
+
+세션18 다음. 제안서 산출물 제작 중 실사용 버그를 발견해 제품 코드도 수리. **다음 세션 = P1+P2 대화형 액션 구현**(계획 freeze, 착수만 남음).
+
+**① 제안용 산출물 3종(DONE, repo `docs/product/`)**
+- `보고서_2026-07-06/` — 청주 실데이터 기능 스크린샷 **19장 재촬영** + `기능소개.md`. 구 세트는 `screenshots/이전버전_2026-07-06/`로 아카이브.
+- `활용시나리오_2026-07-06/` — ①기존 A동 가상 시나리오를 **실 청주 데이터**(EE-01-016 PP-380V 분전반 증설·실이슈·실양식)로 개정 ②**AI 활용 비전**(별도 문서, 실 gpt-5.5 6실험: 브리핑·온톨로지·증설영향·환각정직성·딥링크·TypeDB) ③**데이터 파이프라인·관측성 부록**(자동추출 vs 시드, JSON vs TypeDB 실태, 대화·툴콜·egress 감사 구조). 스크린샷 18장.
+- ⚠️ G: 제안서 폴더(`G:\...\LS일렉트릭-청주사업장-도면관리시스템`)는 미변경 — repo 산출물을 사용자가 덱/제안서에 반영 예정.
+
+**② AI 챗 제품 버그 2건 수리(DONE, 커밋 `bdfe370`)**
+- `src/ai/markdown.tsx`: 답변의 **GFM 표·헤딩이 raw 파이프로 노출** → 표(셀 인라인·정렬 구분자)·`#~######` 헤딩 렌더 추가. vitest +4.
+- `src/ai/chat.css`: `.ai-messages`에 `min-height:0`(flex 스크롤 함정)·`overscroll-behavior:contain` → 드로어 위 휠이 대화창 스크롤. **vitest 120·build 통과.**
+
+**③ TypeDB 라이브 검증(정직성 확정)**
+- `XD_STORE=typedb XD_ONTOLOGY_DIRECT_TYPEDB=1`로 기동: `store_backend=typedb`, 로그 `TypeDB connected 1729/xd_drawings`+`Ontology 드라이버 재사용`, `/api/ontology/status={"backend":"typedb"}`. **설비 15종은 실 TypeQL(`match…appears_on…select`)로 조회**(미러 폴백 아님, 로그 확정).
+- **단, 드로잉/시트/이슈 읽기는 typedb 모드에서도 JSON 미러**(`store.py:952` 설계상). 기본 서버는 안정성 위해 JSON(온톨로지 직접연결은 명시 플래그). **TypeDB 전면 조회·드라이버 패닉 안정화 = 고도화.**
+- **설비 온톨로지는 자동 추출 아님 — `scripts/seed_ontology.py` 수동 시드.** 자동 추출은 시트 번호·제목·공종(타이틀블록 휴리스틱)·PDF/DXF 변환뿐.
+
+**④ 미커밋/미추적(그대로 둠)**
+- `docs/product/시작하기_매뉴얼_2026-07-06/` — **다른 터미널 세션이 제작 중**(허브·프로젝트생성·구성원 매뉴얼). 이 세션은 미접촉.
+- 서버 3종(5173·8000 typedb·8001) **가동 유지**(사용자 지시).
+
+### ▶ 다음 세션 = P1+P2 대화형 액션 구현 (진입점)
+- **계획(freeze)**: `docs/superpowers/plans/2026-07-06-conversational-actions-p1p2.md` — 8태스크 TDD, 파일구조, pending_action 스키마 완비.
+- **설계 SoT**: `docs/superpowers/specs/2026-07-06-conversational-actions-mcp-roadmap-design.md`.
+- **핵심**: 사이드카(8001)는 `propose_*` 툴로 **정규화 액션 스펙만 반환**(8000 mutate 0, 격리 불변식 유지). ChatDrawer가 확인 카드 [실행] 시 기존 `src/api`의 `createIssue`/`updateIssue`/`createTask` 호출. origin=ai_chat 감사로그(`_action_audit.json`).
+- **실행법**: `superpowers:subagent-driven-development`로 태스크별. 재기동법은 계획 문서 상단 참조. ⚠️ vitest는 8000 내리고 실행, 8001 라우트 변경 후 수동 재기동.
+- **주의**: 이번 세션의 markdown 표/헤딩 렌더·드로어 스크롤 수정이 ChatDrawer에 반영돼 있으니, P1+P2 카드 UI 추가 시 회귀 확인.
+
+## 이전 상태 (2026-07-06, 세션 18 — 실 청주 데이터 교체 + MCP 에이전트 로드맵 설계)
 
 빌드아웃 루프 S1~S13은 세션17에 DONE·push 완료. 세션18은 두 갈래.
 
