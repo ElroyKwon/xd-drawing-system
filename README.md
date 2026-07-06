@@ -4,6 +4,20 @@ XD 제품군에 포함될 도면관리 시스템 개발 프로젝트.
 
 Autodesk Construction Cloud Build를 벤치마크로 삼아, 도면관리 화면과 워크플로우를 메뉴 단위로 재현하고 XD 고유의 설비 엔티티 바인딩과 지식 연동을 붙여가는 실험/개발 공간이다.
 
+## 서버 기동 (Quick Start)
+
+```powershell
+# 1) 백엔드 (FastAPI, 127.0.0.1:8000) — JSON 폴백 스토어
+cd "D:\_Project\xd-drawing-system\backend"; $env:XD_STORE='json'; .\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+
+# 2) 프론트엔드 (Vite, 127.0.0.1:5173) — 별도 터미널, 프로젝트 루트에서
+cd "D:\_Project\xd-drawing-system"; npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+- 접속: http://127.0.0.1:5173 · 백엔드 헬스체크: http://127.0.0.1:8000/health
+- ⚠️ 프론트 Vitest(`npm test`)는 8000 백엔드를 내리고 실행한다(라이브 백엔드면 템플릿 fixture 테스트 오염).
+- TypeDB가 필요하면 `docker ps`로 `typedb-server` 확인 후 `XD_STORE=auto`, 없으면 `XD_STORE=json` 폴백.
+
 ## Current State
 
 - 앱은 Vite + React + TypeScript + Vitest 기반 프론트엔드와 `backend/` FastAPI 로컬 백엔드로 구성된다.
