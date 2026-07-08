@@ -36,9 +36,12 @@ cd "D:\_Project\xd-drawing-system"; npm run dev -- --host 127.0.0.1 --port 5173
 
 ### 제품 문서 / 보고서 (docs/product/)
 
+- `docs/product/README.md` — 제품 문서 인덱스(목적별 진입, 폴더 구성, 재현 환경). 여기부터 읽는다.
 - `docs/product/기능설명서.md` · `docs/product/사용자매뉴얼.md` — 모듈별 구현 명세·작업별 안내.
-- `docs/product/screenshots/` — 최신 화면 캡처 **18종**(01~18, 청주 실데이터, 2560×1362). 구버전은 `이전버전_2026-07-02/·07-03/·07-06/`로 보관.
-- **`docs/product/보고서_2026-07-06/`** — 자기완결형 보고서 세트. `기능소개.md`(18화면 설명 + 청주 실데이터 대표 수치) + `screenshots/` 18장. 이 폴더만 있으면 다른 곳에서 보고서/제안서를 작성할 수 있도록 정리됨(vault 제안서 v4의 소스).
+- `docs/product/screenshots/` — canonical 화면 캡처 **19종**(01~18 + 02b, 청주 실데이터, 2560×1362). 화면 갱신 시 구 세트는 `이전버전_YYYY-MM-DD/`로 보관(관례). ⚠️ `16-ai-ontology-equipment.png`는 세션19에 TypeDB-backed 표 렌더 버전으로 교체됨.
+- **`docs/product/보고서_2026-07-06/`** — 자기완결형 보고서 세트. `기능소개.md`(18화면 설명 + 청주 실데이터 대표 수치) + `screenshots/` 19장. 이 폴더만 있으면 다른 곳에서 보고서/제안서를 작성할 수 있도록 정리됨(vault 제안서 v4.1의 소스).
+- `docs/product/활용시나리오_2026-07-06/` — 제안용 시나리오 세트(청주 실데이터 라이프사이클·AI 활용 비전·데이터 파이프라인/관측성 부록 + AI 실험 캡처 ai-00~06).
+- `docs/product/시작하기_매뉴얼_2026-07-06/` — 신규 사용자 온보딩 매뉴얼(별도 세션 제작).
 
 ## Implemented Local Slices
 
