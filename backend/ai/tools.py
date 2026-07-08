@@ -242,22 +242,22 @@ def get_equipment(project: str, equipment_id: str) -> dict:
 
 def get_sheet_content(project: str, sheet_id: Optional[str] = None,
                       sheet_key: Optional[str] = None) -> dict:
-    """GET /api/sheet-meta — 시트의 자동추출 본문색인·설비태그·요약(현재 rev).
+    """GET /api/sheet-meta/merged — 시트의 자동추출 본문색인·설비태그·요약(DWG↔PDF 병합 뷰).
 
-    sheet_id 또는 sheet_key 중 하나로 조회. 태그의 confidence·src를 함께 반환하므로
+    sheet_id 또는 sheet_key 중 하나로 조회. DWG 원본이 연결된 시트는 DXF 권위로 병합돼
+    source_kind='merged'·conflicts[]를 함께 반환한다. 태그의 confidence·src가 있으므로
     저신뢰(<0.6) 항목을 인용할 땐 '자동추출(미검증)'으로 밝혀야 한다. 없으면 found=False.
     """
     if not sheet_id and not sheet_key:
         return {"found": False, "reason": "sheet_id 또는 sheet_key 필요"}
-    params = {"project_name": project, "current_only": "true"}
+    params = {"project_name": project}
     if sheet_key:
         params["sheet_key"] = sheet_key
     if sheet_id:
         params["sheet_id"] = sheet_id
-    rows = get("/api/sheet-meta", params=params).get("results", [])
-    if not rows:
+    r = get("/api/sheet-meta/merged", params=params)
+    if not r.get("found"):
         return {"found": False, "sheet_id": sheet_id, "sheet_key": sheet_key}
-    r = rows[0]
     text = r.get("text_index") or ""
     return {
         "found": True,
@@ -265,6 +265,7 @@ def get_sheet_content(project: str, sheet_id: Optional[str] = None,
         "sheet_id": r.get("sheet_id"),
         "file_id": r.get("file_id"),
         "source_kind": r.get("source_kind"),
+        "sources": r.get("sources") or [],
         "summary": r.get("summary"),
         "tags": _compact_tags(r.get("tags")),
         "conflicts": r.get("conflicts") or [],

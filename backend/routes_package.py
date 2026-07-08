@@ -299,8 +299,19 @@ async def publish_package(package_id: str):
                 if prev.get("is_current"):
                     store.update_sheet_source(prev["link_id"], is_current=False)
         else:
-            sheet_key = f"sk_{uuid.uuid4().hex}"
-            rev = "A"
+            # 단계6 통합(D5): sheet_key를 인라인 uuid로 새로 만들지 않고 레지스트리(유일 권위)에서
+            # PDF 시트의 정체성 키를 계승한다(없으면 발급). sheet_source.sheet_key == 레지스트리 키.
+            draw = store.get_drawing(entry.get("pdf_file_id"))
+            vsid = ((draw.get("version_set_id") or entry.get("pdf_file_id"))
+                    if draw else entry.get("pdf_file_id"))
+            key_args = dict(project_name=project_name, version_set_id=vsid,
+                            sheet_number=entry.get("sheet_number", ""),
+                            sheet_index=entry.get("sheet_index", 0))
+            sheet_key = store.resolve_sheet_key(**key_args) or store.issue_sheet_key(**key_args)
+            rev = store.next_rev(sheet_key, project_name=project_name)
+            for prev in store.list_sheet_sources(sheet_key=sheet_key, project_name=project_name):
+                if prev.get("is_current"):
+                    store.update_sheet_source(prev["link_id"], is_current=False)
         link = {
             "link_id": f"lnk_{uuid.uuid4().hex}",
             "sheet_key": sheet_key,

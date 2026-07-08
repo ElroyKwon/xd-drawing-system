@@ -3,7 +3,35 @@
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 > **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 현재 상태 (2026-07-08, 세션 23 — **S15 단계8 AI 툴 배선 DONE**, 자동추출 표면이 AI 그라운딩에 노출됨) ⬅ 최신
+## 현재 상태 (2026-07-08, 세션 24 — **S15 단계6 DWG↔PDF 병합 + 시트정체성 통합 DONE**) ⬅ 최신
+
+> prompts/20 FROZEN 수행 11단계 중 **7단계 완료**(1·2·3·4·6·7·8). O8(병합·conflicts) MET. 남은 미착수=5(HUMAN_GATE)·9완결(라이브)·10·11.
+
+### 공동설계 확정(AskUserQuestion 3결정, freeze)
+- **Q1 병합 = 조회 시 계산(merge-on-read)**: 저장 안 함, 항상 현재 rev로 fresh. `sheet_merge.merge_current` 순수함수.
+- **Q2 시트정체성 발급자 통합(D5) = 지금**: publish가 인라인 `sk_{uuid}` 대신 **레지스트리(`_sheet_keys.json`) 단일 권위에서 PDF 시트 키를 계승/발급**. → `sheet_source.sheet_key == 레지스트리 키` → 병합이 sheet_key로 도달. 원칙5 충족.
+- **Q3 검증 = 충돌 pytest + 합성 e2e**.
+
+### 문제의 실체(조사 결과 — 다음 세션 참고)
+- 발급자가 둘로 갈렸던 것이 얽힘의 정체: 시스템A(`store.issue_sheet_key`, 변환 색인)·시스템B(`routes_package.py:302` 인라인 uuid, publish). 같은 PDF·원본 DWG는 다른 version_set→다른 레지스트리 키라 **"같은 sheet_key의 dxf·pdf"는 자연 발생 불가**. 병합은 sheet_key 그룹핑이 아니라 **`sheet_source` 링크(pdf sheet_id↔dwg_file_id)를 타야** 함. Q2 통합으로 sheet_source.sheet_key를 레지스트리 키로 맞춰 병합 도달성 확보.
+- **실 청주 데이터는 100% PDF(DWG 0·패키지 0·링크 0)** → 라이브 payoff는 DWG 세트 업로드+매핑 후 발현. 이번 단계는 메커니즘+검증.
+
+### 산출물
+- 신규 `backend/sheet_merge.py`(순수 병합: `_canon` OCR혼동 접기 O↔0·I↔1로 PP-38OV≡PP-380V, `_merge_tags` DXF권위+conflicts, `merge_current` passthrough/병합). `routes_sheet_meta.py` `GET /api/sheet-meta/merged`(sheet_key/sheet_id). `routes_package.py` publish 통합(레지스트리 계승). `config.py` `XD_UPLOADS_DIR` env(격리 테스트/데모). `ai/tools.py` `get_sheet_content`→`/merged` 소비(source_kind=merged·sources·conflicts 노출).
+- 신규 `backend/tests/test_s15_merge.py` 8건(병합 로직·passthrough·비현재 링크 무시·통합 publish). 사이드카 `test_tools.py` get_sheet_content를 /merged 모킹으로 갱신.
+
+### 검증(회귀 0)
+- **backend pytest 152→160**(+8, S14 15건 회귀0 통과) · **사이드카 46**(그대로, get_sheet_content 갱신). frontend build/vitest 미변경(백엔드+사이드카만).
+- **합성 e2e(격리 `XD_UPLOADS_DIR`, 실 데이터 무접촉, 콘솔0)**: PDF(PP-38OV)+DXF(PP-380V)+링크 시드 → 실 HTTP `GET /api/sheet-meta/merged?sheet_key=sk_pdf` → `source_kind=merged`, tags=PP-380V(merged)·CABLE-1·MTR-1, **conflicts=[PP-380V↔PP-38OV resolved PP-380V]**, text 둘 다 보존. 사이드카 `get_sheet_content`(sheet_key·sheet_id 양경로)도 병합 뷰 소비 확인.
+
+### ▶ 다음 세션(25) 진입점
+- **읽기**: `ROADMAP.md §0` → `prompts/20`(FROZEN, O8=병합/conflicts MET) → 이 세션24 블록.
+- **선택지**: (a) 단계9 라이브 정직성 이밸(8000+8001+gpt-5.5, 골든셋에 저신뢰 "자동추출(미검증)" 문항 추가). (b) 단계10 온톨로지 승격(추출태그→/api/ontology/equipment, TypeDB on/off). (c) 단계5 8002 LLM 사이드카(HUMAN_GATE-7). (d) 단계11 3렌즈+회귀 게이트로 S15 DONE 선언.
+- **재기동**: 8000 `XD_STORE=json backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000` · 격리 데모는 `XD_UPLOADS_DIR=<temp>` 추가. 사이드카 pytest는 `backend/ai/.venv`.
+
+---
+
+## 현재 상태 (2026-07-08, 세션 23 — **S15 단계8 AI 툴 배선 DONE**, 자동추출 표면이 AI 그라운딩에 노출됨)
 
 > prompts/20 FROZEN 수행 11단계 중 **6단계 완료**(1·2·3·4·7·8). 업로드 도면의 본문색인·설비태그를 AI가 본다(payoff 달성).
 

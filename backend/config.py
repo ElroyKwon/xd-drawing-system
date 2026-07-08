@@ -3,8 +3,9 @@ import os
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent
-UPLOADS_DIR = BACKEND_DIR / "uploads"
-UPLOADS_DIR.mkdir(exist_ok=True)
+# 기본은 backend/uploads. 격리 테스트/데모는 XD_UPLOADS_DIR로 별도 디렉터리 지정(실 데이터 격리).
+UPLOADS_DIR = Path(os.environ.get("XD_UPLOADS_DIR", str(BACKEND_DIR / "uploads")))
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ODA File Converter (DWG→DXF). 설치 경로.
 ODA_EXE = os.environ.get(

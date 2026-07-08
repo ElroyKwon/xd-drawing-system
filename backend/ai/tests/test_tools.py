@@ -119,13 +119,23 @@ def test_get_sheet_found_no_meta():
     assert out["tags"] == [] and out["summary"] is None and out["has_content"] is False
 
 
+# 단계6: get_sheet_content는 /merged(병합 뷰)를 소비. DXF 권위 병합 + conflicts.
+_MERGED_S2 = {"found": True, "sheet_key": "sk-2", "sheet_id": "s2", "file_id": "f1",
+              "source_kind": "merged", "sources": ["dxf", "pdf"], "summary": "배관 상세",
+              "text_index": "PIPE ROUTING M-201 " * 100,
+              "conflicts": [{"field": "tag", "dxf": "PP-380V", "pdf": "PP-38OV", "resolved": "PP-380V"}],
+              "tags": [{"tag": "PP-380V", "type": "분전반", "confidence": 0.92, "src": "merged"},
+                       {"tag": "TR-2", "type": "transformer", "confidence": 0.5, "src": "rule"}]}
+
+
 @respx.mock
 def test_get_sheet_content_by_id():
-    respx.get(f"{BASE}/api/sheet-meta").mock(return_value=httpx.Response(200, json=_META_S2))
+    respx.get(f"{BASE}/api/sheet-meta/merged").mock(return_value=httpx.Response(200, json=_MERGED_S2))
     out = tools.get_sheet_content("Study_Project", sheet_id="s2")
     assert out["found"] is True
     assert out["sheet_key"] == "sk-2"
-    assert out["source_kind"] == "dxf"
+    assert out["source_kind"] == "merged" and out["sources"] == ["dxf", "pdf"]
+    assert out["conflicts"][0]["resolved"] == "PP-380V"  # DXF 권위
     assert out["text_truncated"] is True and len(out["text_excerpt"]) == 1200
     assert out["tags"][1]["confidence"] == 0.5  # 저신뢰 유지(정직성 판정용)
 
@@ -138,7 +148,8 @@ def test_get_sheet_content_needs_id():
 
 @respx.mock
 def test_get_sheet_content_not_found():
-    respx.get(f"{BASE}/api/sheet-meta").mock(return_value=httpx.Response(200, json=_META_EMPTY))
+    respx.get(f"{BASE}/api/sheet-meta/merged").mock(
+        return_value=httpx.Response(200, json={"found": False, "sheet_key": "sk-none"}))
     out = tools.get_sheet_content("Study_Project", sheet_key="sk-none")
     assert out["found"] is False and out["sheet_key"] == "sk-none"
 

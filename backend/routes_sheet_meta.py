@@ -12,6 +12,7 @@ from typing import Optional
 
 from fastapi import APIRouter
 
+import sheet_merge
 from store import get_store
 
 router = APIRouter(prefix="/api/sheet-meta", tags=["sheet-meta"])
@@ -51,6 +52,24 @@ async def search_sheet_meta(q: str = "", project_name: Optional[str] = None,
         })
     return {"query": q.strip(), "count": len(hits), "results": hits[:_LIMIT],
             "truncated": len(hits) > _LIMIT}
+
+
+@router.get("/merged")
+async def merged_sheet_meta(project_name: Optional[str] = None, sheet_key: Optional[str] = None,
+                           sheet_id: Optional[str] = None):
+    """DWG↔PDF 병합 뷰(D7). DWG 원본이 연결된 시트면 DXF 권위로 병합한 태그·conflicts를,
+    아니면 pdf 추출본을 그대로 반환. sheet_key 또는 sheet_id(→sheet_key 해소)로 조회."""
+    if not sheet_key and sheet_id:
+        rows = get_store().list_sheet_meta(
+            project_name=project_name, sheet_id=sheet_id, current_only=True)
+        if rows:
+            sheet_key = rows[0].get("sheet_key")
+    if not sheet_key:
+        return {"found": False}
+    view = sheet_merge.merge_current(get_store(), project_name, sheet_key)
+    if not view:
+        return {"found": False, "sheet_key": sheet_key}
+    return {"found": True, **view}
 
 
 @router.get("/by-equipment")
