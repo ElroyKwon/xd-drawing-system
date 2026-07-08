@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 import config
 from auth import require_role
 from conversion import process_drawing
+from sheet_indexing import index_drawing
 from store import get_store
 from vector import get_vector_json
 
@@ -73,6 +74,11 @@ def _with_urls(row: dict) -> dict:
     return row
 
 
+def _issue_sheet_keys(store, file_id: str) -> None:
+    """S15: 변환 완료 시 sheet_key 발급 + 규칙 추출 색인(공용 sheet_indexing에 위임)."""
+    index_drawing(store, file_id)
+
+
 def _run_conversion(file_id: str, file_path: str, file_format: str, base_dir: str, filename: str = ""):
     store = get_store()
     store.update_conversion(file_id, "converting")
@@ -81,6 +87,8 @@ def _run_conversion(file_id: str, file_path: str, file_format: str, base_dir: st
         file_id, res.status, sheets=res.sheets, scan=res.scan,
         dxf_path=res.dxf_path, error=res.error,
     )
+    if res.status == "completed":
+        index_drawing(store, file_id)
 
 
 def _folder_share(store, folder_id: str | None) -> str:

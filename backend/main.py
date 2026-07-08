@@ -22,6 +22,7 @@ from routes_template import router as template_router
 from routes_markup import router as markup_router
 from routes_package import router as package_router, ss_router as sheet_source_router
 from routes_search import router as search_router
+from routes_sheet_meta import router as sheet_meta_router
 from routes_ontology import router as ontology_router
 from routes_email import router as email_router
 from store import get_store
@@ -51,6 +52,7 @@ app.include_router(form_router)
 app.include_router(photo_router)
 app.include_router(template_router)
 app.include_router(search_router)
+app.include_router(sheet_meta_router)
 app.include_router(ontology_router)
 app.include_router(email_router)
 app.include_router(auth_router)

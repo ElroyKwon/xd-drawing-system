@@ -318,6 +318,45 @@ class DrawingStore(ABC):
         """sheet_key의 다음 리비전 라벨(A→B→C…). 기존 링크 없으면 'A'.
         project_name 지정 시 해당 프로젝트 링크만 센다(프로젝트 격리)."""
 
+    # --- S15: 시트 정체성 레지스트리(_sheet_keys.json, 유일 권위) ---
+    # 버전을 가로지르는 영속 시트 정체성. 변환 완료 시 시트마다 get-or-create.
+    @abstractmethod
+    def issue_sheet_key(self, *, project_name: str, version_set_id: Optional[str],
+                        sheet_number: str, sheet_index: int = 0) -> str:
+        """(project_name, version_set_id, 시트라벨)에 대한 영속 sheet_key를 계승 또는 신규 발급.
+        시트라벨 = sheet_number(비어있지 않으면) 또는 위치폴백(빈 번호). 멱등."""
+
+    @abstractmethod
+    def resolve_sheet_key(self, *, project_name: str, version_set_id: Optional[str],
+                          sheet_number: str, sheet_index: int = 0) -> Optional[str]:
+        """읽기 전용: 이미 발급된 sheet_key를 반환(없으면 None). 발급하지 않는다."""
+
+    @abstractmethod
+    def get_sheet_key(self, sheet_key: str) -> Optional[dict]:
+        """레지스트리 레코드(project_name·version_set_id·sheet_number·…) 조회."""
+
+    @abstractmethod
+    def list_sheet_keys(self, *, project_name: Optional[str] = None) -> dict:
+        """sheet_key → 레코드 매핑. project_name 지정 시 해당 프로젝트만."""
+
+    # --- S15: 버전별 추출본(_sheet_meta.json, 이력 보존) ---
+    @abstractmethod
+    def upsert_sheet_meta(self, *, sheet_key: str, project_name: str, file_id: str,
+                          sheet_index: int, sheet_id: str, source_kind: str,
+                          content_hash: str, text_index: str, tags: list,
+                          summary: Optional[str] = None, conflicts: Optional[list] = None,
+                          extractor: Optional[dict] = None) -> dict:
+        """새 추출본을 이력으로 적재. 같은 sheet_key+content_hash면 no-op(멱등).
+        새 이력이면 같은 sheet_key의 기존 is_current를 강등하고 신규만 is_current=True(D6)."""
+
+    @abstractmethod
+    def get_sheet_meta(self, meta_id: str) -> Optional[dict]: ...
+
+    @abstractmethod
+    def list_sheet_meta(self, *, project_name: Optional[str] = None,
+                        sheet_key: Optional[str] = None, file_id: Optional[str] = None,
+                        sheet_id: Optional[str] = None, current_only: bool = False) -> list: ...
+
 
 class JsonDrawingStore(DrawingStore):
     """uploads/_index.json 단일 인덱스. 단일 프로세스 로컬 개발용."""
@@ -335,6 +374,8 @@ class JsonDrawingStore(DrawingStore):
         self._templates_path = Path(config.UPLOADS_DIR) / "_templates.json"  # S9.3: 프로젝트 템플릿
         self._packages_path = Path(config.UPLOADS_DIR) / "_packages.json"  # S14: 발행분(package/transmittal)
         self._sheet_sources_path = Path(config.UPLOADS_DIR) / "_sheet_sources.json"  # S14: 시트↔DWG 링크
+        self._sheet_keys_path = Path(config.UPLOADS_DIR) / "_sheet_keys.json"  # S15: 시트 정체성 레지스트리
+        self._sheet_meta_path = Path(config.UPLOADS_DIR) / "_sheet_meta.json"  # S15: 버전별 추출본(이력)
         # S7: 구성원·프로젝트·프로젝트-구성원·현재 사용자
         self._members_path = Path(config.UPLOADS_DIR) / "_members.json"
         self._projects_path = Path(config.UPLOADS_DIR) / "_projects.json"
@@ -363,6 +404,10 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._packages_path, {})
         if not self._sheet_sources_path.exists():
             self._write_at(self._sheet_sources_path, {})
+        if not self._sheet_keys_path.exists():
+            self._write_at(self._sheet_keys_path, {})
+        if not self._sheet_meta_path.exists():
+            self._write_at(self._sheet_meta_path, {})
 
     def _read_at(self, path: Path) -> dict:
         try:
@@ -1018,6 +1063,91 @@ class JsonDrawingStore(DrawingStore):
         idx = max((_rev_to_index(r) for r in revs), default=-1)
         return _index_to_rev(idx + 1)
 
+    # --- S15: 시트 정체성 레지스트리 ---
+    def _sk_match(self, rec: dict, project_name, version_set_id, label) -> bool:
+        return (rec.get("project_name") == project_name
+                and rec.get("version_set_id") == version_set_id
+                and _sheet_label(rec.get("sheet_number", ""), rec.get("sheet_index", 0)) == label)
+
+    def resolve_sheet_key(self, *, project_name, version_set_id, sheet_number, sheet_index=0):
+        label = _sheet_label(sheet_number, sheet_index)
+        for key, rec in self._read_at(self._sheet_keys_path).items():
+            if self._sk_match(rec, project_name, version_set_id, label):
+                return key
+        return None
+
+    def issue_sheet_key(self, *, project_name, version_set_id, sheet_number, sheet_index=0):
+        label = _sheet_label(sheet_number, sheet_index)
+        with self._lock:
+            data = self._read_at(self._sheet_keys_path)
+            for key, rec in data.items():
+                if self._sk_match(rec, project_name, version_set_id, label):
+                    return key   # 계승(멱등)
+            key = f"sk_{uuid.uuid4().hex}"
+            data[key] = {
+                "project_name": project_name,
+                "version_set_id": version_set_id,
+                "sheet_number": sheet_number,
+                "sheet_index": sheet_index,
+                "created_at": datetime.now().isoformat(),
+            }
+            self._write_at(self._sheet_keys_path, data)
+            return key
+
+    def get_sheet_key(self, sheet_key: str) -> Optional[dict]:
+        return self._read_at(self._sheet_keys_path).get(sheet_key)
+
+    def list_sheet_keys(self, *, project_name=None) -> dict:
+        data = self._read_at(self._sheet_keys_path)
+        if project_name is None:
+            return dict(data)
+        return {k: v for k, v in data.items() if v.get("project_name") == project_name}
+
+    # --- S15: 버전별 추출본(이력) ---
+    def upsert_sheet_meta(self, *, sheet_key, project_name, file_id, sheet_index, sheet_id,
+                          source_kind, content_hash, text_index, tags,
+                          summary=None, conflicts=None, extractor=None) -> dict:
+        with self._lock:
+            data = self._read_at(self._sheet_meta_path)
+            for rec in data.values():
+                if rec.get("sheet_key") == sheet_key and rec.get("content_hash") == content_hash:
+                    return rec   # 동일 콘텐츠 재변환 → no-op(멱등)
+            for rec in data.values():
+                if rec.get("sheet_key") == sheet_key and rec.get("is_current"):
+                    rec["is_current"] = False   # 이전 rev 강등(이력은 보존)
+            meta_id = f"sm_{uuid.uuid4().hex}"
+            rec = {
+                "meta_id": meta_id, "project_name": project_name, "sheet_key": sheet_key,
+                "file_id": file_id, "sheet_index": sheet_index, "sheet_id": sheet_id,
+                "content_hash": content_hash, "source_kind": source_kind,
+                "is_current": True, "text_index": text_index, "tags": tags,
+                "summary": summary, "conflicts": conflicts or [],
+                "extractor": extractor or {"rule_version": "1", "llm_model": None},
+                "extracted_at": datetime.now().isoformat(),
+            }
+            data[meta_id] = rec
+            self._write_at(self._sheet_meta_path, data)
+            return rec
+
+    def get_sheet_meta(self, meta_id: str) -> Optional[dict]:
+        return self._read_at(self._sheet_meta_path).get(meta_id)
+
+    def list_sheet_meta(self, *, project_name=None, sheet_key=None, file_id=None,
+                        sheet_id=None, current_only=False) -> list:
+        rows = list(self._read_at(self._sheet_meta_path).values())
+        if project_name is not None:
+            rows = [r for r in rows if r.get("project_name") == project_name]
+        if sheet_key is not None:
+            rows = [r for r in rows if r.get("sheet_key") == sheet_key]
+        if file_id is not None:
+            rows = [r for r in rows if r.get("file_id") == file_id]
+        if sheet_id is not None:
+            rows = [r for r in rows if r.get("sheet_id") == sheet_id]
+        if current_only:
+            rows = [r for r in rows if r.get("is_current")]
+        rows.sort(key=lambda r: r.get("extracted_at", ""), reverse=True)
+        return rows
+
 
 class TypeDBDrawingStore(DrawingStore):
     """typedb-driver 적재. 04-drawings 온톨로지(이식). 미가동 시 생성에서 예외."""
@@ -1379,6 +1509,47 @@ class TypeDBDrawingStore(DrawingStore):
 
     def next_rev(self, sheet_key: str, project_name: Optional[str] = None) -> str:
         return _MIRROR.next_rev(sheet_key, project_name=project_name)
+
+    def issue_sheet_key(self, *, project_name, version_set_id, sheet_number, sheet_index=0):
+        return _MIRROR.issue_sheet_key(
+            project_name=project_name, version_set_id=version_set_id,
+            sheet_number=sheet_number, sheet_index=sheet_index)
+
+    def resolve_sheet_key(self, *, project_name, version_set_id, sheet_number, sheet_index=0):
+        return _MIRROR.resolve_sheet_key(
+            project_name=project_name, version_set_id=version_set_id,
+            sheet_number=sheet_number, sheet_index=sheet_index)
+
+    def get_sheet_key(self, sheet_key: str) -> Optional[dict]:
+        return _MIRROR.get_sheet_key(sheet_key)
+
+    def list_sheet_keys(self, *, project_name=None) -> dict:
+        return _MIRROR.list_sheet_keys(project_name=project_name)
+
+    def upsert_sheet_meta(self, *, sheet_key, project_name, file_id, sheet_index, sheet_id,
+                          source_kind, content_hash, text_index, tags,
+                          summary=None, conflicts=None, extractor=None) -> dict:
+        return _MIRROR.upsert_sheet_meta(
+            sheet_key=sheet_key, project_name=project_name, file_id=file_id,
+            sheet_index=sheet_index, sheet_id=sheet_id, source_kind=source_kind,
+            content_hash=content_hash, text_index=text_index, tags=tags,
+            summary=summary, conflicts=conflicts, extractor=extractor)
+
+    def get_sheet_meta(self, meta_id: str) -> Optional[dict]:
+        return _MIRROR.get_sheet_meta(meta_id)
+
+    def list_sheet_meta(self, *, project_name=None, sheet_key=None, file_id=None,
+                        sheet_id=None, current_only=False) -> list:
+        return _MIRROR.list_sheet_meta(
+            project_name=project_name, sheet_key=sheet_key, file_id=file_id,
+            sheet_id=sheet_id, current_only=current_only)
+
+
+def _sheet_label(sheet_number: str, sheet_index: int) -> str:
+    """시트 정체성 라벨. sheet_number(번호)가 정체성이며, 위치(index)에 독립적이라
+    rev가 올라가며 순서가 바뀌어도 계승된다. 빈 번호만 위치로 폴백(계승 불가한 퇴화 케이스)."""
+    num = (sheet_number or "").strip()
+    return num if num else f"idx:{sheet_index}"
 
 
 _REV_SEQ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

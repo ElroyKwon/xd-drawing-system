@@ -1,8 +1,62 @@
 # PROGRESS — 실동작 빌드아웃 루프
 
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
+> **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 현재 상태 (2026-07-06, 세션 20 — PDF↔DWG 매칭 **S14 구현 DONE**: 진단→인터뷰→FROZEN 프롬프트→ai-loop 풀루프) ⬅ 최신
+## 현재 상태 (2026-07-08, 세션 22 — **S15 구현 착수: 단계 1·2·3·4·7 DONE**, 추출→저장→HTTP질의 백본 완성) ⬅ 최신
+
+> prompts/20 FROZEN 수행 11단계 중 **5단계 완료**(1 정체성 레지스트리 · 2 소급 마이그레이션 · 3 규칙 추출 · 4 sheet_meta 이력 · 7 read API). 실 청주 데이터로 검증. **미커밋.**
+
+### 완료 단계 (전부 회귀 0, pytest GREEN)
+- **단계1 sheet_key 레지스트리**(`_sheet_keys.json` 유일 권위): `store.py` issue/resolve/get/list_sheet_key + 변환 완료 훅 발급. 발급·계승(버전 가로지름·위치독립)·멱등·프로젝트/버전셋 격리. `test_s15_sheet_keys.py` 8건.
+- **단계2 소급 마이그레이션**(`scripts/migrate_sheet_keys.py`, 멱등): 실 청주 42파일/108시트 → **108 sheet_key 발급, 2회차 신규 0**(O3). `test_s15_migrate.py` 1건.
+- **단계3 규칙 추출**(`rule_extract.py`+`equipment_vocab.py`, egress 0): PDF(PyMuPDF)·DXF(ezdxf) → text_index + 설비태그(정규식+청주 15종 사전). 고신뢰0.92/prefix추론0.65, evidence 부착, 시트번호 오탐0. **실 청주 도면에서 시드 없이 TR-3201·LV-2501 등 실 태그 추출**(O5 핵심). `test_s15_rule_extract.py` 9건.
+- **단계4 sheet_meta 이력**(`_sheet_meta.json`, D6): `store.py` upsert(content_hash 멱등·is_current 강등·이력보존)/get/list + `sheet_indexing.py`(공용 색인) 변환·마이그레이션 양쪽 배선. 실 청주 **108 meta 적재(21 태그보유)**. `test_s15_sheet_meta.py` 5건.
+- **단계7 read API 3종**(`routes_sheet_meta.py`): GET /api/sheet-meta(조회·current_only) · /search(본문색인) · /by-equipment(태그역조회). 실데이터 스모크: current 40 · "변압기" 3 · "TR-" 6시트. `test_s15_routes_sheet_meta.py` 4건.
+- **회귀**: backend pytest **125→152**(+27 신규, 회귀 0). build·vitest·사이드카 미실행(백엔드만 변경).
+
+### 남은 단계 (성격별)
+- **단계6 DWG↔PDF 병합**(D7): ⚠️ 같은 sheet_key가 PDF·DXF 양쪽에 있어야 하는데 현재 issue 규칙상 다른 version_set→다른 키. **S14 sheet_source↔레지스트리 계승(D5) 재조정 설계 선행 필요** → 순수 확장 아님, 사용자 논의 대상.
+- **단계5 8002 LLM 사이드카**(D8, 격리·기본 off): 새 서비스. **HUMAN_GATE-7**(대량 LLM egress). 규칙 트랙만으로 시스템 완주하므로 부가 레이어.
+- **단계8 AI 툴 강화/신설**(D3): search 본문색인·get_sheet tags·get_sheet_content·find_sheets_by_equipment. **실 gpt-5.5+8001 사이드카 라이브 검증 필요**(사용자 환경).
+- **단계9 정직성 골든 이밸**(D4): 저신뢰 "자동추출(미검증)" 명시 문항. 8001 이밸 환경 필요.
+- **단계10 온톨로지 연결**: 추출태그→/api/ontology/equipment 승격. TypeDB on/off 2회 e2e.
+- **단계11 회귀 게이트 + 독립 3렌즈 검수**.
+
+### 이번 세션 산출물(미커밋, 전부 backend/scripts/docs)
+신규: `backend/equipment_vocab.py`·`rule_extract.py`·`sheet_indexing.py`·`routes_sheet_meta.py`·`scripts/migrate_sheet_keys.py` + 테스트 5파일(`test_s15_*`). 수정: `backend/store.py`(레지스트리·sheet_meta CRUD, 추상+Json+TypeDB위임)·`routes_drawing.py`(변환훅 색인)·`main.py`(라우터 등록). 데이터(gitignore): `_sheet_keys.json`·`_sheet_meta.json` 실 청주 backfill 완료.
+
+---
+
+## 현재 상태 (2026-07-08, 세션 21 — 백본 진단 + 방향 확정 + **S15 업로드 지능화 설계 FROZEN**, 코드변경 0)
+
+> 이 세션은 **설계·계획·로드맵 관리 세션**이다(코드 미변경). 사용자 지적("중요한 백본이 빠졌다 + 로드맵에 방향/순서를 제대로 관리 안 해 자꾸 잊는다")에서 출발 → 실태 코드조사(3렌즈) → 방향 확정 → **S15 메타프롬프트 freeze**까지. **다음 세션 = S15 구현 착수.**
+
+### 한 일
+1. **워크플로 백본 실태 코드조사(독립 3에이전트)**: ① 업로드 메타추출=**100% 규칙기반 휴리스틱, AI 미호출**(PDF=타이틀블록 텍스트, DWG=파일명/레이아웃명·더 약함), 설비=수동 시드. ② TypeDB=**선택적·미러 이중화**, 실 TypeQL은 설비 조회 1개뿐이고 기본 8000서버는 미연결(`XD_ONTOLOGY_DIRECT_TYPEDB=1`일 때만). ③ 이슈→수정→재업로드 루프는 **2단계까지만**(버전·supersede 기계장치는 있으나 이슈와 분리, 연결·검증게이트 없음=S14 Phase2 미착수).
+2. **확정 방향을 로드맵 SoT에 박음**(사용자 핵심 지적 반영): `ROADMAP.md §0` 신설 — A(첫 주력=백본1 업로드 지능화) · B(**TypeDB 선택적·외부·DKS 제공 LOCKED**, 이슈추적/링크는 알고리즘 유지) · C(나머지 순서 백본3→A→C→D). memory 2건 저장(`project_workflow_backbone_direction`·`feedback_roadmap_sot_keep_direction`).
+3. **S15 메타프롬프트 공동설계·FROZEN**: `prompts/20-s15-upload-intelligence.md`. AskUserQuestion 8결정(D1~D8) + 저장설계(코드가 강제: `store.py:429-430` 재변환 시 sheets 통째 교체→시트 임베드 금지→외부 JSON 조인) + 합격기준 **O1~O15**. `PLAN.md` S15 마일스톤+체크리스트, `HUMAN_GATE.md` **GATE-7**(대량 LLM egress) 등록.
+4. **AI 어시스턴트 축을 설계 출발점으로**: 진단=AI 근거 시트정보 5필드뿐(`ai/tools.py:43-50`)+수동시드 15종 → 새 도면 내용 못 봄. "**업로드 추출=AI 답변의 천장**"을 Stage goal에 못박음. D3(툴 강화+신설)·D4(신뢰도 정직성)가 실행계약.
+
+### ▶ 다음 세션(22) = S15 구현 착수 (진입점)
+- **읽기**: `ROADMAP.md §0` → `prompts/20-s15-upload-intelligence.md`(FROZEN, 수행 11단계·O1~O15) → 이 블록.
+- **실행법**: `ai-loop`(권장) 또는 `subagent-driven-development`로 수행단계 1~11 순차. **첫 태스크 = 단계1**(`_sheet_keys.json` 정체성 레지스트리 + 변환 완료 시 전 시트 발급, 계승 pytest). 그다음 단계2(청주 40장 소급 마이그레이션 스크립트).
+- **핵심 불변식(채점)**: 8000 egress 0(O11) · 신규 `backend/extract/`(8002) 기존 backend import 0(O12·AST) · `backend/ai/` 무변경 격리 · TypeDB 없어도 100% 동작(O13) · 회귀 0(O14).
+- **저장설계(고정)**: 추출물을 `row["sheets"]`에 넣지 말 것(재변환 소멸). `_sheet_keys.json`(정체성 유일권위) + `_sheet_meta.json`(버전별 이력, `sheet_key`로 조인). 데이터 모델 상세는 prompts/20 "데이터 모델(계약)".
+- **게이트**: LLM 트랙(8002, `XD_EXTRACT_LLM=1`)은 **HUMAN_GATE-7**. **기본 off(규칙기반)로 S15 완주·DONE 선언 가능** — 실 LLM 켜기만 사용자 결정.
+- **재기동**:
+  - 8000: `XD_STORE=auto backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000` (TypeDB 없으면 json 폴백).
+  - 8001(기존 챗, 무변경): `cd backend/ai && .venv/Scripts/python.exe -m uvicorn main_ai:app --port 8001`.
+  - 8002(신규 추출기, 이번에 만듦): `backend/extract/` 자체 venv, `uvicorn main_extract:app --port 8002`. 기본 mock/off.
+  - 프론트: `npm run dev`(5173). ⚠️ **vitest는 8000 내리고 실행**. 라우트 추가 후 uvicorn 수동 재기동.
+- **회귀 기준선**: build · vitest **128** · backend pytest **125** · 사이드카 pytest **39** (S15 시작 전 GREEN 확인).
+
+### 미커밋(이 세션 산출물 — 전부 문서, 코드 0)
+`prompts/20-s15-upload-intelligence.md`(신규) · `ROADMAP.md`(§0 A 확장) · `PLAN.md`(S15 마일스톤) · `HUMAN_GATE.md`(GATE-7). git 미커밋(사용자 커밋 지시 시 반영). 세션시작 기준 기존 미커밋(README.md·docs/product 산출물)은 이 세션 미접촉.
+
+---
+
+## 이전 상태 (2026-07-06, 세션 20 — PDF↔DWG 매칭 **S14 구현 DONE**: 진단→인터뷰→FROZEN 프롬프트→ai-loop 풀루프)
 
 > 이 세션은 진단/인터뷰/프롬프트 freeze로 시작해 **ai-loop로 S14를 구현·검증·DONE까지 완주**했다.
 
