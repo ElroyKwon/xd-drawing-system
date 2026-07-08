@@ -61,6 +61,15 @@
 ### S14 — PDF 시트 ↔ DWG 소스 매칭 + 버전 기반 (Phase 1: 토대)
 **목표**: 실제 도면관리 왕복(이슈→수정→리턴 DWG→버전관리→신규 PDF로 시트 갱신)의 **1차 토대**. 현행 시스템은 PDF↔DWG 링크·supersede·이슈연결이 전무 → deep-interview(2026-07-06)로 현장 절차 확정. **세트 제출(DWG+PDF) 기본·수동 매핑·시트별 rev+발행분 이중버전·검증게이트**를 freeze. Phase 1 = ①Package/Transmittal 엔티티 ②`sheet_key`(버전 가로지르는 영속 시트 정체성, 시트번호는 라벨) ③sheet_source 링크(N:M 수동 매핑) + 세트 업로드·매핑 UI + 시트→소스 DWG 벡터 뷰어 열기. `prompts/19` FROZEN(2026-07-06), N1~N9 채점. **자동변환·supersede·이슈연결은 Phase 2**(Out of scope). 기존 drawing/sheet/folder/version_set 무변경 + 새 JSON 2개(`_packages.json`·`_sheet_sources.json`) 외부 조인.
 
+### S15 — 업로드 지능화 (백본1) ★ 다음 작업
+**목표**: 업로드 시 **본문 텍스트 색인 + 설비 태그 자동 추출**(PDF+DWG) → **`sheet_key`(버전 가로지르는 영속 시트 정체성)**에 매달아 생명주기 관리 → **8000 read API로 AI 어시스턴트가 그라운딩**. **왜**: 현재 AI가 볼 수 있는 시트 정보는 5필드뿐이고 설비 지식은 수동 시드 15종 → 새 도면을 올려도 AI가 내용을 모름. **업로드 추출이 AI 답변의 천장**이다.
+- **저장 설계(코드가 강제)**: 추출물을 `row["sheets"]`에 임베드 금지 — 재변환 시 통째 교체돼 소멸(`store.py:429-430`), `sheet_id`도 재발급되어 불안정 앵커. → 외부 JSON 조인(`_sheet_keys.json` 정체성 레지스트리 + `_sheet_meta.json` 버전별 추출본).
+- **공동설계 8결정 FROZEN** (`prompts/20-s15-upload-intelligence.md`, 2026-07-08): D1 범위=본문색인+설비태그(관계/정격은 범위외) · D2 엔진=**규칙·LLM 2트랙 독립 추출 + 3차 분류·정규화**(LLM 기본 off) · D3 AI소비=기존툴 강화(`search` 본문·`get_sheet` tags)+신규툴(`get_sheet_content`·`find_sheets_by_equipment`) · D4 **confidence·src 표기 + 저신뢰는 AI가 "자동추출(미검증)" 명시**(골든 이밸 문항 추가) · D5 **모든 시트에 업로드 시 sheet_key 발급**(현재 publish 시만) + 청주 40장 소급 마이그레이션 · D6 **버전별 메타 전부 보존, AI는 `is_current`만** · D7 **DWG(DXF) 우선 + PDF 보강**, 충돌은 `conflicts[]`에 기록 · D8 **LLM은 별도 추출 사이드카 8002**(8000 egress 0·킬스위치 유지, 8002 꺼도 규칙기반으로 정상 동작).
+- **불변식**: 8000 egress 0 / `backend/extract/` 기존 backend import 0(AST) / `backend/ai/` 무변경 격리 / TypeDB 없어도 100% 동작(§0 B LOCKED) / 회귀 0.
+- **HUMAN_GATE-7**: 실 고객 도면 **대량** 외부 LLM 전송은 게이트. 기본 off로 구현만 → **규칙기반 트랙만으로 S15 DONE 선언 가능**.
+- **Done**: 합격기준 **O1~O15** 전항목 MET(시드 없이 새 도면 설비 태그가 AI에 보임 · 8002 정지해도 추출 동작 · 버전별 이력 보존 · DXF 우선 병합+충돌 기록 · 저신뢰 미검증 표기 · 환각 0 유지 · 3렌즈 수리).
+- **부수 효과**: `sheet_key` + 버전별 메타 이력 = **백본3(S14 Phase 2: supersede diff·이슈↔해결버전 연결)의 토대**.
+
 ## 마일스톤 체크리스트
 
 - [x] S1 업로드→변환→뷰어 (+ 렌더 bake-off S1.5: 2-way 승자=②벡터, ③APS 전략상 배제)
@@ -79,6 +88,7 @@
 - [ ] S8.4 egress 감사로그/게이트 정식화
 - [ ] S8.5 3렌즈 검수 + 격리 불변식 reconcile
 - [ ] S10 XD 온톨로지 적재 + equipmentEntityId 바인딩 (TypeDB 기동됨 → 착수 가능)
+- [ ] **S15 업로드 지능화(백본1)** — 본문색인+설비태그 자동추출 · sheet_key 보편발급+마이그레이션 · 버전별 메타 이력 · DXF우선 병합 · 8002 추출 사이드카(LLM 기본 off) · AI 툴 강화+신설 · 신뢰도 정직성 이밸. `prompts/20` FROZEN, O1~O15. **★ 다음 작업**
 - [x] S14 PDF↔DWG 매칭 + 버전 토대 Phase 1 (Package·sheet_key·sheet_source + 세트 업로드·수동 매핑 UI[HTML5 DnD+a11y 버튼+계승 셀렉트] + 소스 DWG 벡터 왕래, prompts/19 FROZEN, **N1~N9 전항목 MET**, 세션20. 3렌즈 BLOCKER0·MAJOR1[프로젝트 스코프 계승]+MINOR9 전량 수리, 자체 실버그2[renderEngine stale·변환폴링] e2e 적발수리. pytest 125·vitest 128·build·diff clean. device e2e 콘솔0 `evidence/s14-01~08`)
 
 ## 순서 근거 / 조정 여지
