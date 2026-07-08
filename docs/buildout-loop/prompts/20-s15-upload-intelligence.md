@@ -111,7 +111,8 @@
 6. **DWG↔PDF 병합**(D7): 같은 `sheet_key`의 dxf·pdf 추출본을 DXF 우선 병합, 충돌 `conflicts[]` 기록 → verify: 충돌 케이스 pytest.
 7. **8000 read API 3종 신설** → verify: 라이브 GET 200 + 스키마.
 8. **AI 툴 강화·신설**(D3): `search` 본문 색인 포함, `get_sheet`/`list_sheets`에 tags·summary, 신규 `get_sheet_content`·`find_sheets_by_equipment` → verify: 사이드카 pytest + 실 gpt-5.5 라이브.
-9. **신뢰도 정직성**(D4): 시스템 프롬프트에 "저신뢰(`confidence < 0.6`) 태그 인용 시 '자동추출(미검증)' 명시" 지침 + **골든 이밸 문항 추가** → verify: 이밸 통과.
+9. **신뢰도 정직성**(D4): 시스템 프롬프트에 "저신뢰(`confidence < 0.7`) 태그 인용 시 '자동추출(미검증)' 명시" 지침 + **골든 이밸 문항 추가** → verify: 이밸 통과.
+   > **임계값 조정(2026-07-08, 세션25, 사용자 승인)**: `< 0.6` → `< 0.7`. 근거: 규칙 트랙은 사전확정 0.92·prefix추론 0.65 두 신뢰도만 생성하고 실 청주 태그는 100%가 0.65(prefix추론=사전 미매칭). 0.6 임계값은 그 바로 아래라 정직성 플래그가 **실 데이터에서 절대 발화되지 않아** O9가 공허해짐. 의미선(사전확정 신뢰 vs prefix추론 미검증)에 맞춰 0.7로 올려 prefix추론(0.65)을 "미검증"으로 잡음. AskUserQuestion 승인 = HUMAN_GATE 해제.
 10. **온톨로지 연결**: 추출 태그를 `/api/ontology/equipment` 표면으로 승격(수동 시드는 고신뢰 curated overlay로 유지). TypeDB 연결 시 동기, 없으면 내부 JSON만 → verify: TypeDB 끈 상태·켠 상태 둘 다 동작.
 11. **회귀 게이트** + **독립 3렌즈 검수**(백엔드 적대 · 프론트/AI 소비 · Done-When 비평) → 발견 전량 수리 + 회귀.
 
@@ -129,7 +130,7 @@
 | **O6** | 새 버전 업로드 시 이전 rev 추출본 **보존**, `is_current`는 최신 1개 | pytest + JSON 확인 |
 | **O7** | AI 기본 답변은 `is_current` 기준. 과거 rev는 명시 질의 시만 | 라이브 챗 2문항 |
 | **O8** | DXF·PDF 충돌 시 **DXF 채택 + `conflicts[]` 기록**(버리지 않음) | pytest 충돌 케이스 |
-| **O9** | 저신뢰 태그를 AI가 인용할 때 **"자동추출(미검증)" 명시** | 골든 이밸 신규 문항 PASS |
+| **O9** | 저신뢰 태그(`confidence < 0.7`, 세션25 승인 조정)를 AI가 인용할 때 **"자동추출(미검증)" 명시** | 골든 이밸 신규 문항 PASS |
 | **O10** | 없는 설비를 물으면 여전히 **"없음"** (환각 0 유지) | 기존 환각 적대 문항 전부 PASS |
 | **O11** | **8000 egress 0** — 본선에 외부 네트워크 호출 없음 | 정적 grep/AST 검사 |
 | **O12** | **`backend/extract/` 격리** — 기존 backend 모듈 import 0 | AST 검사 |

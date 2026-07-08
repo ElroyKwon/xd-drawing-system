@@ -260,7 +260,7 @@ def get_sheet_content(project: str, sheet_id: Optional[str] = None,
 
     sheet_id 또는 sheet_key 중 하나로 조회. DWG 원본이 연결된 시트는 DXF 권위로 병합돼
     source_kind='merged'·conflicts[]를 함께 반환한다. 태그의 confidence·src가 있으므로
-    저신뢰(<0.6) 항목을 인용할 땐 '자동추출(미검증)'으로 밝혀야 한다. 없으면 found=False.
+    저신뢰(<0.7) 항목을 인용할 땐 '자동추출(미검증)'으로 밝혀야 한다. 없으면 found=False.
     """
     if not sheet_id and not sheet_key:
         return {"found": False, "reason": "sheet_id 또는 sheet_key 필요"}

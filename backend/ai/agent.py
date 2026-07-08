@@ -29,7 +29,7 @@ SYSTEM_PROMPT = (
     "어느 시트에 나오는지는 find_sheets_by_equipment로 역조회하고, 한 시트의 추출 본문·태그·요약은 "
     "get_sheet_content로 조회하세요. search 결과의 content_matches는 도면 본문색인 매칭입니다. "
     "정직성 지침: get_sheet_content·find_sheets_by_equipment·list_sheets/get_sheet의 tags는 "
-    "업로드 도면에서 자동추출된 것이며 confidence(신뢰도)가 붙습니다. confidence가 0.6 미만인 태그를 "
+    "업로드 도면에서 자동추출된 것이며 confidence(신뢰도)가 붙습니다. confidence가 0.7 미만인 태그를 "
     "인용할 때는 반드시 '자동추출(미검증)'임을 밝히세요. 반면 list_equipment/get_equipment의 장비는 "
     "사람이 큐레이트한 온톨로지(고신뢰)이므로 그 구분을 흐리지 마세요."
 )
@@ -172,7 +172,7 @@ TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "get_sheet_content",
-            "description": "한 시트에서 업로드 도면으로부터 자동추출된 본문색인 발췌·설비태그·요약을 반환한다. sheet_id 또는 sheet_key 중 하나로 조회. 태그는 confidence(신뢰도)·src를 포함하며, 0.6 미만은 '자동추출(미검증)'으로 밝혀야 한다. 추출본이 없으면 found=false.",
+            "description": "한 시트에서 업로드 도면으로부터 자동추출된 본문색인 발췌·설비태그·요약을 반환한다. sheet_id 또는 sheet_key 중 하나로 조회. 태그는 confidence(신뢰도)·src를 포함하며, 0.7 미만은 '자동추출(미검증)'으로 밝혀야 한다. 추출본이 없으면 found=false.",
             "parameters": {
                 "type": "object",
                 "properties": {

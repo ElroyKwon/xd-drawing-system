@@ -3,7 +3,35 @@
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 > **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 현재 상태 (2026-07-08, 세션 24 — **S15 단계6 DWG↔PDF 병합 + 시트정체성 통합 DONE**) ⬅ 최신
+## 현재 상태 (2026-07-08, 세션 25 — **S15 단계9 신뢰도 정직성 라이브 이밸 DONE: O9·O10·O14 MET**) ⬅ 최신
+
+> 세션24에서 이어짐. 사용자 지시 "남은 단계 O9부터". 단계9(신뢰도 정직성) 라이브 완결 + 회귀 게이트. **남은 미착수=단계5(8002/O12)·단계10(온톨로지 승격/O13)·O7(과거rev 툴).**
+
+### 핵심 결정 (AskUserQuestion, 사용자 승인 → HUMAN_GATE 해제)
+- **정직성 임계값 `confidence < 0.6` → `< 0.7`**. 조사 결과 규칙 트랙은 사전확정 0.92·prefix추론 0.65 두 값만 생성하고 **실 청주 태그는 100%가 0.65** → 0.6 임계값은 그 바로 아래라 "자동추출(미검증)" 플래그가 **실 데이터에서 절대 발화 안 됨**(O9 공허 통과). 의미선(사전확정=신뢰 vs prefix추론=미검증)에 맞춰 0.7로 상향. 반영: `agent.py` SYSTEM_PROMPT·get_sheet_content 설명, `tools.py` docstring, `prompts/20` 단계9·O9(변경 기록 박음).
+
+### 산출물
+- `backend/ai/eval/golden.json` **청주 정렬 재작성**(구 Study_Project→LS 청주사업장): grounding 5(시트40·이슈10·clash2 실제목·22.9kV·접지) + hallucination 4(X-999·예산·GEN-9·issue-99999) + **honesty 신규 4(N1~N4: 저신뢰 태그 인용 시 미검증 명시)**.
+- `backend/ai/eval/results.json` 라이브 실행 결과. 증거 `evidence/s15-o9-honesty-golden-eval.md`(채점표).
+
+### 검증 — 라이브 골든 이밸 **13/13 PASS** (실 gpt-5.5 + 8000 json + 8001)
+- **Grounding 5/5**: 40장·10건·clash 2건 실제목·CV 325→400sq·접지 TN-S 전부 툴 근거 인용.
+- **Hallucination 4/4 → O10 환각0 MET**: 없는 시트/예산/설비(GEN-9)/이슈 전부 "없음".
+- **Honesty 4/4 → O9 MET**: N1 TR-3204 4시트 + "자동추출(미검증, 0.65)" 명시 · N2 LV-5 7시트 미검증 명시 · N3 "0.7미만 전부 미검증" 정직 설명 · N4 자동추출로 단정 않고 **큐레이트 온톨로지(list_equipment)로 구분 답**(D4 충족).
+- **회귀 게이트 O14 MET**: backend pytest **166** · 사이드카 **47** · vitest **128** · build GREEN(전부 기준선 유지, 내 변경은 backend/ai 문자열+데이터라 회귀0).
+
+### DONE 경계 (정직) — **전체 S15 여전히 DONE 아님**
+- **이번 세션 MET**: O9(정직성 라이브)·O10(환각0)·O14(회귀). 세션24 검수통과분(O1~O6·O8·O11)과 합쳐 **11/15 MET**.
+- **남은 미착수 4**: **O7**(is_current 기본은 구조상 참이나 "과거 rev 명시 질의"는 LLM에 노출된 히스토리 툴이 없어 미검증 — 툴 표면 설계 필요) · **O12**(단계5 8002 추출 사이드카 미구축 — mock/off 스켈레톤이라도 만들어야 격리 AST 검사 가능, HUMAN_GATE-7은 라이브 LLM만) · **O13**(단계10 온톨로지 승격 + TypeDB off/on 2회 e2e — 사용자 컨테이너 준비됨).
+
+### ▶ 다음 세션(26) 진입점
+- **읽기**: `ROADMAP.md §0` → `prompts/20`(FROZEN, O9 임계값 0.7 반영) → 이 세션25 블록.
+- **남은 순서 권장**: (a) **단계5 8002 스켈레톤**(mock provider·`XD_EXTRACT_LLM=0` 기본·자체 venv·격리 AST 검사 → O12) → (b) **단계10 온톨로지 승격**(추출 태그→`/api/ontology/equipment` overlay, TypeDB off/on 2회 → O13, 컨테이너 기동됨) → (c) **O7 과거 rev 툴**(get_sheet_content에 rev/history 파라미터 노출 or 신규 툴, 라이브 2문항). 전부 끝나면 단계11 최종 3렌즈+회귀로 **S15 DONE 선언**.
+- **재기동**: 8000 `XD_STORE=json backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000` · 8001 `cd backend/ai && .venv/Scripts/python.exe -m uvicorn main_ai:app --port 8001`(헬스=`/api/chat/health`). 이밸 러너 `backend/ai/eval/run_golden.py`. ⚠️ vitest는 8000 내리고, backend pytest는 `--ignore=ai`.
+
+---
+
+## 현재 상태 (2026-07-08, 세션 24 — **S15 단계6 DWG↔PDF 병합 + 시트정체성 통합 DONE**)
 
 > prompts/20 FROZEN 수행 11단계 중 **7단계 완료**(1·2·3·4·6·7·8). O8(병합·conflicts) MET. 남은 미착수=5(HUMAN_GATE)·9완결(라이브)·10·11.
 
