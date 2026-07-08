@@ -24,8 +24,19 @@
 - **backend pytest 152→160**(+8, S14 15건 회귀0 통과) · **사이드카 46**(그대로, get_sheet_content 갱신). frontend build/vitest 미변경(백엔드+사이드카만).
 - **합성 e2e(격리 `XD_UPLOADS_DIR`, 실 데이터 무접촉, 콘솔0)**: PDF(PP-38OV)+DXF(PP-380V)+링크 시드 → 실 HTTP `GET /api/sheet-meta/merged?sheet_key=sk_pdf` → `source_kind=merged`, tags=PP-380V(merged)·CABLE-1·MTR-1, **conflicts=[PP-380V↔PP-38OV resolved PP-380V]**, text 둘 다 보존. 사이드카 `get_sheet_content`(sheet_key·sheet_id 양경로)도 병합 뷰 소비 확인.
 
+### 세션24 후반 — 단계11 독립 3렌즈 검수(구현분 1·2·3·4·6·7·8 대상) + 전량 수리
+- **렌즈1 백엔드 적대**: egress0 확증. **MAJOR 3 적발→수리**: ①`_merge_tags` 같은 소스 내 canon 충돌(PL-1↔PI-1)·빈 태그 침묵유실 → **교차 소스만 폴딩·소스 내부 무손실**로 재작성. ②`merge_current` `layout_name` 무시로 DWG 전 layout 과병합 → **layout 시트로 좁힘**. ③번호없는 시트 색인(빈 sheet_number) vs publish(sheet_name 폴백) 라벨 불일치로 **sheet_key 이중발급(D5 위반)** → publish가 **권위 시트 레코드의 raw sheet_number** 사용. MINOR 2(None 가드·/merged project 스코프 재바인딩) 수리.
+- **렌즈2 AI 소비**: 격리·정직성(D4)·환각0 확증. **MAJOR 2 적발→수리**: ①`list_sheets` 태그가 read API 50캡 초과 시 침묵누락 → `/api/sheet-meta` **limit 파라미터**+사이드카 `_META_ALL=5000`. ②`search` 본문색인 실패가 교차검색 전체를 무너뜨림 → **BackendError try/except로 강등**(content_matches만 비움). MINOR(딥링크 라벨=설비태그)는 무해 판정 수용.
+- **렌즈3 Done-When**: 전 판정 코드/테스트 대조. **"침묵좁힘 거의 없음 — PROGRESS 이례적으로 정직"**. O1~O6·O8·O11 MET(검수통과), **O9=UNMET·O7=NARROWED·O10/O12/O15=DEFERRED·O13/O14=PARTIAL**.
+- **회귀**: backend **160→166**(+6 신규: 병합 무손실·layout 좁힘·라벨통합·None가드·/merged 라우트) · 사이드카 **46→47**(+1 검색 회복력). 전부 GREEN.
+
+### DONE 경계(정직) — **전체 S15 DONE 아님**
+- **검수통과 확정**: 규칙기반 업로드 지능화 백본 — 발급·계승·멱등·규칙추출·이력·병합(conflicts)·실질 egress0(O1~O6·O8·O11) + 회귀 GREEN. 단 O8은 합성전용(실 청주=100% PDF), O3·O5 라이브분은 gitignore 주장.
+- **다음 세션 필수 잔여**: O9(골든 정직성 문항 추가+라이브 PASS — LLM 필요) · O10(온톨로지 승격+환각 라이브) · O7(라이브 2문항+과거 rev 툴 경로) · O13(TypeDB on 동기, 사용자 컨테이너 준비됨) · O14(vitest/build 재실행) · O12/단계5(8002=HUMAN_GATE-7).
+
 ### ▶ 다음 세션(25) 진입점
 - **읽기**: `ROADMAP.md §0` → `prompts/20`(FROZEN, O8=병합/conflicts MET) → 이 세션24 블록.
+- **사용자 준비**: TypeDB Docker 컨테이너 기동해 둠(O10·O13용).
 - **선택지**: (a) 단계9 라이브 정직성 이밸(8000+8001+gpt-5.5, 골든셋에 저신뢰 "자동추출(미검증)" 문항 추가). (b) 단계10 온톨로지 승격(추출태그→/api/ontology/equipment, TypeDB on/off). (c) 단계5 8002 LLM 사이드카(HUMAN_GATE-7). (d) 단계11 3렌즈+회귀 게이트로 S15 DONE 선언.
 - **재기동**: 8000 `XD_STORE=json backend/.venv/Scripts/python.exe -m uvicorn main:app --app-dir backend --port 8000` · 격리 데모는 `XD_UPLOADS_DIR=<temp>` 추가. 사이드카 pytest는 `backend/ai/.venv`.
 

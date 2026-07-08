@@ -65,6 +65,24 @@ def test_merge_tags_agreement_marks_merged():
     assert len(tags) == 1 and tags[0]["src"] == "merged" and tags[0]["confidence"] == 0.95
 
 
+def test_merge_tags_intra_source_no_loss():
+    """렌즈1 MAJOR: 같은 소스 내 canon 충돌(PL-1 vs PI-1)·빈 태그는 접지 않아 유실 0."""
+    pdf = [{"tag": "PL-1", "src": "rule"}, {"tag": "PI-1", "src": "rule"},
+           {"tag": "", "type": "cable", "src": "rule"}, {"tag": "", "type": "wire", "src": "rule"}]
+    tags, conflicts = sheet_merge._merge_tags(pdf, [])   # DXF 없음
+    assert {t.get("tag") for t in tags} == {"PL-1", "PI-1", ""}  # PL-1·PI-1 둘 다 생존
+    assert sum(1 for t in tags if t.get("tag") == "") == 2       # 빈 태그 2개 개별 보존
+    assert conflicts == []
+
+
+def test_merge_tags_dxf_intra_canon_both_survive():
+    """DXF끼리 canon 충돌해도 둘 다 보존(원문 완전중복만 제거)."""
+    dxf = [{"tag": "PL-1", "src": "rule"}, {"tag": "PI-1", "src": "rule"},
+           {"tag": "PL-1", "src": "rule"}]   # 마지막은 완전중복
+    tags, _ = sheet_merge._merge_tags([], dxf)
+    assert [t["tag"] for t in tags] == ["PL-1", "PI-1"]   # 중복 1개만 제거, PI-1 유지
+
+
 # ── merge_current: passthrough / 병합 ──────────────────────────────
 
 def test_merge_current_passthrough_when_no_dwg(tmp_path, monkeypatch):
@@ -120,6 +138,59 @@ def test_merge_current_ignores_noncurrent_link(tmp_path, monkeypatch):
 def test_merge_current_none_when_no_meta(tmp_path, monkeypatch):
     _, s = _fresh_store(tmp_path, monkeypatch)
     assert sheet_merge.merge_current(s, "P", "sk_ghost") is None
+
+
+def test_merge_current_narrows_by_layout(tmp_path, monkeypatch):
+    """렌즈1 MAJOR: 링크 layout_name으로 좁혀, DWG의 무관 layout 태그가 과병합되지 않는다."""
+    _, s = _fresh_store(tmp_path, monkeypatch)
+    # 2개 layout(L1·L2)을 가진 DWG. 각 layout이 자기 시트로 dxf meta 적재.
+    s.add_drawing({"file_id": "DF", "filename": "DF.dxf", "file_path": str(tmp_path / "DF"),
+                   "file_format": "dxf", "project_name": "P", "conversion_status": "completed",
+                   "sheets": [{"sheet_id": "DF_s0", "sheet_name": "L1", "sheet_index": 0},
+                              {"sheet_id": "DF_s1", "sheet_name": "L2", "sheet_index": 1}]})
+    dsk0 = s.issue_sheet_key(project_name="P", version_set_id="DF", sheet_number="", sheet_index=0)
+    dsk1 = s.issue_sheet_key(project_name="P", version_set_id="DF", sheet_number="", sheet_index=1)
+    _upsert(s, sheet_key=dsk0, file_id="DF", sheet_id="DF_s0", kind="dxf", text="L1",
+            tags=[{"tag": "IN-L1", "confidence": 0.9, "src": "rule"}])
+    _upsert(s, sheet_key=dsk1, file_id="DF", sheet_id="DF_s1", kind="dxf", text="L2",
+            tags=[{"tag": "IN-L2", "confidence": 0.9, "src": "rule"}])
+    sk = s.issue_sheet_key(project_name="P", version_set_id="PF", sheet_number="EE-01-000")
+    _upsert(s, sheet_key=sk, file_id="PF", sheet_id="PF_s0", kind="pdf", text="pdf",
+            tags=[{"tag": "P-ONLY", "confidence": 0.6, "src": "rule"}])
+    # PDF 시트는 L1에만 링크.
+    s.add_sheet_source({"link_id": "lnk_1", "sheet_key": sk, "rev": "A", "project_name": "P",
+                        "pdf_file_id": "PF", "sheet_id": "PF_s0",
+                        "dwg_links": [{"dwg_file_id": "DF", "layout_name": "L1"}],
+                        "is_current": True, "created_at": "t1"})
+    view = sheet_merge.merge_current(s, "P", sk)
+    names = {t["tag"] for t in view["tags"]}
+    assert names == {"IN-L1", "P-ONLY"}   # L2(IN-L2)는 병합에서 제외됨
+    assert "IN-L2" not in names
+
+
+def test_publish_label_unifies_key_for_numberless_sheet(tmp_path, monkeypatch):
+    """렌즈1 MAJOR: 번호 없는 시트에서 색인(빈 sheet_number)과 publish가 같은 키를 계승(이중발급 방지)."""
+    rp = _reload_routes(tmp_path, monkeypatch)
+    s = rp.get_store()
+    # PDF 시트: sheet_number 비어있고 sheet_name만 있음(타이틀블록 번호추출 실패 케이스).
+    s.add_drawing({"file_id": "PF", "filename": "PF.pdf", "file_path": str(tmp_path / "PF"),
+                   "file_format": "pdf", "project_name": "P", "conversion_status": "completed",
+                   "sheets": [{"sheet_id": "PF_sheet_000", "sheet_name": "p0", "sheet_index": 0,
+                               "source": "pdf-page", "sheet_number": "", "sheet_title": "무번호"}]})
+    s.add_drawing(_dwg_drawing(tmp_path, "DF"))
+    # 색인이 발급했을 레지스트리 키(빈 번호 → 위치 라벨).
+    sk_pre = s.issue_sheet_key(project_name="P", version_set_id="PF",
+                               sheet_number="", sheet_index=0)
+    pid = asyncio.run(rp.create_package(rp.PackageCreate(project_name="P")))["package_id"]
+    asyncio.run(rp.add_package_files(pid, rp.PackageFiles(dwg_file_ids=["DF"], pdf_file_ids=["PF"])))
+    # 프론트가 sheet_name 폴백("p0")을 sheet_number로 넘겨도, publish는 권위 레코드의 빈 번호를 써야 한다.
+    asyncio.run(rp.save_mapping(pid, rp.MappingSave(mapping={
+        "PF_sheet_000": rp.MappingEntry(
+            sheet_id="PF_sheet_000", pdf_file_id="PF", sheet_number="p0",
+            dwg_links=[rp.DwgLink(dwg_file_id="DF", layout_name="EE-01-000")])})))
+    res = asyncio.run(rp.publish_package(pid))
+    assert res["links"][0]["sheet_key"] == sk_pre   # 새 키 발급 아님 = 이중발급 방지
+    assert len(s.list_sheet_keys(project_name="P")) == 1   # 레지스트리에 키는 여전히 1개
 
 
 # ── D5 통합: publish가 레지스트리 sheet_key를 계승(인라인 uuid 아님) ──

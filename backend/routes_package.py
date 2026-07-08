@@ -304,9 +304,14 @@ async def publish_package(package_id: str):
             draw = store.get_drawing(entry.get("pdf_file_id"))
             vsid = ((draw.get("version_set_id") or entry.get("pdf_file_id"))
                     if draw else entry.get("pdf_file_id"))
+            # 렌즈1 MAJOR: 라벨은 색인(index_drawing)과 **동일하게 권위 시트 레코드의 raw sheet_number**에서
+            # 뽑는다(mapping entry의 sheet_name 폴백과 어긋나면 같은 시트에 키 이중발급 → D5 위반).
+            rec = next((s for s in (draw.get("sheets") if draw else [])
+                        if s.get("sheet_id") == sheet_id), None)
+            snum = rec.get("sheet_number", "") if rec else entry.get("sheet_number", "")
+            sidx = rec.get("sheet_index", 0) if rec else entry.get("sheet_index", 0)
             key_args = dict(project_name=project_name, version_set_id=vsid,
-                            sheet_number=entry.get("sheet_number", ""),
-                            sheet_index=entry.get("sheet_index", 0))
+                            sheet_number=snum, sheet_index=sidx)
             sheet_key = store.resolve_sheet_key(**key_args) or store.issue_sheet_key(**key_args)
             rev = store.next_rev(sheet_key, project_name=project_name)
             for prev in store.list_sheet_sources(sheet_key=sheet_key, project_name=project_name):

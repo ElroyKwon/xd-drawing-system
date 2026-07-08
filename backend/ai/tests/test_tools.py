@@ -191,6 +191,16 @@ def test_search_merges_content_matches():
 
 
 @respx.mock
+def test_search_content_index_failure_degrades():
+    """렌즈2 MAJOR: 본문색인 실패 시 교차검색은 살고 content_matches만 비워진다."""
+    respx.get(f"{BASE}/api/search").mock(return_value=httpx.Response(200, json=_SEARCH))
+    respx.get(f"{BASE}/api/sheet-meta/search").mock(return_value=httpx.Response(500, json={"detail": "x"}))
+    out = tools.search("Study_Project", "케이블")
+    assert out["sheets"][0]["sheet_id"] == "s1"   # 교차검색 결과 보존
+    assert out["content_matches"] == []           # 본문매칭만 생략(전체 실패 아님)
+
+
+@respx.mock
 def test_list_sheets_enriched_with_tags():
     respx.get(f"{BASE}/api/drawings").mock(return_value=httpx.Response(200, json=_DRAWINGS))
     respx.get(f"{BASE}/api/sheet-meta").mock(return_value=httpx.Response(200, json=_META_S2))

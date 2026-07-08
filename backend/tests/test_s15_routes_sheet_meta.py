@@ -69,3 +69,25 @@ def test_by_equipment_reverse_lookup(tmp_path, monkeypatch):
     # 부분일치·대소문자 무시
     assert asyncio.run(rsm.by_equipment(tag="tr-a1"))["count"] == 1
     assert asyncio.run(rsm.by_equipment(tag="ZZZ"))["count"] == 0
+
+
+def test_merged_route_resolves_and_passthrough(tmp_path, monkeypatch):
+    """/merged: sheet_id→sheet_key 해소 + DWG 링크 없으면 passthrough(found=true, source_kind 불변)."""
+    rsm = _setup(tmp_path, monkeypatch)
+    r = asyncio.run(rsm.merged_sheet_meta(project_name="P", sheet_id="F3_s0"))
+    assert r["found"] is True and r["sheet_key"] == "sk2"
+    assert r["source_kind"] == "pdf" and r["conflicts"] == []   # 링크 없음 → passthrough
+    # 미존재 → found=false 정직
+    assert asyncio.run(rsm.merged_sheet_meta(project_name="P", sheet_key="sk_ghost"))["found"] is False
+    assert asyncio.run(rsm.merged_sheet_meta(project_name="P"))["found"] is False
+
+
+def test_none_text_and_tag_guarded(tmp_path, monkeypatch):
+    """렌즈1 MINOR: text_index=None·tag=None 레코드가 있어도 검색/역조회가 500 없이 견딘다."""
+    rsm = _setup(tmp_path, monkeypatch)
+    rsm.get_store().upsert_sheet_meta(
+        sheet_key="sk9", project_name="P", file_id="F9", sheet_index=0, sheet_id="F9_s0",
+        source_kind="pdf", content_hash="sha256:z", text_index=None,
+        tags=[{"tag": None, "type": "unknown", "confidence": 0.5, "src": "rule"}])
+    assert asyncio.run(rsm.search_sheet_meta(q="panel", project_name="P"))["count"] >= 0
+    assert asyncio.run(rsm.by_equipment(tag="pp", project_name="P"))["count"] >= 0

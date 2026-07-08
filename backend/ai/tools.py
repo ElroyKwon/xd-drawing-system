@@ -12,7 +12,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from client import get
+from client import BackendError, get
+
+# list_sheets 강화가 전 시트 태그를 받도록 상향(read API 기본 50캡을 우회 — 50 초과 프로젝트 침묵누락 방지).
+_META_ALL = 5000
 
 
 def _compact_tags(tags: Optional[list]) -> list:
@@ -27,8 +30,10 @@ def _compact_tags(tags: Optional[list]) -> list:
 
 
 def _current_meta_by_sheet_id(project: str) -> dict:
-    """현재 rev(sheet_meta) 추출본을 sheet_id로 색인한 맵(list_sheets 강화용, 1회 GET)."""
-    data = get("/api/sheet-meta", params={"project_name": project, "current_only": "true"})
+    """현재 rev(sheet_meta) 추출본을 sheet_id로 색인한 맵(list_sheets 강화용, 1회 GET).
+    limit 상향으로 50 초과 프로젝트에서도 전 시트 태그를 담는다(침묵누락 방지)."""
+    data = get("/api/sheet-meta",
+               params={"project_name": project, "current_only": "true", "limit": _META_ALL})
     out = {}
     for r in data.get("results", []):
         sid = r.get("sheet_id")
@@ -38,23 +43,32 @@ def _current_meta_by_sheet_id(project: str) -> dict:
 
 
 def search(project: str, query: str) -> dict:
-    """GET /api/search + /api/sheet-meta/search — 교차 검색 + 도면 본문색인 매칭 병합."""
+    """GET /api/search + /api/sheet-meta/search — 교차 검색 + 도면 본문색인 매칭 병합.
+
+    본문색인(강화분)이 실패해도 교차검색은 살린다(회복력: content_matches만 비우고 부분성 표기)."""
     data = get("/api/search", params={"q": query, "project_name": project})
-    content = get("/api/sheet-meta/search", params={"q": query, "project_name": project})
+    content_matches: list = []
+    content_truncated = False
+    try:
+        content = get("/api/sheet-meta/search", params={"q": query, "project_name": project})
+        content_matches = [{
+            "sheet_key": m.get("sheet_key"),
+            "sheet_id": m.get("sheet_id"),
+            "file_id": m.get("file_id"),
+            "source_kind": m.get("source_kind"),
+            "snippet": m.get("snippet"),
+        } for m in content.get("results", [])]
+        content_truncated = content.get("truncated", False)
+    except BackendError:
+        content_matches = []   # 본문색인 미도달 → 교차검색 결과는 유지, 본문매칭만 생략
     return {
         "query": data.get("query", query),
         "sheets": data.get("sheets", []),
         "issues": data.get("issues", []),
         "files": data.get("files", []),
         "folders": data.get("folders", []),
-        "content_matches": [{
-            "sheet_key": m.get("sheet_key"),
-            "sheet_id": m.get("sheet_id"),
-            "file_id": m.get("file_id"),
-            "source_kind": m.get("source_kind"),
-            "snippet": m.get("snippet"),
-        } for m in content.get("results", [])],
-        "truncated": data.get("truncated", False) or content.get("truncated", False),
+        "content_matches": content_matches,
+        "truncated": data.get("truncated", False) or content_truncated,
     }
 
 

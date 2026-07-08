@@ -22,12 +22,15 @@ _LIMIT = 50
 
 @router.get("")
 async def get_sheet_meta(project_name: Optional[str] = None, sheet_key: Optional[str] = None,
-                         sheet_id: Optional[str] = None, current_only: bool = True):
-    """추출본 조회. 기본 current_only=true(최신 rev). 과거 rev는 current_only=false."""
+                         sheet_id: Optional[str] = None, current_only: bool = True,
+                         limit: int = _LIMIT):
+    """추출본 조회. 기본 current_only=true(최신 rev). 과거 rev는 current_only=false.
+    limit: 반환 상한(기본 50). 사이드카 list_sheets 강화가 전 시트 태그를 받도록 상향 가능."""
     rows = get_store().list_sheet_meta(
         project_name=project_name, sheet_key=sheet_key, sheet_id=sheet_id,
         current_only=current_only)
-    return {"count": len(rows), "results": rows[:_LIMIT], "truncated": len(rows) > _LIMIT}
+    cap = max(1, limit)
+    return {"count": len(rows), "results": rows[:cap], "truncated": len(rows) > cap}
 
 
 @router.get("/search")
@@ -40,7 +43,7 @@ async def search_sheet_meta(q: str = "", project_name: Optional[str] = None,
     rows = get_store().list_sheet_meta(project_name=project_name, current_only=current_only)
     hits = []
     for r in rows:
-        idx = r.get("text_index", "")
+        idx = r.get("text_index") or ""
         pos = idx.lower().find(needle)
         if pos < 0:
             continue
@@ -82,7 +85,7 @@ async def by_equipment(tag: str = "", project_name: Optional[str] = None,
     rows = get_store().list_sheet_meta(project_name=project_name, current_only=current_only)
     hits = []
     for r in rows:
-        matched = [t for t in r.get("tags", []) if needle in (t.get("tag", "").lower())]
+        matched = [t for t in r.get("tags", []) if needle in ((t.get("tag") or "").lower())]
         if not matched:
             continue
         hits.append({
