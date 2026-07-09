@@ -1,5 +1,7 @@
 # XD Drawing System — 작업 로드맵 & 현황 (검수용 대시보드)
 
+> ⚠️ **STALE (세션7 무렵에서 멈춤).** 이 파일은 S7 인증까지만 반영하며 세션18~29의 대화형 액션·지식그래프 트랙이 없다. **최신 진행·남은 일 SoT = 제안 vault `_개발-브릿지.md` §2(🗺️ 지식그래프 로드맵) + dev `docs/buildout-loop/PROGRESS.md`(세션별 로그) + `docs/superpowers/specs·plans/`.** 재작성 전까지 이 문서로 다음 작업을 판단하지 말 것.
+
 > 이 파일은 사용자가 **전체 작업량·진척·과정·결과**를 한눈에 보고 검수하기 위한 시각 대시보드다.
 > 사실 기준: `docs/buildout-loop/PROGRESS.md` · `PLAN.md` · `EVIDENCE.md` (2026-06-30 기준).
 > 정밀 근거는 그 문서들이 SoT이고, 이 파일은 그 위의 **지도**다.
