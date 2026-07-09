@@ -41,7 +41,7 @@ def path(project_name: str = Query(...),
          dst: str = Query(..., alias="to")):
     r = kg_store.path(project_name, src, dst)
     if not r.get("found"):
-        raise HTTPException(404, "노드 없음")
+        raise HTTPException(404, f"노드 없음: {src} 또는 {dst}")
     return r
 
 
@@ -55,4 +55,7 @@ def evidence(project_name: str = Query(...), id: str = Query(...)):
 
 @router.get("/graph")
 def graph(project_name: str = Query(...), scope: Optional[str] = None):
-    return kg_store.subgraph(project_name, scope)
+    r = kg_store.subgraph(project_name, scope)
+    if not r.get("found", True):
+        raise HTTPException(404, f"노드 없음: {scope}")
+    return r

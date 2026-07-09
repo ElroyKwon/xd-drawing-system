@@ -55,3 +55,25 @@ def test_evidence(client):
 def test_graph_full(client):
     r = client.get("/api/kg/graph?project_name=P1")
     assert len(r.json()["nodes"]) == 3 and len(r.json()["edges"]) == 2
+
+
+def test_node_missing_404(client):
+    r = client.get("/api/kg/node/eq:NOPE?project_name=P1")
+    assert r.status_code == 404
+
+
+def test_path_missing_node_404(client):
+    r = client.get("/api/kg/path?project_name=P1&from=eq:NOPE&to=eq:E2")
+    assert r.status_code == 404
+
+
+def test_graph_scope_bad_404(client):
+    r = client.get("/api/kg/graph?project_name=P1&scope=eq:NOPE")
+    assert r.status_code == 404
+
+
+def test_graph_scope_valid(client):
+    r = client.get("/api/kg/graph?project_name=P1&scope=eq:E1")
+    assert r.status_code == 200
+    body = r.json()
+    assert "nodes" in body and "edges" in body
