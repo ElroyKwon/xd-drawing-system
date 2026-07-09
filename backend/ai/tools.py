@@ -334,3 +334,26 @@ def get_sheet_history(project: str, sheet_key: Optional[str] = None) -> dict:
         })
     return {"found": True, "sheet_key": sheet_key, "rev_count": len(revs),
             "current_count": sum(1 for x in revs if x["is_current"]), "revisions": revs}
+
+
+def kg_neighbors(project: str, id: str, depth: int = 1, types: Optional[str] = None) -> dict:
+    """GET /api/kg/neighbors — 지식그래프 N홉 이웃(설비관계·자산 링크 순회).
+
+    노드 id 접두: eq:설비 sh:시트 is:이슈 tk:작업 fl:파일 tg:태그 nt:노트. 엣지 track=llm/relates_to
+    는 AI 추출(미검증) — 인용 시 밝힐 것. 자산 본문은 get_sheet_content, 태그 역조회는
+    find_sheets_by_equipment 로 구분해 쓴다.
+    """
+    params = {"project_name": project, "id": id, "depth": depth}
+    if types:
+        params["types"] = types
+    return get("/api/kg/neighbors", params=params)
+
+
+def kg_path(project: str, src: str, dst: str) -> dict:
+    """GET /api/kg/path — 두 노드 최단 경로(관계 경로추적). from/to 는 노드 id."""
+    return get("/api/kg/path", params={"project_name": project, "from": src, "to": dst})
+
+
+def kg_evidence(project: str, id: str) -> dict:
+    """GET /api/kg/evidence — 근거체인(엣지 evidence + describes 노트). track/confidence 동반."""
+    return get("/api/kg/evidence", params={"project_name": project, "id": id})

@@ -28,6 +28,8 @@ SYSTEM_PROMPT = (
     "설비/장비나 도면 본문 내용을 물으면: 특정 설비 태그(예: 'TR-3201', 'PP-380V')가 "
     "어느 시트에 나오는지는 find_sheets_by_equipment로 역조회하고, 한 시트의 추출 본문·태그·요약은 "
     "get_sheet_content로 조회하세요. search 결과의 content_matches는 도면 본문색인 매칭입니다. "
+    "설비 간 관계·경로·근거체인은 지식그래프 툴(kg_neighbors·kg_path·kg_evidence)로 순회하세요. "
+    "relates_to·track=llm 은 AI 추출(미검증)이므로 인용 시 '자동추론(미검증)'으로 밝힙니다. "
     "버전 지침: 기본 답변은 항상 현재 rev(is_current) 기준입니다(get_sheet_content). "
     "사용자가 '과거/이전 버전/예전 rev/개정 전'을 명시적으로 물을 때만 get_sheet_history로 "
     "버전 이력을 조회하고, 답할 때 어느 rev(현재/과거)인지 구분해 밝히세요. "
@@ -213,6 +215,22 @@ TOOLS_SCHEMA = [
             },
         },
     },
+    {"type": "function", "function": {
+        "name": "kg_neighbors",
+        "description": "지식그래프에서 한 노드의 N홉 이웃(설비관계·자산 링크)을 순회한다. 노드 id 접두 eq:설비 sh:시트 is:이슈 tk:작업 fl:파일 tg:태그 nt:노트. relates_to·track=llm 은 AI 추출(미검증). depth 상한 5.",
+        "parameters": {"type": "object", "properties": {
+            "id": {"type": "string"}, "depth": {"type": "integer"},
+            "types": {"type": "string", "description": "쉼표구분 노드타입 필터(선택)"}},
+            "required": ["id"]}}},
+    {"type": "function", "function": {
+        "name": "kg_path",
+        "description": "지식그래프에서 두 노드 최단 경로(관계 경로추적). from/to 는 노드 id.",
+        "parameters": {"type": "object", "properties": {
+            "from": {"type": "string"}, "to": {"type": "string"}}, "required": ["from", "to"]}}},
+    {"type": "function", "function": {
+        "name": "kg_evidence",
+        "description": "지식그래프 노드의 근거체인(엣지 evidence + describes 노트)을 track·confidence 와 함께 조회. 저신뢰·llm 은 '미검증'으로 밝혀 인용.",
+        "parameters": {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}}},
 ]
 
 
@@ -284,6 +302,12 @@ def _dispatch(name: str, args: dict, project: str) -> dict:
         return tools.find_sheets_by_equipment(project, args.get("tag", ""))
     if name == "get_sheet_history":
         return tools.get_sheet_history(project, args.get("sheet_key"))
+    if name == "kg_neighbors":
+        return tools.kg_neighbors(project, args.get("id", ""), args.get("depth", 1), args.get("types"))
+    if name == "kg_path":
+        return tools.kg_path(project, args.get("from", ""), args.get("to", ""))
+    if name == "kg_evidence":
+        return tools.kg_evidence(project, args.get("id", ""))
     return {"error": f"알 수 없는 툴: {name}"}
 
 
