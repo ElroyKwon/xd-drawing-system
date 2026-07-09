@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from collections import deque
 from pathlib import Path
 from typing import Optional
@@ -16,6 +17,7 @@ import config
 logger = logging.getLogger(__name__)
 
 _PATH = Path(config.UPLOADS_DIR) / "_knowledge_graph.json"
+_OVERLAY_PATH = Path(config.UPLOADS_DIR) / "_kg_overlay.json"
 
 
 def _load() -> dict:
@@ -140,3 +142,47 @@ def check_integrity(g: dict) -> list:
             if e[end] not in ids:
                 problems.append(f"dangling {e['type']} {end}={e[end]}")
     return problems
+
+
+# ── 오버레이 저널 (⑥ write-back) ──────────────────────────────
+def edge_key(a: str, b: str) -> str:
+    """relates_to 무방향 정규화 키 — A↔B 동일. (relates_to 전용, 다른 엣지 타입엔 쓰지 않음.)"""
+    lo, hi = sorted([a, b])
+    return f"{lo}|{hi}|relates_to"
+
+
+def _load_overlay() -> dict:
+    if _OVERLAY_PATH.exists():
+        try:
+            return json.loads(_OVERLAY_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            logger.error("오버레이 저널 파싱 실패(%s) → 빈 오버레이 반환", _OVERLAY_PATH)
+    return {"version": 1, "graphs": {}}
+
+
+def _overlay_map(project: str) -> dict:
+    """프로젝트 오버레이를 {edge_key: action} 로 축약(last-write-wins).
+
+    같은 edge_key 에 override 가 여러 개면 리스트 마지막 항목이 유효.
+    """
+    overrides = _load_overlay().get("graphs", {}).get(project, {}).get("overrides", [])
+    m: dict = {}
+    for o in overrides:  # 리스트 순서대로 덮어쓰기 → 마지막이 이김.
+        m[o["edge_key"]] = o["action"]
+    return m
+
+
+def append_override(project: str, key: str, action: str,
+                    actor: Optional[str] = None, at: Optional[str] = None,
+                    reason: Optional[str] = None) -> dict:
+    """오버레이 저널에 override 1건 append(기존 항목 불변). 저장 후 그 항목 반환."""
+    data = _load_overlay()
+    graphs = data.setdefault("graphs", {})
+    proj = graphs.setdefault(project, {"overrides": []})
+    entry = {"edge_key": key, "action": action, "actor": actor, "at": at, "reason": reason}
+    proj.setdefault("overrides", []).append(entry)
+    _OVERLAY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = _OVERLAY_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, _OVERLAY_PATH)
+    return entry
