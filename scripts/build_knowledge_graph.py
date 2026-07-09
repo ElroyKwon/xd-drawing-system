@@ -101,7 +101,6 @@ def build_graph(project: str, built_at: str | None = None) -> dict:
     def add(node: dict):
         nodes[node["id"]] = node
 
-    tag_by_norm: dict = {}
     for e in equipment:
         add({"id": f"eq:{e['equipment_id']}", "type": "equipment", "ref_id": e["equipment_id"],
              "label": e.get("tag") or e["equipment_id"], "props": {"type": e.get("type", "")}})
@@ -113,7 +112,6 @@ def build_graph(project: str, built_at: str | None = None) -> dict:
             if not tag:
                 continue
             nid = f"tg:{_norm(tag)}"
-            tag_by_norm.setdefault(_norm(tag), tag)
             add({"id": nid, "type": "tag", "ref_id": _norm(tag), "label": tag, "props": {}})
             edges.append({"src": f"sh:{s['sheet_id']}", "dst": nid, "type": "has_tag",
                           "confidence": float(t.get("confidence", 1.0)), "track": "rule",
