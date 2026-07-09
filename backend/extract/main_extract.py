@@ -38,6 +38,11 @@ class ExtractRequest(BaseModel):
     text_index: str = ""
 
 
+class AnalyzeRequest(BaseModel):
+    equipment: list[dict] = []
+    sheets: list[dict] = []
+
+
 @app.get("/health")
 def health() -> dict:
     prov = make_extract_provider()
@@ -64,4 +69,20 @@ def extract(req: ExtractRequest) -> dict:
         "summary": read.get("summary"),
         "conflicts": conflicts,
         "extractor": {"rule_version": "1", "llm_model": provider.name},
+    }
+
+
+@app.post("/analyze")
+def analyze(req: AnalyzeRequest) -> dict:
+    """설비관계(relates_to)·지식노트 생성 — 외부 AI API 경유(provider).
+
+    격리 유지: backend import 0, 코퍼스는 HTTP body 로 받는다(8000 이 build 스크립트에서
+    수집해 POST). mock provider 는 공출현 결정적 관계(egress 0), 실 LLM 은 HUMAN_GATE-7.
+    """
+    provider = make_extract_provider()
+    out = provider.analyze(req.equipment, req.sheets)
+    return {
+        "relations": out.get("relations", []),
+        "notes": out.get("notes", []),
+        "analyzer": {"llm_model": provider.name},
     }

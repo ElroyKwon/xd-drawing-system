@@ -88,3 +88,21 @@ def test_extract_endpoint_merges_rule_and_llm():
     assert "MTR-1" in by                        # llm 이 보강
     assert body["summary"]
     assert body["extractor"]["llm_model"] == "mock"
+
+
+def test_analyze_mock_cooccurrence_relations():
+    from main_extract import app
+    from fastapi.testclient import TestClient
+    c = TestClient(app)
+    body = {
+        "equipment": [{"tag": "MTR-1", "type": "motor"}, {"tag": "VCB-1", "type": "breaker"}],
+        "sheets": [{"sheet_id": "s1", "tags": [{"tag": "MTR-1"}, {"tag": "VCB-1"}], "text_excerpt": "VCB-1 feeds MTR-1"}],
+    }
+    r = c.post("/analyze", json=body)
+    assert r.status_code == 200
+    data = r.json()
+    pairs = {(x["src_tag"], x["dst_tag"]) for x in data["relations"]}
+    # 같은 시트 공출현 → 무방향 관계 1개(정렬된 튜플로 결정적).
+    assert ("MTR-1", "VCB-1") in pairs or ("VCB-1", "MTR-1") in pairs
+    assert all(x["relation"] == "relates_to" for x in data["relations"])
+    assert all(0.0 <= x["confidence"] <= 1.0 for x in data["relations"])

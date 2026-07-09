@@ -64,6 +64,22 @@ class MockExtractProvider(ExtractProvider):
             summary = f"[mock] 설비 후보 {len(llm_tags)}종(예: {head})"
         return {"llm_tags": llm_tags, "summary": summary}
 
+    def analyze(self, equipment: list, sheets: list) -> dict:
+        """결정적 공출현 관계(egress 0). 같은 시트에 함께 나온 설비쌍 → relates_to.
+        실 LLM 없이도 그래프를 채워 시각화·테스트가 되게 하는 오프라인 기본값."""
+        pair_sheets: dict = {}
+        for s in sheets:
+            tags = sorted({t.get("tag", "") for t in (s.get("tags") or []) if t.get("tag")})
+            for i in range(len(tags)):
+                for j in range(i + 1, len(tags)):
+                    pair_sheets.setdefault((tags[i], tags[j]), []).append(s.get("sheet_id"))
+        relations = [{
+            "src_tag": a, "dst_tag": b, "relation": "relates_to",
+            "confidence": round(min(0.3 + 0.2 * len(sids), 0.7), 2),
+            "evidence": f"같은 시트 공출현: {', '.join(str(x) for x in sids[:3])}",
+        } for (a, b), sids in sorted(pair_sheets.items())]
+        return {"relations": relations, "notes": []}
+
 
 class OpenAIExtractProvider(ExtractProvider):
     """실 LLM 독립 읽기 — HUMAN_GATE-7(대량 egress). 키·게이트 없으면 생성 실패."""
@@ -81,16 +97,24 @@ class OpenAIExtractProvider(ExtractProvider):
         self._client = OpenAI(api_key=key)
         self._model = model or os.environ.get("XD_EXTRACT_MODEL", DEFAULT_MODEL)
 
+    def _complete(self, prompt: str) -> str:
+        """실 LLM 호출 공통 경로 — 원문 텍스트만 반환. 호출 실패는 ExtractProviderError."""
+        try:
+            resp = self._client.responses.create(model=self._model, input=prompt)
+            return getattr(resp, "output_text", "") or "{}"
+        except Exception as e:  # noqa: BLE001
+            raise ExtractProviderError(f"OpenAI 호출 실패: {e}") from e
+
     def read(self, text_index: str, source_kind: str) -> dict:
         prompt = (
             "다음 도면 시트 텍스트에서 설비 태그(분전반·모터·차단기 등)만 뽑아라. "
             "JSON {\"tags\":[{\"tag\":..,\"type\":..}],\"summary\":..} 로만 답하라.\n\n"
             f"[{source_kind}]\n{text_index[:4000]}"
         )
+        raw = self._complete(prompt)
         try:
-            resp = self._client.responses.create(model=self._model, input=prompt)
             import json
-            data = json.loads(getattr(resp, "output_text", "") or "{}")
+            data = json.loads(raw)
         except Exception as e:  # noqa: BLE001
             raise ExtractProviderError(f"OpenAI 추출 호출 실패: {e}") from e
         tags = [
@@ -99,6 +123,26 @@ class OpenAIExtractProvider(ExtractProvider):
             for t in (data.get("tags") or []) if t.get("tag")
         ]
         return {"llm_tags": tags, "summary": data.get("summary")}
+
+    def analyze(self, equipment: list, sheets: list) -> dict:
+        """실 LLM 관계·지식 추출 — HUMAN_GATE-7 (실 고객 도면을 외부 전송).
+        프롬프트: 설비 목록·시트 태그·본문 발췌를 주고 전원계통 상위/하위 relates_to 와
+        wiki 지식노트를 JSON 으로 요청. 결과는 track=llm 으로 표기(정직성)."""
+        import json as _json
+        prompt = (
+            "다음 설비·시트에서 설비 간 전원계통/상하위 관계(relates_to)와 "
+            "지식노트(notes)를 JSON 으로 추출. "
+            "형식: {\"relations\":[{\"src_tag\",\"dst_tag\",\"relation\":\"relates_to\","
+            "\"confidence\":0~1,\"evidence\"}],\"notes\":[{\"about_tag\",\"text\",\"confidence\"}]}\n"
+            f"설비: {_json.dumps(equipment, ensure_ascii=False)}\n"
+            f"시트: {_json.dumps(sheets, ensure_ascii=False)[:6000]}"
+        )
+        raw = self._complete(prompt)  # 기존 실 LLM 호출 경로 재사용
+        try:
+            data = _json.loads(raw)
+        except Exception:  # noqa: BLE001 — 모델이 비정형 반환 시 빈 결과(정직)
+            return {"relations": [], "notes": []}
+        return {"relations": data.get("relations", []), "notes": data.get("notes", [])}
 
 
 def make_extract_provider(prefer: Optional[str] = None) -> ExtractProvider:
