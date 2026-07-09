@@ -1,0 +1,24 @@
+# 지식그래프 읽기 트랙 통합 검증 — 세션28 (2026-07-09)
+
+## 실 빌드 (mock /analyze, egress 0)
+$ python scripts/build_knowledge_graph.py "LS 청주사업장" 2026-07-09T00:00:00
+built: 134 nodes, 141 edges
+
+## graph API (실데이터)
+nodes 134 edges 141 built_at 2026-07-09T00:00:00
+node types {'equipment': 15, 'sheet': 40, 'tag': 23, 'issue': 10, 'task': 6, 'file': 40}
+edge types {'has_tag': 59, 'appears_on': 33, 'pinned_to': 9, 'references': 40}
+edge tracks {'rule': 108, 'curated': 33}
+
+## relates_to(llm) = 0 — 원인(정상 동작)
+설비 큐레이트태그(MTR-1,VCB-22.9KV,...) ∩ 시트 추출태그(LV-6,TR-1201,...) = 0 (naming 분리).
+mock /analyze는 70개 시트태그 관계 반환하나, 설비노드로 매핑 안 되어 전량 드롭(날조 방지). 실 설비관계=GATE-7 LLM.
+
+## 조회 API 스모크 (실데이터)
+graph:200 neighbors(eq:EQ-ACB-LV,depth2):200 evidence:200
+
+## 회귀 종합
+frontend vitest 135 · backend tests/ 196(+1skip) · AI 사이드카 50 · 8002 extract 8 · npm run build GREEN
+
+## 브라우저 e2e (canvas 픽셀 페인트)
+미실행 — chrome-devtools 프로필 잠금 + wmux 미기동(환경). 렌더 경로는 vitest 컴포넌트 렌더 테스트 + kgForce 결정성/bounds 테스트 + 무조건 클램프로 커버. CORS allow-credentials 활성, dev 5178 라이브(육안 확인 가능).
