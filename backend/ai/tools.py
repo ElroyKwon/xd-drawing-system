@@ -346,14 +346,23 @@ def kg_neighbors(project: str, id: str, depth: int = 1, types: Optional[str] = N
     params = {"project_name": project, "id": id, "depth": depth}
     if types:
         params["types"] = types
-    return get("/api/kg/neighbors", params=params)
+    try:
+        return get("/api/kg/neighbors", params=params)
+    except BackendError:  # 404 등 → 허위 생성 대신 정직한 not-found
+        return {"found": False, "id": id}
 
 
 def kg_path(project: str, src: str, dst: str) -> dict:
     """GET /api/kg/path — 두 노드 최단 경로(관계 경로추적). from/to 는 노드 id."""
-    return get("/api/kg/path", params={"project_name": project, "from": src, "to": dst})
+    try:
+        return get("/api/kg/path", params={"project_name": project, "from": src, "to": dst})
+    except BackendError:
+        return {"found": False, "from": src, "to": dst}
 
 
 def kg_evidence(project: str, id: str) -> dict:
     """GET /api/kg/evidence — 근거체인(엣지 evidence + describes 노트). track/confidence 동반."""
-    return get("/api/kg/evidence", params={"project_name": project, "id": id})
+    try:
+        return get("/api/kg/evidence", params={"project_name": project, "id": id})
+    except BackendError:
+        return {"found": False, "id": id}

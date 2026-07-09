@@ -219,7 +219,8 @@ TOOLS_SCHEMA = [
         "name": "kg_neighbors",
         "description": "지식그래프에서 한 노드의 N홉 이웃(설비관계·자산 링크)을 순회한다. 노드 id 접두 eq:설비 sh:시트 is:이슈 tk:작업 fl:파일 tg:태그 nt:노트. relates_to·track=llm 은 AI 추출(미검증). depth 상한 5.",
         "parameters": {"type": "object", "properties": {
-            "id": {"type": "string"}, "depth": {"type": "integer"},
+            "id": {"type": "string", "description": "시작 노드 id(예: eq:E1)."},
+            "depth": {"type": "integer", "description": "홉 수(1~5, 기본 1)."},
             "types": {"type": "string", "description": "쉼표구분 노드타입 필터(선택)"}},
             "required": ["id"]}}},
     {"type": "function", "function": {
