@@ -38,12 +38,17 @@ def _llm_augment(extracted: dict, file_id: str, sheet_id: str) -> dict:
         )
         resp.raise_for_status()
         merged = resp.json()
+        # 8002 응답 형태 방어: tags 가 null/누락이면 규칙 결과 유지(None 저장 금지 — 하류
+        # overlay 루프가 None 을 순회하다 500 나는 것을 원천 차단).
+        merged_tags = merged.get("tags")
+        if not isinstance(merged_tags, list):
+            merged_tags = extracted.get("tags", [])
         return {
             "text_index": extracted.get("text_index", ""),
             "source_kind": extracted.get("source_kind", ""),
-            "tags": merged.get("tags", extracted.get("tags", [])),
+            "tags": merged_tags,
             "summary": merged.get("summary"),
-            "conflicts": merged.get("conflicts", []),
+            "conflicts": merged.get("conflicts") or [],
             "extractor": merged.get("extractor"),
         }
     except Exception as e:  # noqa: BLE001 — 사이드카 실패는 변환/색인을 막지 않는다.

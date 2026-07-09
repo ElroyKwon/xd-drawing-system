@@ -319,14 +319,18 @@ def get_sheet_history(project: str, sheet_key: Optional[str] = None) -> dict:
     rows = data.get("results", [])
     if not rows:
         return {"found": False, "sheet_key": sheet_key}
-    revs = [{
-        "is_current": bool(r.get("is_current")),
-        "extracted_at": r.get("extracted_at"),
-        "file_id": r.get("file_id"),
-        "source_kind": r.get("source_kind"),
-        "summary": r.get("summary"),
-        "tags": _compact_tags(r.get("tags")),
-        "text_excerpt": (r.get("text_index") or "")[:400],
-    } for r in rows]
+    revs = []
+    for r in rows:
+        txt = r.get("text_index") or ""
+        revs.append({
+            "is_current": bool(r.get("is_current")),
+            "extracted_at": r.get("extracted_at"),
+            "file_id": r.get("file_id"),
+            "source_kind": r.get("source_kind"),
+            "summary": r.get("summary"),
+            "tags": _compact_tags(r.get("tags")),
+            "text_excerpt": txt[:400],
+            "text_truncated": len(txt) > 400,   # 형제 get_sheet_content 와 정직성 일관
+        })
     return {"found": True, "sheet_key": sheet_key, "rev_count": len(revs),
             "current_count": sum(1 for x in revs if x["is_current"]), "revisions": revs}

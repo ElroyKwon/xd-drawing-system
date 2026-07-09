@@ -40,7 +40,8 @@ class MockExtractProvider(ExtractProvider):
     """egress 0. text_index 에서 설비 태그 후보를 결정적으로 뽑고 짧은 요약을 만든다.
 
     실 LLM 을 흉내 낸 오프라인 트랙 — 규칙 트랙과 독립적으로 한 번 더 읽어(병합 시
-    src=merged 로 신뢰 상승), 규칙이 놓친 후보를 보강한다. 확신은 중간값(0.7).
+    src=merged 로 신뢰 상승), 규칙이 놓친 후보를 보강한다. 확신은 미검증 수준(_MOCK_CONF=0.65,
+    O9 정합: <0.7 이면 AI 가 '자동추출(미검증)'으로 명시).
     """
 
     name = "mock"

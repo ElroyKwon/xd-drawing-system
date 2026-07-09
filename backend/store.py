@@ -1110,7 +1110,10 @@ class JsonDrawingStore(DrawingStore):
         with self._lock:
             data = self._read_at(self._sheet_meta_path)
             for rec in data.values():
-                if rec.get("sheet_key") == sheet_key and rec.get("content_hash") == content_hash:
+                # 멱등 dedup 은 실제 해시가 있을 때만. content_hash 가 ""(파일 누락/읽기실패)면
+                # 서로 다른 rev 가 ""로 충돌해 새 rev 가 삼켜지는 것을 막는다(O6 보존).
+                if content_hash and rec.get("sheet_key") == sheet_key \
+                        and rec.get("content_hash") == content_hash:
                     return rec   # 동일 콘텐츠 재변환 → no-op(멱등)
             for rec in data.values():
                 if rec.get("sheet_key") == sheet_key and rec.get("is_current"):

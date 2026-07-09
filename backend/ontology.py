@@ -26,6 +26,12 @@ def _esc(s) -> str:
     return str(s).replace("\\", "/").replace('"', "'")
 
 
+def _norm_tag(tag: str) -> str:
+    """추출 태그 집계/충돌 키 — 대문자·공백제거만. OCR 혼동 접기(O↔0 등)는 하지 않는다:
+    서로 다른 설비(PL-1 vs PI-1)를 붕괴시켜 유실하는 것을 막기 위함(sheet_merge 손실방지 원칙)."""
+    return "".join((tag or "").upper().split())
+
+
 class OntologyStore:
     def __init__(self):
         self._driver = None
@@ -180,7 +186,6 @@ class OntologyStore:
         """S15 단계10 — 업로드 추출 태그(_sheet_meta.json, is_current)를 equipment 표면으로
         승격. **read-time overlay**(TypeDB 원칙 LOCKED: 추출 SoT는 내부 JSON, TypeDB 미기록).
         TypeDB on/off 무관하게 동작한다. origin="extracted" + confidence/src 로 curated 와 구분."""
-        from sheet_merge import _canon
         try:
             from store import get_store  # lazy — 순환 import 회피
             metas = get_store().list_sheet_meta(project_name=project, current_only=True)
@@ -192,11 +197,11 @@ class OntologyStore:
             sid = m.get("sheet_id", "")
             if sheet_id and sid != sheet_id:
                 continue
-            for t in m.get("tags", []):
+            for t in (m.get("tags") or []):
                 tag = t.get("tag", "")
                 if not tag:
                     continue
-                key = _canon(tag)
+                key = _norm_tag(tag)
                 conf = float(t.get("confidence", 0.0))
                 rec = agg.get(key)
                 if rec is None:
@@ -228,11 +233,10 @@ class OntologyStore:
         for e in items:
             e.setdefault("origin", "curated")  # 수동 시드 = 고신뢰 curated overlay(D 정신).
         if include_extracted:
-            from sheet_merge import _canon
-            curated_canon = {_canon(e.get("tag", "")) for e in items if e.get("tag")}
+            curated_norm = {_norm_tag(e.get("tag", "")) for e in items if e.get("tag")}
             for ex in self._extracted_overlay(project, sheet_id):
-                if _canon(ex["tag"]) in curated_canon:
-                    continue  # curated 가 권위 — 같은 설비의 추출본은 흡수(중복 방지).
+                if _norm_tag(ex["tag"]) in curated_norm:
+                    continue  # curated 가 권위 — 같은 표기 추출본은 흡수(중복 방지).
                 items.append(ex)
         items.sort(key=lambda e: e.get("tag", ""))
         return items

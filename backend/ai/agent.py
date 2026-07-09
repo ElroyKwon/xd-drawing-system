@@ -203,7 +203,7 @@ TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "get_sheet_history",
-            "description": "한 시트(sheet_key)의 버전별 추출 이력(과거 rev 포함)을 반환한다. 기본 답변은 현재 rev(get_sheet_content)를 쓰고, 사용자가 '과거/이전 버전/예전 rev'를 명시적으로 물을 때만 이 툴을 쓴다. is_current=true 가 현재, 나머지는 과거 rev. sheet_key 는 get_sheet_content/list_sheets 결과에서 얻는다.",
+            "description": "한 시트(sheet_key)의 버전별 추출 이력(과거 rev 포함)을 반환한다. 기본 답변은 현재 rev(get_sheet_content)를 쓰고, 사용자가 '과거/이전 버전/예전 rev'를 명시적으로 물을 때만 이 툴을 쓴다. is_current=true 가 현재, 나머지는 과거 rev. sheet_key 는 get_sheet_content 또는 get_sheet 결과에서 얻는다(list_sheets 결과에는 sheet_key 가 없음).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -374,5 +374,5 @@ def _summarize(name: str, result: dict) -> str:
     if name == "find_sheets_by_equipment":
         return f"sheets={result.get('count')}"
     if name == "get_sheet_history":
-        return f"found={result.get('found')} revs={result.get('rev_count')}"
+        return f"found={result.get('found')} revs={result.get('rev_count') or 0}"
     return "ok"

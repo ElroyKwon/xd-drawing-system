@@ -35,6 +35,15 @@ def test_normalize_merges_and_records_conflict():
     assert any(c["dropped"] == "PP-38OV" and c["resolved"] == "PP-380V" for c in conflicts)
 
 
+def test_normalize_keeps_distinct_same_source_tags():
+    # PL-1 과 PI-1 은 canon 이 같지만(P1-1) 서로 다른 설비 — 같은 트랙 내부에서 유실되면 안 됨.
+    rule = [{"tag": "PL-1", "confidence": 0.9, "src": "rule"},
+            {"tag": "PI-1", "confidence": 0.8, "src": "rule"}]
+    tags, conflicts = normalize(rule, [])
+    assert {t["tag"] for t in tags} == {"PL-1", "PI-1"}   # 둘 다 보존
+    assert conflicts == []                                # 트랙 내부는 접지 않음 → 충돌 기록 없음
+
+
 def test_mock_provider_is_deterministic_offline():
     prov = MockExtractProvider()
     r1 = prov.read("PANEL BOARD PP-380V FEEDS MTR-1 VCB", "pdf")

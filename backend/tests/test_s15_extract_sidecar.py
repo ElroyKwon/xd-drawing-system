@@ -22,17 +22,42 @@ def _backend_local_modules() -> set[str]:
     }
 
 
-def _imported_toplevel(path: str) -> set[str]:
+def _import_offenders(path: str, banned: set[str]) -> set[str]:
+    """backend/extract 파일이 banned(backend 로컬) 모듈을 당기는 모든 경로를 잡는다.
+
+    정적 절대 import·별칭뿐 아니라 스펙이 경고한 우회 벡터도 검사:
+      - 상대 import level≥2 (`from ..store`) = 패키지 밖(backend)으로 상승 → 무조건 위반
+      - 상대 import level==1 로 banned 이름 당기기
+      - 동적 import (`__import__("store")`, `importlib.import_module("store")`) — 리터럴이면
+        banned 검사, 비리터럴이면 보수적으로 위반(정적 판정 불가 = 격리 미보장)
+    """
     tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
-    mods: set[str] = set()
+    bad: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
-                mods.add(a.name.split(".")[0])
+                if a.name.split(".")[0] in banned:
+                    bad.add(a.name)
         elif isinstance(node, ast.ImportFrom):
-            if node.level == 0 and node.module:  # 절대 import 만(상대 import 는 자기 패키지)
-                mods.add(node.module.split(".")[0])
-    return mods
+            if node.level >= 2:
+                bad.add(f"relative(level={node.level}):{node.module or ''}")
+            elif node.level == 0 and node.module and node.module.split(".")[0] in banned:
+                bad.add(node.module)
+            elif node.level == 1:
+                for a in node.names:
+                    if a.name in banned:
+                        bad.add(f".{a.name}")
+        elif isinstance(node, ast.Call):
+            fn = node.func
+            fname = fn.id if isinstance(fn, ast.Name) else (fn.attr if isinstance(fn, ast.Attribute) else None)
+            if fname in ("__import__", "import_module"):
+                arg = node.args[0] if node.args else None
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    if arg.value.split(".")[0] in banned:
+                        bad.add(f"dynamic:{arg.value}")
+                else:
+                    bad.add(f"dynamic:{fname}(non-literal)")
+    return bad
 
 
 def test_extract_isolation_no_backend_imports():
@@ -41,10 +66,33 @@ def test_extract_isolation_no_backend_imports():
     for f in os.listdir(_EXTRACT):
         if not f.endswith(".py"):
             continue
-        hit = _imported_toplevel(os.path.join(_EXTRACT, f)) & banned
+        hit = _import_offenders(os.path.join(_EXTRACT, f), banned)
         if hit:
             offenders[f] = hit
     assert not offenders, f"backend/extract 격리 위반(backend 모듈 import): {offenders}"
+
+
+def test_isolation_guard_catches_evasions(tmp_path):
+    # guard 가 스펙이 경고한 우회 벡터를 실제로 잡는지(=O12 판정이 견고한지) 증명.
+    banned = {"store"}
+    probes = [
+        "import store",
+        "import store as s",
+        "from store import get_store",
+        "from ..store import get_store",
+        "import importlib\nimportlib.import_module('store')",
+        "__import__('store')",
+        "import importlib\nmod = 'st' + 'ore'\nimportlib.import_module(mod)",  # 비리터럴 → 보수적 위반
+    ]
+    for i, src in enumerate(probes):
+        p = tmp_path / f"probe{i}.py"
+        p.write_text(src, encoding="utf-8")
+        assert _import_offenders(str(p), banned), f"guard가 우회를 못 잡음: {src!r}"
+    # 정상 flat import 는 위반이 아니어야 한다(거짓양성 방지).
+    ok = tmp_path / "ok.py"
+    ok.write_text("import os\nimport re\nfrom normalize import normalize\nfrom . import provider",
+                  encoding="utf-8")
+    assert not _import_offenders(str(ok), banned)
 
 
 def test_extract_has_own_requirements():

@@ -51,15 +51,38 @@ def test_extracted_tags_promoted_with_origin(tmp_path, monkeypatch):
     assert "F1_s0" in by["PP-380V"]["sheet_ids"]       # 등장 시트 바인딩
 
 
-def test_curated_wins_on_canon_collision(tmp_path, monkeypatch):
+def test_curated_absorbs_exact_extracted(tmp_path, monkeypatch):
     s, ont = _fresh(tmp_path, monkeypatch)
     ont.add_equipment("P", {"equipment_id": "eq1", "tag": "PP-380V", "type": "분전반"},
                       sheet_ids=["F1_s0"])
-    _seed_meta(s, [{"tag": "PP-38OV", "confidence": 0.65, "src": "rule"}])  # OCR 변형, canon 동일
+    _seed_meta(s, [{"tag": "PP-380V", "confidence": 0.65, "src": "rule"}])  # 정확 동일 표기
     items = ont.list_equipment("P")
     tags = [e["tag"] for e in items]
-    assert tags.count("PP-380V") == 1 and "PP-38OV" not in tags  # curated 흡수(중복 없음)
+    assert tags.count("PP-380V") == 1  # 같은 표기 추출본은 curated 로 흡수(중복 없음)
     assert next(e for e in items if e["tag"] == "PP-380V")["origin"] == "curated"
+
+
+def test_ocr_variant_extracted_kept_distinct(tmp_path, monkeypatch):
+    # OCR 변형(PP-38OV)은 curated(PP-380V)와 canon 이 같지만 자동으로 접지 않는다.
+    # 서로 다른 설비를 오병합해 유실하는 위험보다, 별개 노출 + 신뢰도 표기가 정직하다.
+    s, ont = _fresh(tmp_path, monkeypatch)
+    ont.add_equipment("P", {"equipment_id": "eq1", "tag": "PP-380V", "type": "분전반"},
+                      sheet_ids=["F1_s0"])
+    _seed_meta(s, [{"tag": "PP-38OV", "confidence": 0.65, "src": "rule"}])
+    items = ont.list_equipment("P")
+    by = {e["tag"]: e for e in items}
+    assert by["PP-380V"]["origin"] == "curated"
+    assert by["PP-38OV"]["origin"] == "extracted"   # 유실 없이 별개 노출
+    assert by["PP-38OV"]["confidence"] == 0.65       # 미검증 신뢰도 표기(정직성)
+
+
+def test_distinct_extracted_tags_not_collapsed(tmp_path, monkeypatch):
+    # PL-1 과 PI-1 은 canon 충돌(P1-1)이나 서로 다른 설비 — overlay 집계에서 유실 금지.
+    s, ont = _fresh(tmp_path, monkeypatch)
+    _seed_meta(s, [{"tag": "PL-1", "confidence": 0.65, "src": "rule"},
+                   {"tag": "PI-1", "confidence": 0.65, "src": "rule"}])
+    tags = {e["tag"] for e in ont.list_equipment("P")}
+    assert {"PL-1", "PI-1"} <= tags  # 둘 다 승격(붕괴 없음)
 
 
 def test_include_extracted_false_returns_curated_only(tmp_path, monkeypatch):
