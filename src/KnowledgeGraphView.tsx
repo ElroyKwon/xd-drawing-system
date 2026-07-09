@@ -3,7 +3,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchGraph, type KgGraph, type KgNode } from "./api/kg";
+import { confirmEdge, fetchGraph, rejectEdge, type KgEdge, type KgGraph, type KgNode } from "./api/kg";
 import { layout, type Pos } from "./kgForce";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -19,6 +19,24 @@ const TYPE_COLOR: Record<string, string> = {
 const W = 900;
 const H = 640;
 
+/** 점(px,py)에서 임계거리 안에 있는 가장 가까운 엣지 선분을 고른다(없으면 null). */
+export function pickEdge(edges: KgEdge[], pos: Pos, px: number, py: number, threshold = 6): KgEdge | null {
+  let best: KgEdge | null = null;
+  let bestD = threshold;
+  for (const e of edges) {
+    const a = pos[e.src], b = pos[e.dst];
+    if (!a || !b) continue;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy || 1;
+    let t = ((px - a.x) * dx + (py - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = a.x + t * dx, cy = a.y + t * dy;
+    const d = Math.hypot(px - cx, py - cy);
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  return best;
+}
+
 type KnowledgeGraphViewProps = {
   projectName: string;
   onBack: () => void;
@@ -28,6 +46,7 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
   const [graph, setGraph] = useState<KgGraph | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<KgNode | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<KgEdge | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -35,11 +54,18 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
     setError(null);
     setGraph(null);
     setSelected(null);
+    setSelectedEdge(null);
     fetchGraph(projectName)
       .then((g) => { if (live) setGraph(g); })
       .catch((e) => { if (live) setError(String(e)); });
     return () => { live = false; };
   }, [projectName]);
+
+  const reload = () => {
+    fetchGraph(projectName)
+      .then((g) => setGraph(g))
+      .catch((e) => setError(String(e)));
+  };
 
   const pos: Pos = useMemo(
     () => (graph ? layout(graph.nodes, graph.edges, W, H, 200) : {}),
@@ -81,11 +107,27 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
     if (!graph) return;
     const rect = ev.currentTarget.getBoundingClientRect();
     const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-    const hit = graph.nodes.find((nd) => {
+    const hitNode = graph.nodes.find((nd) => {
       const p = pos[nd.id];
       return p && Math.hypot(p.x - x, p.y - y) <= 8;
     });
-    setSelected(hit || null);
+    if (hitNode) { setSelected(hitNode); setSelectedEdge(null); return; }
+    setSelected(null);
+    setSelectedEdge(pickEdge(graph.edges, pos, x, y));
+  }
+
+  async function onConfirm() {
+    if (!selectedEdge) return;
+    await confirmEdge(projectName, selectedEdge.src, selectedEdge.dst);
+    setSelectedEdge(null);
+    reload();
+  }
+
+  async function onReject() {
+    if (!selectedEdge) return;
+    await rejectEdge(projectName, selectedEdge.src, selectedEdge.dst);
+    setSelectedEdge(null);
+    reload();
   }
 
   return (
@@ -129,6 +171,20 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
         <aside className="kg-inspect">
           <strong>{selected.label}</strong> <em>{selected.type}</em>
           {selected.ref_id && <div>ref: {selected.ref_id}</div>}
+        </aside>
+      )}
+
+      {selectedEdge && (
+        <aside className="kg-inspect" data-testid="edge-selected">
+          <strong>{selectedEdge.src} ↔ {selectedEdge.dst}</strong> <em>{selectedEdge.type}</em>
+          <div>track: {selectedEdge.track}{selectedEdge.track === "llm" ? " (미검증)" : ""}</div>
+          {selectedEdge.evidence && <div>근거: {selectedEdge.evidence}</div>}
+          {selectedEdge.track === "llm" && (
+            <div data-testid="edge-actions" style={{ marginTop: 8, display: "flex", gap: 8 }}>
+              <button type="button" onClick={onConfirm}>확인(승격)</button>
+              <button type="button" onClick={onReject}>거부(숨김)</button>
+            </div>
+          )}
         </aside>
       )}
     </section>
