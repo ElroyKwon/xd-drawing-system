@@ -1,0 +1,10 @@
+# ⑥ write-back 통합 스모크 (2026-07-09, 세션30)
+backend tests/     : 215 passed, 1 skipped
+backend tests -k kg: 43 passed, 173 deselected   ← KG 테스트만: 전부 pass
+backend/extract    : 8 passed
+backend/ai         : 50 passed
+frontend vitest    : 140 passed (22 files)
+npm run build      : PASS (tsc clean + Vite GREEN, built in 352ms)
+통합 스모크        : test_confirm_then_reject_roundtrip PASS (confirm→curated, reject→drop, 되돌림→curated)
+비고               : 이번 실행에서 test_s2_sheet_meta 9 passed (ezdxf 사전 실패 없음). KG 관련 전부 green.
+                     1 skipped 은 KG 무관(사전 존재 skip). extract/ai/build 미변경 기대치 그대로.

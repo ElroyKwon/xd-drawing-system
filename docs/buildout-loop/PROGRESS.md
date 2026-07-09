@@ -3,7 +3,25 @@
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 > **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 현재 상태 (2026-07-09, 세션 26 — **S15 잔여(단계5·10·O7) + 3렌즈 수리 완료 → 이후 지식그래프 트랙으로 방향 재정의**) ⬅ 최신
+## 세션30 (2026-07-09) — ⑥ write-back 구현 (relates_to 승격·거부) ⬅ 최신
+
+**입력**: FROZEN 스펙 `specs/2026-07-09-kg-writeback-design.md`, 계획 `plans/2026-07-09-kg-writeback.md`.
+
+**산출**(Task 1~7, subagent-driven, 각 태스크 스펙검토+코드품질검토+수리):
+- `kg_store.py`: 오버레이 저널(edge_key 무방향 정규화·append-only·last-write-wins) + 로드타임 병합(_merge/_merged_graph, confirm→curated·reject→drop·비llm+비relates_to 보호·dangling 무시). 읽기 5경로 배선. 병합은 읽기 메모리에서만 → 스냅샷 불변, 승격 재빌드 생존.
+- `routes_kg_writeback.py`(신규): POST confirm/reject, 순수 스냅샷 검증(relates_to+track=llm 아니면 400), X-Actor 옵셔널, at 주입, egress 0. main 등록. 읽기 routes_kg.py 불변.
+- 프론트: `api/kg.ts` confirmEdge/rejectEdge(POST), `KnowledgeGraphView.tsx` 엣지 히트테스트(pickEdge)·llm 확인/거부 버튼·refetch·실패 시 setError.
+- `scripts/seed_demo_llm_edge.py`(신규): relates_to(llm)=0 대응 시연 시드(demo_seed, 멱등).
+
+**검증**: backend tests/ **215 passed·1 skipped**·KG테스트(-k kg) **43 passed** 전부 green·extract **8 passed**·ai **50 passed**·frontend vitest **140 passed**·build GREEN. 통합 스모크 `evidence/kg-writeback-smoke-260709.txt`(confirm→curated·reject→drop·되돌림 왕복). 비고: 이번 실행 test_s2_sheet_meta 9 passed(ezdxf 사전 실패 없음). 1 skipped 은 KG 무관.
+
+**불변식 사수**: 빌드 스크립트 무변경(멱등 유지) · 승격 재빌드 생존(병합은 읽기 메모리에서만) · rule/curated 보호 · 8000 egress 0 · TypeDB 물리분리.
+
+**스코프 밖(이연)**: 증분 재빌드(YAGNI)·수동 엣지 추가·note 편집·실인증(GATE-6)·mock확장/GATE-7 실 relates_to·⑤ 라우팅. 잔여위험: seed 스크립트 prod 가드 없음(marker 기반 안전모델, 재빌드로 청소).
+
+---
+
+## 이전 상태 (2026-07-09, 세션 26 — **S15 잔여(단계5·10·O7) + 3렌즈 수리 완료 → 이후 지식그래프 트랙으로 방향 재정의**)
 
 > 세션25에서 이어짐. 사용자 지시 "s15 잔여 진행하자" → 권장 순서(단계5→단계10→O7) 수행. 이후 사용자가 **단계10 방향을 재정의**(온톨로지 승격 → AI 지식그래프 분리 레이어). 세션 종료.
 
