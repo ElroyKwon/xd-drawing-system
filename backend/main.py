@@ -25,6 +25,7 @@ from routes_search import router as search_router
 from routes_sheet_meta import router as sheet_meta_router
 from routes_ontology import router as ontology_router
 from routes_kg import router as kg_router
+from routes_kg_writeback import router as kg_writeback_router
 from routes_email import router as email_router
 from store import get_store
 
@@ -56,6 +57,7 @@ app.include_router(search_router)
 app.include_router(sheet_meta_router)
 app.include_router(ontology_router)
 app.include_router(kg_router)
+app.include_router(kg_writeback_router)
 app.include_router(email_router)
 app.include_router(auth_router)
 
