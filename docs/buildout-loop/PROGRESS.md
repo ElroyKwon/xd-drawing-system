@@ -3,7 +3,31 @@
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 > **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 현재 상태 (2026-07-08, 세션 25 — **S15 단계9 신뢰도 정직성 라이브 이밸 DONE: O9·O10·O14 MET**) ⬅ 최신
+## 현재 상태 (2026-07-09, 세션 26 — **S15 잔여(단계5·10·O7) + 3렌즈 수리 완료 → 이후 지식그래프 트랙으로 방향 재정의**) ⬅ 최신
+
+> 세션25에서 이어짐. 사용자 지시 "s15 잔여 진행하자" → 권장 순서(단계5→단계10→O7) 수행. 이후 사용자가 **단계10 방향을 재정의**(온톨로지 승격 → AI 지식그래프 분리 레이어). 세션 종료.
+
+### 완료 (커밋 2개)
+- **단계5 (O12·O4) — `05d0014`**: `backend/extract/` 8002 LLM 추출 사이드카 신설. 격리(backend import 0 AST)·MockExtractProvider(egress 0)·rule↔llm 정규화 병합. 8000 훅 `_llm_augment`는 `XD_EXTRACT_LLM` 게이트(기본 off). 자체 venv `backend/extract/.venv`. 라이브 `/extract` 스모크 PASS. 실 LLM(XD_EXTRACT_LLM=1)=HUMAN_GATE-7.
+- **단계10 (O13 off) — `05d0014`**: 추출 태그 → `/api/ontology/equipment` read-time overlay 승격. **⚠️ 이 방향은 세션26 후반 사용자 재정의로 폐기 예정**(아래 방향 재정의). O13 on(TypeDB e2e)은 Docker 미기동으로 DEFERRED.
+- **O7 — `05d0014`**: 신규 AI 툴 `get_sheet_history(sheet_key)`. 기본 답변 is_current(get_sheet_content), 과거 rev 명시 질의 시만 이력. **실 gpt-5.5 라이브 2문항 PASS**(현재→get_sheet_content·과거→get_sheet_history, 현재/과거 구분 답변).
+- **단계11 3렌즈 검수 + 수리 — `f0782d9`**: 독립 3렌즈(백엔드 적대·AI 소비·Done-When) → BLOCKER 0, MAJOR 3 + MINOR 6 전량 수리. ①normalize/overlay same-source canon-fold 유실 제거(OCR 접기는 cross-source만) ②O12 AST guard 강화(상대·동적 import 우회 검출) ③get_sheet_history 스키마 description 수정. + MINOR 6.
+
+### 검증 (회귀 0)
+backend pytest **178** · AI 사이드카 **50** · 8002 자체 **7** · 프론트 vitest **128** · build GREEN.
+
+### S15 Acceptance: 14/15 MET
+O1~O12·O14·O15 MET. **O13**: off MET / on DEFERRED(Docker). — 단 단계10이 아래 트랙으로 방향 수정되어 **O13/단계10 문언 자체가 재정의 대상**.
+
+### ★ 방향 재정의 (세션26 후반, 사용자) — 지식/관계성 지식그래프 트랙
+- 사용자: "온톨로지로 승격하지 말고, 온톨로지(TypeDB)는 큐레이트 권위 그대로 두고 AI 분석물(관계성·wiki·지식)은 **분리된 레이어**로. 에이전틱 AI의 자료 소스로." + "도면관리 UI에서 분석 지식 시각화."
+- 설계 handoff(브레인스토밍 진행 중, §1·§2 승인 대기): **`docs/superpowers/specs/2026-07-09-knowledge-graph-layer-design.md`** ← 다음 세션 필독.
+- 확정: XD 내부 JSON 지식그래프(nodes/edges) · 읽기 그래프 먼저(스토어+시드+순회/근거조회+시각화) · 자기확장/서비스라우팅은 다음 스펙 · 단계10 overlay는 되돌림.
+- **다음 세션 = 이 설계 문서로 brainstorming 재개**(§2 승인 3점부터) → 스펙 FROZEN → writing-plans → 구현(§6 overlay 되돌림 + ① 스토어).
+
+---
+
+## 이전 상태 (2026-07-08, 세션 25 — **S15 단계9 신뢰도 정직성 라이브 이밸 DONE: O9·O10·O14 MET**)
 
 > 세션24에서 이어짐. 사용자 지시 "남은 단계 O9부터". 단계9(신뢰도 정직성) 라이브 완결 + 회귀 게이트. **남은 미착수=단계5(8002/O12)·단계10(온톨로지 승격/O13)·O7(과거rev 툴).**
 
