@@ -172,6 +172,46 @@ def test_find_sheets_by_equipment():
     assert route.calls.last.request.url.params["tag"] == "PP-380V"
 
 
+# O7: 과거 rev 명시 질의 — get_sheet_history 는 current_only=false 로 이력 전체 조회.
+_HISTORY = {"count": 2, "truncated": False, "results": [
+    {"is_current": True, "extracted_at": "2026-07-09T10:00", "file_id": "f2",
+     "source_kind": "pdf", "summary": "rev B", "text_index": "PP-380V 380V",
+     "tags": [{"tag": "PP-380V", "confidence": 0.92, "src": "rule", "evidence": "x"}]},
+    {"is_current": False, "extracted_at": "2026-07-01T09:00", "file_id": "f1",
+     "source_kind": "pdf", "summary": "rev A", "text_index": "PP-220V 220V",
+     "tags": [{"tag": "PP-220V", "confidence": 0.65, "src": "rule", "evidence": "y"}]}]}
+
+
+@respx.mock
+def test_get_sheet_history_lists_current_and_past():
+    route = respx.get(f"{BASE}/api/sheet-meta").mock(
+        return_value=httpx.Response(200, json=_HISTORY))
+    out = tools.get_sheet_history("Study_Project", sheet_key="sk-2")
+    assert out["found"] is True
+    assert out["rev_count"] == 2 and out["current_count"] == 1
+    cur = [r for r in out["revisions"] if r["is_current"]]
+    assert len(cur) == 1 and cur[0]["summary"] == "rev B"       # 현재 rev
+    past = [r for r in out["revisions"] if not r["is_current"]]
+    assert past[0]["summary"] == "rev A"                        # 과거 rev 노출
+    assert "evidence" not in past[0]["tags"][0]                 # 태그 축약
+    assert route.calls.last.request.url.params["current_only"] == "false"
+    assert route.calls.last.request.url.params["sheet_key"] == "sk-2"
+
+
+@respx.mock
+def test_get_sheet_history_needs_key():
+    out = tools.get_sheet_history("Study_Project")
+    assert out["found"] is False and "sheet_key" in out["reason"]
+
+
+@respx.mock
+def test_get_sheet_history_empty_is_honest():
+    respx.get(f"{BASE}/api/sheet-meta").mock(
+        return_value=httpx.Response(200, json={"count": 0, "results": [], "truncated": False}))
+    out = tools.get_sheet_history("Study_Project", sheet_key="sk-none")
+    assert out["found"] is False and out["sheet_key"] == "sk-none"
+
+
 _SEARCH = {"query": "케이블", "sheets": [{"sheet_id": "s1", "number": "E-101"}],
            "issues": [], "files": [], "folders": [], "truncated": False}
 _CONTENT = {"query": "케이블", "count": 1, "truncated": False, "results": [{

@@ -28,6 +28,9 @@ SYSTEM_PROMPT = (
     "설비/장비나 도면 본문 내용을 물으면: 특정 설비 태그(예: 'TR-3201', 'PP-380V')가 "
     "어느 시트에 나오는지는 find_sheets_by_equipment로 역조회하고, 한 시트의 추출 본문·태그·요약은 "
     "get_sheet_content로 조회하세요. search 결과의 content_matches는 도면 본문색인 매칭입니다. "
+    "버전 지침: 기본 답변은 항상 현재 rev(is_current) 기준입니다(get_sheet_content). "
+    "사용자가 '과거/이전 버전/예전 rev/개정 전'을 명시적으로 물을 때만 get_sheet_history로 "
+    "버전 이력을 조회하고, 답할 때 어느 rev(현재/과거)인지 구분해 밝히세요. "
     "정직성 지침: get_sheet_content·find_sheets_by_equipment·list_sheets/get_sheet의 tags는 "
     "업로드 도면에서 자동추출된 것이며 confidence(신뢰도)가 붙습니다. confidence가 0.7 미만인 태그를 "
     "인용할 때는 반드시 '자동추출(미검증)'임을 밝히세요. 반면 list_equipment/get_equipment의 장비는 "
@@ -196,6 +199,20 @@ TOOLS_SCHEMA = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_sheet_history",
+            "description": "한 시트(sheet_key)의 버전별 추출 이력(과거 rev 포함)을 반환한다. 기본 답변은 현재 rev(get_sheet_content)를 쓰고, 사용자가 '과거/이전 버전/예전 rev'를 명시적으로 물을 때만 이 툴을 쓴다. is_current=true 가 현재, 나머지는 과거 rev. sheet_key 는 get_sheet_content/list_sheets 결과에서 얻는다.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "sheet_key": {"type": "string", "description": "버전을 가로지르는 시트 정체성 키."},
+                },
+                "required": ["sheet_key"],
+            },
+        },
+    },
 ]
 
 
@@ -265,6 +282,8 @@ def _dispatch(name: str, args: dict, project: str) -> dict:
         return tools.get_sheet_content(project, args.get("sheet_id"), args.get("sheet_key"))
     if name == "find_sheets_by_equipment":
         return tools.find_sheets_by_equipment(project, args.get("tag", ""))
+    if name == "get_sheet_history":
+        return tools.get_sheet_history(project, args.get("sheet_key"))
     return {"error": f"알 수 없는 툴: {name}"}
 
 
@@ -354,4 +373,6 @@ def _summarize(name: str, result: dict) -> str:
         return f"found={result.get('found')} tags={len(result.get('tags', []))}"
     if name == "find_sheets_by_equipment":
         return f"sheets={result.get('count')}"
+    if name == "get_sheet_history":
+        return f"found={result.get('found')} revs={result.get('rev_count')}"
     return "ok"

@@ -1,0 +1,7 @@
+# 8002 추출 사이드카 자체 venv (backend/.venv·ai/.venv 와 분리, 격리).
+# 설치: python -m venv backend/extract/.venv && extract/.venv/Scripts/pip install -r requirements.txt
+fastapi
+uvicorn
+httpx
+pydantic
+openai  # OpenAIExtractProvider(HUMAN_GATE-7) 에서만 lazy import

@@ -13,6 +13,7 @@ coverage/
 desktop.ini
 backend/uploads/
 backend/.venv/
+**/.venv/
 __pycache__/
 *.pyc
 

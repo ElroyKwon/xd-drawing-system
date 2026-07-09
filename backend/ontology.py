@@ -176,7 +176,45 @@ class OntologyStore:
                     base[eid]["sheet_ids"].append(r.get("sid").get_string())
         return list(base.values())
 
-    def list_equipment(self, project: str, sheet_id: Optional[str] = None) -> list:
+    def _extracted_overlay(self, project: str, sheet_id: Optional[str] = None) -> list:
+        """S15 단계10 — 업로드 추출 태그(_sheet_meta.json, is_current)를 equipment 표면으로
+        승격. **read-time overlay**(TypeDB 원칙 LOCKED: 추출 SoT는 내부 JSON, TypeDB 미기록).
+        TypeDB on/off 무관하게 동작한다. origin="extracted" + confidence/src 로 curated 와 구분."""
+        from sheet_merge import _canon
+        try:
+            from store import get_store  # lazy — 순환 import 회피
+            metas = get_store().list_sheet_meta(project_name=project, current_only=True)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("추출 태그 overlay 조회 실패: %s", e)
+            return []
+        agg: dict = {}
+        for m in metas:
+            sid = m.get("sheet_id", "")
+            if sheet_id and sid != sheet_id:
+                continue
+            for t in m.get("tags", []):
+                tag = t.get("tag", "")
+                if not tag:
+                    continue
+                key = _canon(tag)
+                conf = float(t.get("confidence", 0.0))
+                rec = agg.get(key)
+                if rec is None:
+                    agg[key] = rec = {
+                        "equipment_id": f"ex_{key}", "tag": tag, "name": "",
+                        "type": t.get("type", ""), "status": "", "discipline": "",
+                        "project_name": project, "sheet_ids": [],
+                        "origin": "extracted", "confidence": conf, "src": t.get("src", ""),
+                    }
+                elif conf > rec["confidence"]:  # 대표는 고신뢰 표기.
+                    rec.update(tag=tag, confidence=conf, src=t.get("src", ""),
+                               type=t.get("type", "") or rec["type"])
+                if sid and sid not in rec["sheet_ids"]:
+                    rec["sheet_ids"].append(sid)
+        return list(agg.values())
+
+    def list_equipment(self, project: str, sheet_id: Optional[str] = None,
+                       include_extracted: bool = True) -> list:
         if self._driver:
             try:
                 items = self._query_equipment(project)
@@ -187,6 +225,15 @@ class OntologyStore:
             items = [e for e in self._read_mirror()["equipment"] if e["project_name"] == project]
         if sheet_id:
             items = [e for e in items if sheet_id in e.get("sheet_ids", [])]
+        for e in items:
+            e.setdefault("origin", "curated")  # 수동 시드 = 고신뢰 curated overlay(D 정신).
+        if include_extracted:
+            from sheet_merge import _canon
+            curated_canon = {_canon(e.get("tag", "")) for e in items if e.get("tag")}
+            for ex in self._extracted_overlay(project, sheet_id):
+                if _canon(ex["tag"]) in curated_canon:
+                    continue  # curated 가 권위 — 같은 설비의 추출본은 흡수(중복 방지).
+                items.append(ex)
         items.sort(key=lambda e: e.get("tag", ""))
         return items
 

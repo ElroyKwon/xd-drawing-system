@@ -304,3 +304,29 @@ def find_sheets_by_equipment(project: str, tag: str) -> dict:
     } for r in data.get("results", [])]
     return {"tag": data.get("tag", tag), "count": len(sheets),
             "sheets": sheets, "truncated": data.get("truncated", False)}
+
+
+def get_sheet_history(project: str, sheet_key: Optional[str] = None) -> dict:
+    """GET /api/sheet-meta?current_only=false — 한 시트(sheet_key)의 버전별 추출 이력(O7·D6).
+
+    기본 답변은 현재 rev(get_sheet_content)로 하고, 사용자가 '과거/이전 버전/예전 rev'를
+    **명시적으로** 물을 때만 이 툴을 쓴다. is_current=true 가 현재, 나머지는 과거 rev.
+    """
+    if not sheet_key:
+        return {"found": False, "reason": "sheet_key 필요"}
+    data = get("/api/sheet-meta", params={
+        "project_name": project, "sheet_key": sheet_key, "current_only": "false"})
+    rows = data.get("results", [])
+    if not rows:
+        return {"found": False, "sheet_key": sheet_key}
+    revs = [{
+        "is_current": bool(r.get("is_current")),
+        "extracted_at": r.get("extracted_at"),
+        "file_id": r.get("file_id"),
+        "source_kind": r.get("source_kind"),
+        "summary": r.get("summary"),
+        "tags": _compact_tags(r.get("tags")),
+        "text_excerpt": (r.get("text_index") or "")[:400],
+    } for r in rows]
+    return {"found": True, "sheet_key": sheet_key, "rev_count": len(revs),
+            "current_count": sum(1 for x in revs if x["is_current"]), "revisions": revs}
