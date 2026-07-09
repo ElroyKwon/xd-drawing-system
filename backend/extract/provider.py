@@ -7,12 +7,19 @@
 
 두 provider 동일 계약:
     read(text_index: str, source_kind: str) -> {"llm_tags": [...], "summary": str|None}
+    analyze(equipment: list, sheets: list) -> {"relations": [...], "notes": [...]}
+      · mock  = 같은 시트 공출현 설비쌍을 결정적 relates_to 로(egress 0).
+      · openai= 실 LLM 관계·지식노트 추출(HUMAN_GATE-7).
 """
 from __future__ import annotations
 
+import json
+import logging
 import os
 import re
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "gpt-5.5"
 
@@ -33,6 +40,9 @@ class ExtractProvider:
     name = "base"
 
     def read(self, text_index: str, source_kind: str) -> dict:
+        raise NotImplementedError
+
+    def analyze(self, equipment: list, sheets: list) -> dict:
         raise NotImplementedError
 
 
@@ -66,7 +76,8 @@ class MockExtractProvider(ExtractProvider):
 
     def analyze(self, equipment: list, sheets: list) -> dict:
         """결정적 공출현 관계(egress 0). 같은 시트에 함께 나온 설비쌍 → relates_to.
-        실 LLM 없이도 그래프를 채워 시각화·테스트가 되게 하는 오프라인 기본값."""
+        실 LLM 없이도 그래프를 채워 시각화·테스트가 되게 하는 오프라인 기본값.
+        `equipment` 는 무시한다(관계는 시트 공출현에서만 유도) — 공유 시그니처 유지용."""
         pair_sheets: dict = {}
         for s in sheets:
             tags = sorted({t.get("tag", "") for t in (s.get("tags") or []) if t.get("tag")})
@@ -113,7 +124,6 @@ class OpenAIExtractProvider(ExtractProvider):
         )
         raw = self._complete(prompt)
         try:
-            import json
             data = json.loads(raw)
         except Exception as e:  # noqa: BLE001
             raise ExtractProviderError(f"OpenAI 추출 호출 실패: {e}") from e
@@ -127,20 +137,21 @@ class OpenAIExtractProvider(ExtractProvider):
     def analyze(self, equipment: list, sheets: list) -> dict:
         """실 LLM 관계·지식 추출 — HUMAN_GATE-7 (실 고객 도면을 외부 전송).
         프롬프트: 설비 목록·시트 태그·본문 발췌를 주고 전원계통 상위/하위 relates_to 와
-        wiki 지식노트를 JSON 으로 요청. 결과는 track=llm 으로 표기(정직성)."""
-        import json as _json
+        wiki 지식노트를 JSON 으로 요청. provenance 는 배치 단위로 `analyzer.llm_model`
+        에 담기며(provider 출력엔 track 필드 없음), track=llm 표기는 하류 build 단계가 찍는다."""
         prompt = (
             "다음 설비·시트에서 설비 간 전원계통/상하위 관계(relates_to)와 "
             "지식노트(notes)를 JSON 으로 추출. "
             "형식: {\"relations\":[{\"src_tag\",\"dst_tag\",\"relation\":\"relates_to\","
             "\"confidence\":0~1,\"evidence\"}],\"notes\":[{\"about_tag\",\"text\",\"confidence\"}]}\n"
-            f"설비: {_json.dumps(equipment, ensure_ascii=False)}\n"
-            f"시트: {_json.dumps(sheets, ensure_ascii=False)[:6000]}"
+            f"설비: {json.dumps(equipment, ensure_ascii=False)[:2000]}\n"
+            f"시트: {json.dumps(sheets, ensure_ascii=False)[:6000]}"
         )
         raw = self._complete(prompt)  # 기존 실 LLM 호출 경로 재사용
         try:
-            data = _json.loads(raw)
-        except Exception:  # noqa: BLE001 — 모델이 비정형 반환 시 빈 결과(정직)
+            data = json.loads(raw)
+        except (json.JSONDecodeError, AttributeError, TypeError):
+            logger.warning("analyze: 모델 비정형 반환 → 빈 결과")
             return {"relations": [], "notes": []}
         return {"relations": data.get("relations", []), "notes": data.get("notes", [])}
 
