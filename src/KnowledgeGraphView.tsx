@@ -32,6 +32,9 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
 
   useEffect(() => {
     let live = true;
+    setError(null);
+    setGraph(null);
+    setSelected(null);
     fetchGraph(projectName)
       .then((g) => { if (live) setGraph(g); })
       .catch((e) => { if (live) setError(String(e)); });
