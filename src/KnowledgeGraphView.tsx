@@ -118,16 +118,24 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
 
   async function onConfirm() {
     if (!selectedEdge) return;
-    await confirmEdge(projectName, selectedEdge.src, selectedEdge.dst);
-    setSelectedEdge(null);
-    reload();
+    try {
+      await confirmEdge(projectName, selectedEdge.src, selectedEdge.dst);
+      setSelectedEdge(null);
+      reload();
+    } catch (e) {
+      setError(String(e));
+    }
   }
 
   async function onReject() {
     if (!selectedEdge) return;
-    await rejectEdge(projectName, selectedEdge.src, selectedEdge.dst);
-    setSelectedEdge(null);
-    reload();
+    try {
+      await rejectEdge(projectName, selectedEdge.src, selectedEdge.dst);
+      setSelectedEdge(null);
+      reload();
+    } catch (e) {
+      setError(String(e));
+    }
   }
 
   return (
