@@ -6,11 +6,14 @@ TypeDB 와 물리 분리(온톨로지 원칙 LOCKED). 쓰기 시드는 scripts/b
 from __future__ import annotations
 
 import json
+import logging
 from collections import deque
 from pathlib import Path
 from typing import Optional
 
 import config
+
+logger = logging.getLogger(__name__)
 
 _PATH = Path(config.UPLOADS_DIR) / "_knowledge_graph.json"
 
@@ -20,7 +23,7 @@ def _load() -> dict:
         try:
             return json.loads(_PATH.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
-            pass
+            logger.error("지식그래프 스냅샷 파싱 실패(%s) → 빈 그래프 반환", _PATH)
     return {"graphs": {}}
 
 
@@ -53,14 +56,12 @@ def neighbors(project: str, node_id: str, depth: int = 1, types: Optional[list] 
         return {"found": False, "id": node_id}
     seen = {node_id}
     frontier = {node_id}
-    edges_out = []
     for _ in range(depth):
         nxt = set()
         for e in g.get("edges", []):
             for a, b in ((e["src"], e["dst"]), (e["dst"], e["src"])):
                 if a in frontier and b not in seen:
                     nxt.add(b)
-                    edges_out.append(e)
         seen |= nxt
         frontier = nxt
         if not frontier:
@@ -68,6 +69,9 @@ def neighbors(project: str, node_id: str, depth: int = 1, types: Optional[list] 
     nodes = [idx[i] for i in seen if i in idx]
     if types:
         nodes = [n for n in nodes if n["type"] in types]
+    # 반환 엣지 = 최종 노드 집합에 대한 유도 서브그래프(양 끝점이 모두 포함된 엣지만) → dangling 없음.
+    kept = {n["id"] for n in nodes}
+    edges_out = [e for e in g.get("edges", []) if e["src"] in kept and e["dst"] in kept]
     return {"found": True, "nodes": nodes, "edges": edges_out}
 
 

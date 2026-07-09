@@ -49,6 +49,57 @@ def test_neighbors_depth(kg):
     assert ids == {"eq:E1", "sh:s1", "eq:E2"}
 
 
+def _write_snapshot(kg, tmp_path, graph):
+    import json as _json
+    (tmp_path / "_knowledge_graph.json").write_text(
+        _json.dumps({"graphs": {"P1": graph}}), encoding="utf-8")
+
+
+def test_neighbors_returns_induced_edges(kg, tmp_path):
+    # A–B, A–C, B–C. A 에서 depth=1 이면 세 노드 모두 이웃 → 유도 서브그래프는 세 엣지 전부.
+    graph = {
+        "built_at": None,
+        "nodes": [
+            {"id": "eq:A", "type": "equipment", "ref_id": "A", "label": "A", "props": {}},
+            {"id": "eq:B", "type": "equipment", "ref_id": "B", "label": "B", "props": {}},
+            {"id": "eq:C", "type": "equipment", "ref_id": "C", "label": "C", "props": {}},
+        ],
+        "edges": [
+            {"src": "eq:A", "dst": "eq:B", "type": "relates_to", "confidence": 1.0, "track": "rule", "evidence": None},
+            {"src": "eq:A", "dst": "eq:C", "type": "relates_to", "confidence": 1.0, "track": "rule", "evidence": None},
+            {"src": "eq:B", "dst": "eq:C", "type": "relates_to", "confidence": 1.0, "track": "rule", "evidence": None},
+        ],
+    }
+    _write_snapshot(kg, tmp_path, graph)
+    result = kg.neighbors("P1", "eq:A", depth=1)
+    ids = {n["id"] for n in result["nodes"]}
+    assert ids == {"eq:A", "eq:B", "eq:C"}
+    assert len(result["edges"]) == 3  # B–C 유도 엣지 포함
+
+
+def test_neighbors_types_filter_has_no_dangling_edges(kg, tmp_path):
+    # equipment + sheet + tag 혼합. types=["equipment"] 필터 후 남은 엣지는 dangling 없어야.
+    graph = {
+        "built_at": None,
+        "nodes": [
+            {"id": "eq:A", "type": "equipment", "ref_id": "A", "label": "A", "props": {}},
+            {"id": "eq:B", "type": "equipment", "ref_id": "B", "label": "B", "props": {}},
+            {"id": "sh:s1", "type": "sheet", "ref_id": "s1", "label": "E-101", "props": {}},
+            {"id": "tg:HV", "type": "tag", "ref_id": "HV", "label": "HV", "props": {}},
+        ],
+        "edges": [
+            {"src": "eq:A", "dst": "eq:B", "type": "relates_to", "confidence": 1.0, "track": "rule", "evidence": None},
+            {"src": "eq:A", "dst": "sh:s1", "type": "appears_on", "confidence": 1.0, "track": "curated", "evidence": None},
+            {"src": "eq:B", "dst": "tg:HV", "type": "has_tag", "confidence": 1.0, "track": "rule", "evidence": None},
+        ],
+    }
+    _write_snapshot(kg, tmp_path, graph)
+    result = kg.neighbors("P1", "eq:A", depth=1, types=["equipment"])
+    kept = {n["id"] for n in result["nodes"]}
+    for e in result["edges"]:
+        assert e["src"] in kept and e["dst"] in kept
+
+
 def test_referential_integrity_flags_dangling(kg):
     # dst 없는 엣지를 넣으면 무결성 검사가 잡는다.
     bad = {"graphs": {"P1": {"nodes": [{"id": "sh:s1", "type": "sheet", "ref_id": "s1", "label": "", "props": {}}],
