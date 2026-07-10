@@ -24,8 +24,17 @@
 ### 📦 버전업 백로그로 분리(사용자 지시)
 - **TypeDB 연동**(mirror + 온톨로지 적재 e2e + O13) — 별도 트랙 · **⑤ 서비스·툴 라우팅 인덱스**(스펙·코드 0, 원래 계약 밖) · **GATE-5**(실 이메일)·**GATE-6**(실 인증/SSO) · **외부 배포=설치/배포 가이드**(현재 부재) · **B2 해결버전 설정 UI**(백엔드·표시 완료, FE 세터만 미완).
 
+### 세션34-b (2026-07-10) — 단일 설치 exe(setup.exe) 트랙 착수 (키스톤+스캐폴딩, 커밋 `d6230f3`)
+
+사용자 요청("설치를 exe 하나로") → 형태 **B(Inno Setup 설치 마법사)** + **DWG·PDF 둘 다**(ODA 동봉) 결정.
+- ✅ **키스톤**: 백엔드가 프론트 `dist/`를 루트에 서빙(`config.FRONTEND_DIST`·`main.py` StaticFiles, /api·/health·/files 우선). 검증(`/`·`/health`·`/api`·`/assets` 200). 프론트 별도 서버 불필요.
+- ✅ **supervisor** `packaging/serve_all.py`(백엔드8000+AI8001 스레드·브라우저 오픈·frozen/source 양립·데이터=%LOCALAPPDATA%). from-source 스모크 검증(8000 프론트+8001 AI 동시).
+- ✅ **스캐폴딩**: `packaging/xd-server.spec`(PyInstaller onedir)·`installer.iss`(Inno)·`README.md`(빌드 가이드). **FROZEN 스펙** `docs/superpowers/specs/2026-07-10-single-exe-installer-design.md`(P1~P7·게이트).
+- ⬜ **남음**: build-venv + PyInstaller freeze 실행(matplotlib/pymupdf hidden-data 반복 튜닝) → onedir exe 검증 → `setup.exe` 컴파일. **🚧 GATE**: Inno Setup 6 설치(빌드PC)·ODA 재배포 라이선스·(권장)코드사인.
+- 회귀 0(231 passed). 커밋 `d6230f3` origin push.
+
 ### ▶▶ 다음 세션(35) 진입점
-버전업 백로그 중 우선순위 선택(설치/배포 가이드 or TypeDB 연동 or ⑤ 라우팅). 진입=이 블록 + `_개발-브릿지.md` §2.
+**두 갈래**: ① **단일 exe 완성** — `packaging/README.md` 절차로 PyInstaller freeze 실행→onedir 검증→(Inno 설치 후) setup.exe. ② 버전업 백로그 다른 항목(TypeDB 연동 / ⑤ 라우팅). 진입=이 블록 + `_개발-브릿지.md` §2. (참고: AI 챗=gpt-5.5, 비전추출=실행시 gpt-5.6-terra override — 모델 통일 원하면 `.env`/기본값 한 곳 고정.)
 
 ---
 
