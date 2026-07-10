@@ -89,6 +89,85 @@ def _norm(tag: str) -> str:
     return "".join((tag or "").upper().split())
 
 
+def _visual_pass(project: str, sheets: list, equipment: list, nodes: dict, edges: list, add) -> None:
+    """멀티모달 비전 패스(XD_KG_VISUAL=1) — 시트 PDF 를 8002 /analyze_sheet 로 병렬 심층 분석.
+
+    도면 이미지+텍스트에서 뽑은 설비(eq:llm:*)·관계(feeds/protects/relates_to)·지식노트를
+    llm 트랙(미검증)으로 그래프에 얹는다. 큐레이트 온톨로지(eq:*)는 그대로 두는 분리 레이어.
+    """
+    import concurrent.futures
+    proj_dir = Path(config.UPLOADS_DIR) / project
+    jobs = []
+    for s in sheets:
+        fid = s.get("file_id")
+        if not fid:
+            continue
+        pdf = proj_dir / fid / "original.pdf"
+        if pdf.exists():
+            jobs.append((s, str(pdf)))
+    eq_ctx = [{"tag": e.get("tag"), "type": e.get("type")} for e in equipment if e.get("tag")]
+
+    def _call(job):
+        s, pdf = job
+        try:
+            return s, _post(_EXTRACT + "/analyze_sheet", {"pdf_path": pdf, "equipment": eq_ctx})
+        except Exception:  # noqa: BLE001 — 한 장 실패는 전체를 막지 않음
+            return s, None
+
+    results = []
+    workers = int(os.environ.get("XD_KG_VISUAL_WORKERS", "8"))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+        for r in ex.map(_call, jobs):
+            results.append(r)
+
+    def _eqid(tag: str) -> str:
+        return "eq:llm:" + _norm(tag)
+
+    ok = sum(1 for _, res in results if res)
+    # 1패스: 비전 설비 노드 전량 생성(관계가 다른 시트 설비를 참조해도 해소되게).
+    for s, res in results:
+        if not res:
+            continue
+        sid = s.get("sheet_id")
+        for e in res.get("equipment", []):
+            tag = e.get("tag")
+            if not tag:
+                continue
+            nid = _eqid(tag)
+            if nid not in nodes:
+                add({"id": nid, "type": "equipment", "ref_id": None, "label": tag,
+                     "props": {"type": e.get("type", ""), "rating": e.get("rating", ""), "track": "llm"}})
+            if sid and f"sh:{sid}" in nodes:
+                edges.append({"src": nid, "dst": f"sh:{sid}", "type": "appears_on",
+                              "confidence": 0.6, "track": "llm", "evidence": "비전 추출"})
+    # 2패스: 관계 + 노트(양끝 노드 존재 시만).
+    for s, res in results:
+        if not res:
+            continue
+        for r in res.get("relations", []):
+            a, b = _eqid(r.get("src", "")), _eqid(r.get("dst", ""))
+            if r.get("src") and r.get("dst") and a in nodes and b in nodes and a != b:
+                rel = r.get("relation", "relates_to")
+                if rel not in ("feeds", "protects", "relates_to"):
+                    rel = "relates_to"
+                edges.append({"src": a, "dst": b, "type": rel,
+                              "confidence": float(r.get("confidence") or 0.5), "track": "llm",
+                              "evidence": r.get("evidence")})
+        for note in res.get("notes", []):
+            about = _eqid(note.get("about", "")) if note.get("about") else None
+            if not about or about not in nodes:
+                continue
+            _h = hashlib.sha256(f"{note.get('about','')}|{note.get('text','')}".encode("utf-8")).hexdigest()[:16]
+            nid = f"nt:{_h}"
+            if nid not in nodes:
+                add({"id": nid, "type": "note", "ref_id": None, "label": (note.get("text") or "")[:40],
+                     "props": {"text": note.get("text", ""), "confidence": float(note.get("confidence") or 0.5)}})
+            edges.append({"src": nid, "dst": about, "type": "describes",
+                          "confidence": float(note.get("confidence") or 0.5), "track": "llm", "evidence": None})
+    print(f"  비전 패스: {ok}/{len(jobs)} 시트 분석 · 설비노드 "
+          f"{sum(1 for n in nodes.values() if str(n['id']).startswith('eq:llm:'))}개")
+
+
 def build_graph(project: str, built_at: str | None = None) -> dict:
     equipment = _fetch_equipment(project)
     sheets = _fetch_sheets(project)
@@ -162,28 +241,33 @@ def build_graph(project: str, built_at: str | None = None) -> dict:
                 edges.append({"src": f"fl:{fid}", "dst": f"sh:{sid}", "type": "references",
                               "confidence": 1.0, "track": "rule", "evidence": None})
 
-    # ── AI 레이어: 8002 /analyze → relates_to·note ──
-    tag_to_eq = {_norm(e.get("tag", "")): f"eq:{e['equipment_id']}" for e in equipment if e.get("tag")}
-    ai = _call_analyze(equipment, sheets)
-    for r in ai.get("relations", []):
-        s_id = tag_to_eq.get(_norm(r.get("src_tag", "")))
-        d_id = tag_to_eq.get(_norm(r.get("dst_tag", "")))
-        if s_id and d_id and s_id != d_id:  # 무결성: 양끝이 설비 노드여야.
-            edges.append({"src": s_id, "dst": d_id, "type": "relates_to",
-                          "confidence": float(r.get("confidence", 0.5)), "track": "llm",
-                          "evidence": r.get("evidence")})
-    for i, note in enumerate(ai.get("notes", [])):
-        about = tag_to_eq.get(_norm(note.get("about_tag", "")))
-        if not about:
-            continue
-        # 결정적 note id — 내용 기반 content hash(프로세스 간 안정, 시계·난수 없음).
-        _h = hashlib.sha256(f"{note.get('about_tag','')}|{note.get('text','')}".encode("utf-8")).hexdigest()[:16]
-        nid = f"nt:{_h}"
-        add({"id": nid, "type": "note", "ref_id": None, "label": (note.get("text") or "")[:40],
-             "props": {"text": note.get("text", ""), "confidence": float(note.get("confidence", 0.5))}})
-        edges.append({"src": nid, "dst": about, "type": "describes",
-                      "confidence": float(note.get("confidence", 0.5)), "track": "llm",
-                      "evidence": None})
+    # ── AI 레이어 ──
+    if os.environ.get("XD_KG_VISUAL") == "1":
+        # 멀티모달 비전 패스(도면 이미지+텍스트 심층 분석). 큐레이트 온톨로지와 분리 레이어.
+        _visual_pass(project, sheets, equipment, nodes, edges, add)
+    else:
+        # 8002 /analyze → relates_to·note (메타/공존 트랙).
+        tag_to_eq = {_norm(e.get("tag", "")): f"eq:{e['equipment_id']}" for e in equipment if e.get("tag")}
+        ai = _call_analyze(equipment, sheets)
+        for r in ai.get("relations", []):
+            s_id = tag_to_eq.get(_norm(r.get("src_tag", "")))
+            d_id = tag_to_eq.get(_norm(r.get("dst_tag", "")))
+            if s_id and d_id and s_id != d_id:  # 무결성: 양끝이 설비 노드여야.
+                edges.append({"src": s_id, "dst": d_id, "type": "relates_to",
+                              "confidence": float(r.get("confidence", 0.5)), "track": "llm",
+                              "evidence": r.get("evidence")})
+        for i, note in enumerate(ai.get("notes", [])):
+            about = tag_to_eq.get(_norm(note.get("about_tag", "")))
+            if not about:
+                continue
+            # 결정적 note id — 내용 기반 content hash(프로세스 간 안정, 시계·난수 없음).
+            _h = hashlib.sha256(f"{note.get('about_tag','')}|{note.get('text','')}".encode("utf-8")).hexdigest()[:16]
+            nid = f"nt:{_h}"
+            add({"id": nid, "type": "note", "ref_id": None, "label": (note.get("text") or "")[:40],
+                 "props": {"text": note.get("text", ""), "confidence": float(note.get("confidence", 0.5))}})
+            edges.append({"src": nid, "dst": about, "type": "describes",
+                          "confidence": float(note.get("confidence", 0.5)), "track": "llm",
+                          "evidence": None})
 
     g = {"nodes": list(nodes.values()), "edges": edges, "built_at": built_at}
     problems = kg_store.check_integrity(g)

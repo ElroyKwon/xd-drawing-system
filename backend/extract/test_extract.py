@@ -90,6 +90,33 @@ def test_extract_endpoint_merges_rule_and_llm():
     assert body["extractor"]["llm_model"] == "mock"
 
 
+def test_loads_lenient_strips_fences_and_prose():
+    from provider import _loads_lenient
+    assert _loads_lenient('```json\n{"a": 1}\n```') == {"a": 1}
+    assert _loads_lenient('앞 설명\n{"x": [1, 2]}\n뒤 잡문') == {"x": [1, 2]}
+    assert _loads_lenient("완전 비정형") == {}
+    assert _loads_lenient("") == {}
+
+
+def test_mock_analyze_visual_is_egress_zero():
+    """mock 은 멀티모달이라도 egress 0 → 빈 결과(실 LLM 트랙만 채운다)."""
+    out = MockExtractProvider().analyze_visual("VCB-1 TR-A1 도면 텍스트", "FAKEB64", [{"tag": "VCB-1"}])
+    assert out == {"equipment": [], "relations": [], "notes": []}
+
+
+def test_analyze_sheet_endpoint_mock_returns_empty(monkeypatch, tmp_path):
+    """/analyze_sheet: mock provider 면 PDF 안 읽어도(또는 못 읽어도) egress 0 빈 결과·200."""
+    # _read_pdf 를 스텁(실 PDF·fitz 불필요) — 계약만 검증.
+    import main_extract
+    monkeypatch.setattr(main_extract, "_read_pdf", lambda p, z: ("텍스트", None))
+    r = client.post("/analyze_sheet", json={"pdf_path": str(tmp_path / "x.pdf"),
+                                             "equipment": [{"tag": "VCB-1"}]})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["equipment"] == [] and body["relations"] == [] and body["notes"] == []
+    assert body["analyzer"]["llm_model"] == "mock"
+
+
 def test_analyze_mock_equipment_cooccurrence():
     """설비 appears_on 공존 → relates_to(설비 tag). 시트태그가 아니라 설비 sheet_ids 가 소스."""
     body = {"equipment": [

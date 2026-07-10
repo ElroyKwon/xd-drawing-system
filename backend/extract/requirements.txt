@@ -5,3 +5,4 @@ uvicorn
 httpx
 pydantic
 openai  # OpenAIExtractProvider(HUMAN_GATE-7) 에서만 lazy import
+pymupdf>=1.26.0  # /analyze_sheet 멀티모달: PDF 텍스트 추출 + 페이지 이미지 렌더(lazy import)

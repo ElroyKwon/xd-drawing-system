@@ -43,6 +43,28 @@ class AnalyzeRequest(BaseModel):
     sheets: list[dict] = []
 
 
+class SheetAnalyzeRequest(BaseModel):
+    pdf_path: str
+    equipment: list[dict] = []
+    render_zoom: float = 2.2
+
+
+def _read_pdf(path: str, zoom: float) -> tuple[str, str | None]:
+    """fitz(pymupdf)로 1페이지 전체 텍스트 + 페이지 렌더 PNG(base64). 실패/미설치 시 (text, None)."""
+    import base64
+    try:
+        import fitz  # lazy — ai/.venv 전용
+    except ImportError:
+        return "", None
+    doc = fitz.open(path)
+    page = doc[0]
+    text = page.get_text()
+    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+    b64 = base64.b64encode(pix.tobytes("png")).decode()
+    doc.close()
+    return text, b64
+
+
 @app.get("/health")
 def health() -> dict:
     prov = make_extract_provider()
@@ -85,4 +107,23 @@ def analyze(req: AnalyzeRequest) -> dict:
         "relations": out.get("relations", []),
         "notes": out.get("notes", []),
         "analyzer": {"llm_model": provider.name},
+    }
+
+
+@app.post("/analyze_sheet")
+def analyze_sheet(req: SheetAnalyzeRequest) -> dict:
+    """멀티모달 단선결선도 심층 분석 — 시트 PDF 1장에서 텍스트+이미지를 gpt 에 함께.
+
+    HUMAN_GATE-7(대량 egress + 실 고객 도면 이미지 전송). mock 이면 egress 0(빈 결과).
+    사이드카가 pdf_path 를 직접 읽는다(격리 유지: backend import 0, 파일 읽기만).
+    """
+    provider = make_extract_provider()
+    full_text, image_b64 = _read_pdf(req.pdf_path, req.render_zoom)
+    out = provider.analyze_visual(full_text, image_b64, req.equipment)
+    return {
+        "equipment": out.get("equipment", []),
+        "relations": out.get("relations", []),
+        "notes": out.get("notes", []),
+        "analyzer": {"llm_model": provider.name, "has_image": image_b64 is not None,
+                     "text_len": len(full_text)},
     }
