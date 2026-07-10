@@ -3,9 +3,14 @@ import os
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BACKEND_DIR.parent
 # 기본은 backend/uploads. 격리 테스트/데모는 XD_UPLOADS_DIR로 별도 디렉터리 지정(실 데이터 격리).
 UPLOADS_DIR = Path(os.environ.get("XD_UPLOADS_DIR", str(BACKEND_DIR / "uploads")))
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# 프론트 정적 빌드(dist). 단일 오리진 배포(설치형 exe) 시 백엔드가 직접 서빙.
+# 없으면 미마운트 — 개발은 Vite dev 서버(5173)가 별도로 뜬다.
+FRONTEND_DIST = Path(os.environ.get("XD_FRONTEND_DIST", str(REPO_ROOT / "dist")))
 
 # ODA File Converter (DWG→DXF). 설치 경로.
 ODA_EXE = os.environ.get(

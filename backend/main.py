@@ -73,3 +73,10 @@ async def health():
         "oda_available": os.path.exists(config.ODA_EXE),
         "uploads_dir": str(config.UPLOADS_DIR),
     }
+
+
+# 단일 오리진 배포(설치형 exe): 프론트 정적 빌드(dist)를 루트에 서빙한다.
+# 반드시 마지막에 마운트 — /api·/health·/files 라우트가 먼저 등록돼 우선 매칭되고,
+# 그 외 경로(/, /assets/*)만 이 SPA 정적 서빙이 받는다. dist 없으면(개발) 미마운트.
+if config.FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=str(config.FRONTEND_DIST), html=True), name="frontend")
