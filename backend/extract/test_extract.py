@@ -90,19 +90,20 @@ def test_extract_endpoint_merges_rule_and_llm():
     assert body["extractor"]["llm_model"] == "mock"
 
 
-def test_analyze_mock_cooccurrence_relations():
-    from main_extract import app
-    from fastapi.testclient import TestClient
-    c = TestClient(app)
-    body = {
-        "equipment": [{"tag": "MTR-1", "type": "motor"}, {"tag": "VCB-1", "type": "breaker"}],
-        "sheets": [{"sheet_id": "s1", "tags": [{"tag": "MTR-1"}, {"tag": "VCB-1"}], "text_excerpt": "VCB-1 feeds MTR-1"}],
-    }
-    r = c.post("/analyze", json=body)
+def test_analyze_mock_equipment_cooccurrence():
+    """설비 appears_on 공존 → relates_to(설비 tag). 시트태그가 아니라 설비 sheet_ids 가 소스."""
+    body = {"equipment": [
+        {"tag": "VCB-1", "type": "VCB", "sheet_ids": ["s1", "s2"]},
+        {"tag": "TR-1", "type": "TR", "sheet_ids": ["s1"]},
+        {"tag": "MTR-9", "type": "MTR", "sheet_ids": ["s9"]},  # 고립(공존 없음)
+    ], "sheets": []}
+    r = client.post("/analyze", json=body)
     assert r.status_code == 200
     data = r.json()
     pairs = {(x["src_tag"], x["dst_tag"]) for x in data["relations"]}
-    # 같은 시트 공출현 → 무방향 관계 1개(정렬된 튜플로 결정적).
-    assert ("MTR-1", "VCB-1") in pairs or ("VCB-1", "MTR-1") in pairs
+    assert ("TR-1", "VCB-1") in pairs          # s1 공존, 무방향 정렬(TR-1 < VCB-1)
+    assert not any("MTR-9" in p for p in pairs)  # 고립 설비는 관계 없음
     assert all(x["relation"] == "relates_to" for x in data["relations"])
-    assert all(0.0 <= x["confidence"] <= 1.0 for x in data["relations"])
+    assert all(x["confidence"] < 0.7 for x in data["relations"])  # 항상 미검증(CAP<0.7)
+    # 반환 식별자는 설비 tag(build tag_to_eq 와 동일 어휘)여야 매핑 성공.
+    assert all(x["src_tag"] and x["dst_tag"] for x in data["relations"])

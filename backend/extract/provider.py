@@ -31,6 +31,11 @@ _STOP = {"THE", "AND", "FOR", "PANEL", "BOARD", "DWG", "REV", "SHEET", "NO",
 # O9 정직성 임계값(<0.7=미검증)과 정합: rule 사전확정(0.92)과 병합되면 max로 상승.
 _MOCK_CONF = 0.65
 
+# 설비 공존 관계(Stage 1) 파라미터 — FROZEN 스펙 2026-07-10 §4.
+_MAX_EQ_PER_SHEET = 12   # 시트당 설비 상한(폭발 가드, 현 데이터 무발동)
+_MIN_SHARED_SHEETS = 1   # 최소 공유 시트(1=후보 주도, 큐레이트 위임)
+_CO_BASE, _CO_STEP, _CO_CAP = 0.3, 0.1, 0.65  # confidence: 공유 수 스케일, CAP<0.7(항상 미검증)
+
 
 class ExtractProviderError(Exception):
     """provider 구성/호출 실패."""
@@ -75,20 +80,44 @@ class MockExtractProvider(ExtractProvider):
         return {"llm_tags": llm_tags, "summary": summary}
 
     def analyze(self, equipment: list, sheets: list) -> dict:
-        """결정적 공출현 관계(egress 0). 같은 시트에 함께 나온 설비쌍 → relates_to.
-        실 LLM 없이도 그래프를 채워 시각화·테스트가 되게 하는 오프라인 기본값.
-        `equipment` 는 무시한다(관계는 시트 공출현에서만 유도) — 공유 시그니처 유지용."""
-        pair_sheets: dict = {}
-        for s in sheets:
-            tags = sorted({t.get("tag", "") for t in (s.get("tags") or []) if t.get("tag")})
-            for i in range(len(tags)):
-                for j in range(i + 1, len(tags)):
-                    pair_sheets.setdefault((tags[i], tags[j]), []).append(s.get("sheet_id"))
-        relations = [{
-            "src_tag": a, "dst_tag": b, "relation": "relates_to",
-            "confidence": round(min(0.3 + 0.2 * len(sids), 0.7), 2),
-            "evidence": f"같은 시트 공출현: {', '.join(str(x) for x in sids[:3])}",
-        } for (a, b), sids in sorted(pair_sheets.items())]
+        """설비 appears_on 공존 관계(egress 0). 같은 시트에 등장하는 설비쌍 → relates_to(track=llm 후보).
+
+        어휘 벽 우회: 반환 src_tag/dst_tag = **설비 tag**(build tag_to_eq 와 동일 어휘).
+        입력은 equipment[].sheet_ids(공존 소스). `sheets` 는 시그니처 유지용(Stage 1 미사용).
+        필터: 시트당 설비 > MAX 스킵 · 공유 시트 < MIN 드롭. confidence CAP<0.7(항상 미검증).
+        """
+        sheet_to_tags: dict = {}
+        for e in equipment:
+            tag = e.get("tag")
+            if not tag:
+                continue
+            for sid in (e.get("sheet_ids") or []):
+                sheet_to_tags.setdefault(sid, set()).add(tag)
+        pair_shared: dict = {}
+        skipped_sheets = 0
+        for sid, tags in sheet_to_tags.items():
+            if len(tags) > _MAX_EQ_PER_SHEET:
+                skipped_sheets += 1
+                continue
+            st = sorted(tags)
+            for i in range(len(st)):
+                for j in range(i + 1, len(st)):
+                    pair_shared[(st[i], st[j])] = pair_shared.get((st[i], st[j]), 0) + 1
+        relations = []
+        dropped = 0
+        for (a, b), shared in sorted(pair_shared.items()):
+            if shared < _MIN_SHARED_SHEETS:
+                dropped += 1
+                continue
+            conf = round(min(_CO_BASE + _CO_STEP * shared, _CO_CAP), 2)
+            relations.append({
+                "src_tag": a, "dst_tag": b, "relation": "relates_to",
+                "confidence": conf,
+                "evidence": f"설비 공존 시트 {shared}개",
+            })
+        # silent-cap 금지(스펙 §5): 규모를 로그로 명시.
+        logger.info("analyze(설비공존): 후보 %d · 스킵시트 %d · 드롭 %d",
+                    len(relations), skipped_sheets, dropped)
         return {"relations": relations, "notes": []}
 
 
