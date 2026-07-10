@@ -6,6 +6,8 @@ import {
   deleteIssue as apiDeleteIssue,
   listIssues,
   updateIssue,
+  getIssue,
+  addIssueComment,
   ISSUE_STATUS_TRANSITIONS,
   type Issue,
   type IssueStatus
@@ -47,6 +49,7 @@ export default function IssuesView({
   const [issues, setIssues] = useState<Issue[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState("");
 
   const load = useCallback(() => {
     listIssues(view === "deleted" ? { status: "삭제됨", projectName } : { projectName })
@@ -64,6 +67,23 @@ export default function IssuesView({
       setSelectedId(focusIssueId);
     }
   }, [focusIssueId, issues]);
+
+  // B1/B2: 이슈 선택 시 댓글·해결버전 전체를 단건 조회로 하이드레이트(목록 응답엔 없을 수 있음).
+  useEffect(() => {
+    setCommentText("");
+    if (!selectedId) return;
+    getIssue(selectedId)
+      .then((full) =>
+        setIssues((prev) =>
+          prev.map((i) =>
+            i.issue_id === selectedId
+              ? { ...i, comments: full.comments, resolution: full.resolution, sheet_key: full.sheet_key }
+              : i,
+          ),
+        ),
+      )
+      .catch(() => {});
+  }, [selectedId]);
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -115,6 +135,20 @@ export default function IssuesView({
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "상태 변경 실패");
+    }
+  }
+
+  // B1: 댓글 작성 — 뷰어 포함 모든 멤버 허용(canEdit 게이트 없음). 협력사/다른 담당자가 대응을 남긴다.
+  async function submitComment(id: string) {
+    const body = commentText.trim();
+    if (!body) return;
+    try {
+      const updated = await addIssueComment(id, body);
+      setIssues((prev) => prev.map((i) => (i.issue_id === id ? updated : i)));
+      setCommentText("");
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "댓글 작성 실패");
     }
   }
 
@@ -268,6 +302,47 @@ export default function IssuesView({
               ) : null}
 
               {selected.description ? <p className="issue-detail-desc">{selected.description}</p> : null}
+
+              {/* B2: 해결 버전 표시(설정은 후속 — 아래 리포트 참고). */}
+              {selected.resolution ? (
+                <p className="issue-resolution">
+                  해결 버전: {selected.resolution.note || "메모 없음"} (v{selected.resolution.version_no})
+                </p>
+              ) : null}
+
+              {/* B1: 댓글 스레드 + 입력(뷰어 포함 모든 멤버 허용). */}
+              <div className="issue-comments">
+                <h3>댓글</h3>
+                {selected.comments && selected.comments.length > 0 ? (
+                  <ul className="issue-comment-list">
+                    {selected.comments.map((c) => (
+                      <li key={c.comment_id} className="issue-comment">
+                        <span className="issue-comment-meta">
+                          {c.author_name} · {c.created_at.slice(0, 16).replace("T", " ")}
+                        </span>
+                        <span className="issue-comment-body">{c.body}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="issue-empty">아직 댓글이 없습니다.</p>
+                )}
+                <textarea
+                  className="issue-comment-input"
+                  aria-label="댓글 입력"
+                  placeholder="대응 내용을 남기세요"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="secondary-action"
+                  disabled={!commentText.trim()}
+                  onClick={() => submitComment(selected.issue_id)}
+                >
+                  댓글 남기기
+                </button>
+              </div>
 
               {selected.pin && selectedSheet && onOpenIssuePin ? (
                 <button

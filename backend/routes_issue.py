@@ -73,6 +73,11 @@ class IssuePatch(BaseModel):
     status: Optional[str] = None
     sheet_id: Optional[str] = None
     pin: Optional[IssuePin] = None
+    resolution: Optional[dict] = None     # B2: {file_id, version_no, note} | None(해제)
+
+
+class CommentCreate(BaseModel):
+    body: str                             # B1: 댓글 본문(뷰어 이상 작성 가능)
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +119,33 @@ def _require_pin_location(file_id: Optional[str], sheet_id: Optional[str], store
         raise HTTPException(404, f"시트 없음: {sheet_id}")
 
 
+def _resolve_sheet_key(file_id: Optional[str], sheet_id: Optional[str], store) -> Optional[str]:
+    """B3: (도면, 시트) 컨텍스트 → 버전을 가로지르는 영속 sheet_key. 발급(멱등).
+
+    version_set_id = row.version_set_id or file_id. 시트 라벨(sheet_number/index) 기준이라
+    개정본에서 sheet_id 가 재발급돼도 같은 시트는 같은 sheet_key 로 계승된다."""
+    if not file_id or not sheet_id:
+        return None
+    row = store.get_drawing(file_id)
+    if not row:
+        return None
+    sheet = next((s for s in (row.get("sheets") or []) if s.get("sheet_id") == sheet_id), None)
+    if sheet is None:
+        return None
+    project_name = row.get("project_name")
+    version_set_id = row.get("version_set_id") or file_id
+    sheet_number = sheet.get("sheet_number", "")
+    sheet_index = sheet.get("sheet_index", 0)
+    key = store.resolve_sheet_key(
+        project_name=project_name, version_set_id=version_set_id,
+        sheet_number=sheet_number, sheet_index=sheet_index)
+    if key is None:  # 미발급(색인 전) → 멱등 발급
+        key = store.issue_sheet_key(
+            project_name=project_name, version_set_id=version_set_id,
+            sheet_number=sheet_number, sheet_index=sheet_index)
+    return key
+
+
 # ---------------------------------------------------------------------------
 # 라우트
 # ---------------------------------------------------------------------------
@@ -121,11 +153,14 @@ def _require_pin_location(file_id: Optional[str], sheet_id: Optional[str], store
 @router.get("")
 async def list_issues(status: Optional[str] = None, file_id: Optional[str] = None,
                       sheet_id: Optional[str] = None, category: Optional[str] = None,
-                      project_name: Optional[str] = None):
-    """전역/파일/시트 스코프 목록. status 미지정 시 삭제됨 제외(열린+활성 이슈)."""
+                      project_name: Optional[str] = None, sheet_key: Optional[str] = None):
+    """전역/파일/시트 스코프 목록. status 미지정 시 삭제됨 제외(열린+활성 이슈).
+
+    sheet_key 스코프(B3): 버전을 가로지르는 시트 정체성으로 조회 — sheet_id 가 개정으로
+    재발급돼도 같은 시트의 이슈를 계속 반환한다."""
     store = get_store()
     rows = store.list_issues(file_id=file_id, sheet_id=sheet_id, status=status,
-                             category=category, project_name=project_name)
+                             category=category, project_name=project_name, sheet_key=sheet_key)
     if status is None:
         rows = [r for r in rows if r.get("status") != "삭제됨"]
     return rows
@@ -142,6 +177,16 @@ async def issue_categories(project_name: Optional[str] = None):
         if c in counts and r.get("status") in _OPEN_STATUSES:
             counts[c] += 1
     return counts
+
+
+@router.get("/{issue_id}")
+async def get_issue(issue_id: str):
+    """단건 조회(댓글 포함) — 상세 새로고침용. 댓글은 시간순(append-only 저장 순서)."""
+    store = get_store()
+    issue = store.get_issue(issue_id)
+    if not issue:
+        raise HTTPException(404, f"이슈 없음: {issue_id}")
+    return issue
 
 
 @router.post("")
@@ -163,11 +208,14 @@ async def create_issue(body: IssueCreate):
     if body.pin is not None:
         pin = _validate_pin(body.pin)
         _require_pin_location(body.file_id, body.sheet_id, store)
+    # B3: 도면+시트 컨텍스트가 있으면 버전 계승용 sheet_key 를 해석/발급해 이슈에 못박는다.
+    sheet_key = _resolve_sheet_key(body.file_id, body.sheet_id, store)
     now = datetime.now().isoformat()
     meta = {
         "issue_id": str(uuid.uuid4()),
         "file_id": body.file_id,
         "sheet_id": body.sheet_id,
+        "sheet_key": sheet_key,
         "title": body.title.strip(),
         "type": body.type,
         "status": body.status,
@@ -177,6 +225,7 @@ async def create_issue(body: IssueCreate):
         "description": body.description,
         "project_name": body.project_name,
         "pin": pin,
+        "comments": [],
         "created_at": now,
         "updated_at": now,
     }
@@ -213,6 +262,15 @@ async def patch_issue(issue_id: str, body: IssuePatch):
         _validate_category(fields["category"])
     if "pin" in fields and body.pin is not None:
         fields["pin"] = _validate_pin(body.pin)
+    # B2: 해결버전 링크. 명시 None(해제)도 반영해야 하므로 model_fields_set 로 감지
+    # (model_dump(exclude_none)은 None 을 떨궈 clear 를 못 함).
+    if "resolution" in body.model_fields_set:
+        res = body.resolution
+        if res is not None:
+            res_file_id = res.get("file_id")
+            if res_file_id and not store.get_drawing(res_file_id):
+                raise HTTPException(404, f"해결버전 도면 없음: {res_file_id}")
+        fields["resolution"] = res
     # 핀 위치 불변식: 결과 이슈가 핀을 가지면 file_id/sheet_id가 유효해야 한다
     # (create와 동일 — 부유 핀·존재하지 않는 시트로의 재배치 금지).
     result_pin = fields.get("pin", current.get("pin"))
@@ -230,6 +288,36 @@ async def patch_issue(issue_id: str, body: IssuePatch):
                 actor=store.get_current_user())
         except Exception:  # noqa: BLE001
             logger.exception("이슈 상태변경 알림 실패(무시)")
+    return updated
+
+
+@router.post("/{issue_id}/comments")
+async def add_comment(issue_id: str, body: CommentCreate):
+    """B1: 이슈 댓글/답글(append-only). 뷰어 이상(프로젝트 구성원 누구나) 작성 가능 —
+    협력사(뷰어)가 상태를 오염시키지 않고 현장 확인만 남기는 시나리오를 살린다."""
+    store = get_store()
+    require_role_for_issue(issue_id, "뷰어")   # 뷰어 이상(생성/변경=편집자와 별도)
+    text = (body.body or "").strip()
+    if not text:
+        raise HTTPException(400, "댓글 내용은 필수입니다")
+    uid = store.get_current_user()
+    member = store.get_member(uid) if uid else None
+    comment = {
+        "comment_id": str(uuid.uuid4()),
+        "author_id": uid,
+        "author_name": (member or {}).get("name") or "사용자",
+        "body": text,
+        "created_at": datetime.now().isoformat(),
+    }
+    updated = store.add_issue_comment(issue_id, comment)
+    if not updated:
+        raise HTTPException(404, f"이슈 없음: {issue_id}")
+    # B1: 댓글 알림(작성자 제외). 실패해도 댓글 성공 유지.
+    try:
+        notifications.notify_issue_event(
+            "commented", updated, updated.get("project_name") or "", actor=uid)
+    except Exception:  # noqa: BLE001
+        logger.exception("이슈 댓글 알림 실패(무시)")
     return updated
 
 

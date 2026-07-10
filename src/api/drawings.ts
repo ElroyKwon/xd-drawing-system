@@ -313,6 +313,8 @@ export async function deleteMeasurement(fileId: string, measurementId: string): 
 
 export type IssueStatus = "열림" | "진행중" | "답변됨" | "닫힘" | "삭제됨";
 export type IssuePin = { point: [number, number]; coord_space: "world" | "image" };
+export type IssueComment = { comment_id: string; author_id: string | null; author_name: string; body: string; created_at: string };
+export type IssueResolution = { file_id: string; version_no: string | number; note: string };
 
 export type Issue = {
   issue_id: string;
@@ -329,6 +331,9 @@ export type Issue = {
   pin: IssuePin | null;
   created_at: string;
   updated_at: string;
+  comments?: IssueComment[];
+  sheet_key?: string | null;
+  resolution?: IssueResolution | null;
 };
 
 /** ACC식 상태 전이(클라 가드 — 백엔드가 권위 검증). */
@@ -344,6 +349,7 @@ export type IssueFilters = {
   status?: IssueStatus;
   fileId?: string;
   sheetId?: string;
+  sheetKey?: string;
   category?: string;
   projectName?: string;
 };
@@ -353,10 +359,27 @@ export async function listIssues(filters: IssueFilters = {}): Promise<Issue[]> {
   if (filters.status) url.searchParams.set("status", filters.status);
   if (filters.fileId) url.searchParams.set("file_id", filters.fileId);
   if (filters.sheetId) url.searchParams.set("sheet_id", filters.sheetId);
+  if (filters.sheetKey) url.searchParams.set("sheet_key", filters.sheetKey);
   if (filters.category) url.searchParams.set("category", filters.category);
   if (filters.projectName) url.searchParams.set("project_name", filters.projectName);
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`이슈 조회 실패 (${res.status})`);
+  return res.json();
+}
+
+export async function getIssue(issueId: string): Promise<Issue> {
+  const res = await fetch(`${BACKEND_BASE}/api/issues/${issueId}`);
+  if (!res.ok) throw new Error(`이슈 조회 실패 (${res.status})`);
+  return res.json();
+}
+
+export async function addIssueComment(issueId: string, body: string): Promise<Issue> {
+  const res = await fetch(`${BACKEND_BASE}/api/issues/${issueId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error(`댓글 작성 실패 (${res.status}): ${await res.text()}`);
   return res.json();
 }
 
@@ -403,7 +426,7 @@ export async function createIssue(input: {
 
 export async function updateIssue(
   issueId: string,
-  patch: { title?: string; type?: string; category?: string; assignee?: string; description?: string; status?: IssueStatus; pin?: IssuePin },
+  patch: { title?: string; type?: string; category?: string; assignee?: string; description?: string; status?: IssueStatus; pin?: IssuePin; resolution?: IssueResolution | null },
 ): Promise<Issue> {
   const res = await fetch(`${BACKEND_BASE}/api/issues/${issueId}`, {
     method: "PATCH",

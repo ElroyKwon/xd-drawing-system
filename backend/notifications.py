@@ -14,7 +14,8 @@ from store import get_store
 
 logger = logging.getLogger(__name__)
 
-_TEMPLATES = {"created": "issue_created", "status_changed": "issue_status_changed"}
+_TEMPLATES = {"created": "issue_created", "status_changed": "issue_status_changed",
+              "commented": "issue_commented"}
 
 
 def enabled() -> bool:

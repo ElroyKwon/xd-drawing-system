@@ -167,13 +167,17 @@ class DrawingStore(ABC):
     @abstractmethod
     def list_issues(self, *, file_id: Optional[str] = None, sheet_id: Optional[str] = None,
                     status: Optional[str] = None, category: Optional[str] = None,
-                    project_name: Optional[str] = None) -> list: ...
+                    project_name: Optional[str] = None, sheet_key: Optional[str] = None) -> list: ...
 
     @abstractmethod
     def get_issue(self, issue_id: str) -> Optional[dict]: ...
 
     @abstractmethod
     def update_issue(self, issue_id: str, **fields) -> Optional[dict]: ...
+
+    @abstractmethod
+    def add_issue_comment(self, issue_id: str, comment: dict) -> Optional[dict]:
+        """B1: 이슈 comments에 append-only 추가(덮어쓰기 금지). 갱신 이슈 반환, 없으면 None."""
 
     @abstractmethod
     def delete_issue(self, issue_id: str) -> bool:
@@ -663,12 +667,14 @@ class JsonDrawingStore(DrawingStore):
             self._write_at(self._issues_path, data)
 
     def list_issues(self, *, file_id=None, sheet_id=None, status=None,
-                    category=None, project_name=None) -> list:
+                    category=None, project_name=None, sheet_key=None) -> list:
         rows = list(self._read_at(self._issues_path).values())
         if file_id is not None:
             rows = [r for r in rows if r.get("file_id") == file_id]
         if sheet_id is not None:
             rows = [r for r in rows if r.get("sheet_id") == sheet_id]
+        if sheet_key is not None:
+            rows = [r for r in rows if r.get("sheet_key") == sheet_key]
         if status is not None:
             rows = [r for r in rows if r.get("status") == status]
         if category is not None:
@@ -688,10 +694,25 @@ class JsonDrawingStore(DrawingStore):
             row = data.get(issue_id)
             if not row:
                 return None
-            # 스코프 키(file_id)는 불변. 핀(pin) 재배치는 허용.
+            # 스코프 키(file_id·sheet_key)는 불변. 핀(pin) 재배치는 허용.
             for k in ("title", "type", "status", "category", "assignee", "description", "pin", "sheet_id"):
                 if k in fields and fields[k] is not None:
                     row[k] = fields[k]
+            # B2: resolution 은 명시 None(해제)도 허용 — 위 루프의 None 필터를 우회.
+            if "resolution" in fields:
+                row["resolution"] = fields["resolution"]
+            row["updated_at"] = datetime.now().isoformat()
+            self._write_at(self._issues_path, data)
+            return row
+
+    def add_issue_comment(self, issue_id: str, comment: dict) -> Optional[dict]:
+        # B1: append-only. 기존 comments 를 덮어쓰지 않고 뒤에 쌓기만 한다.
+        with self._lock:
+            data = self._read_at(self._issues_path)
+            row = data.get(issue_id)
+            if not row:
+                return None
+            row.setdefault("comments", []).append(comment)
             row["updated_at"] = datetime.now().isoformat()
             self._write_at(self._issues_path, data)
             return row
@@ -1374,9 +1395,10 @@ class TypeDBDrawingStore(DrawingStore):
         _MIRROR.add_issue(meta)
 
     def list_issues(self, *, file_id=None, sheet_id=None, status=None,
-                    category=None, project_name=None) -> list:
+                    category=None, project_name=None, sheet_key=None) -> list:
         return _MIRROR.list_issues(file_id=file_id, sheet_id=sheet_id, status=status,
-                                   category=category, project_name=project_name)
+                                   category=category, project_name=project_name,
+                                   sheet_key=sheet_key)
 
     def get_issue(self, issue_id: str) -> Optional[dict]:
         return _MIRROR.get_issue(issue_id)
@@ -1396,6 +1418,10 @@ class TypeDBDrawingStore(DrawingStore):
             except Exception as e:  # noqa: BLE001
                 logger.error("typedb update_issue: %s", e)
         return _MIRROR.update_issue(issue_id, **fields)
+
+    def add_issue_comment(self, issue_id: str, comment: dict) -> Optional[dict]:
+        # B1: 댓글은 미러 권위(그래프 임베드 후속). append-only.
+        return _MIRROR.add_issue_comment(issue_id, comment)
 
     def delete_issue(self, issue_id: str) -> bool:
         return self.update_issue(issue_id, status="삭제됨") is not None

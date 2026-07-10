@@ -18,6 +18,11 @@ const globalIssue = {
   title: "구역명/장비 태그 식별 불명확", type: "설계 검토", category: "quality",
   created_at: "2026-06-29T02:00:00",
 };
+// B1/B2: 단건 조회는 댓글·해결버전을 실어 온다.
+const existingComment = {
+  comment_id: "c1", author_id: "u2", author_name: "협력사 담당",
+  body: "현장 재확인 완료, 도면 반영 예정", created_at: "2026-06-30T02:00:00",
+};
 
 vi.mock("../api/drawings", async (importActual) => {
   const actual = await importActual<typeof import("../api/drawings")>();
@@ -30,6 +35,15 @@ vi.mock("../api/drawings", async (importActual) => {
     updateIssue: vi.fn((id: string, patch: { status?: string }) =>
       Promise.resolve({ ...pinIssue, issue_id: id, status: patch.status ?? "열림" })),
     deleteIssue: vi.fn(() => Promise.resolve()),
+    getIssue: vi.fn((id: string) =>
+      Promise.resolve(id === "i1"
+        ? { ...pinIssue, comments: [existingComment], resolution: { file_id: "F", version_no: 2, note: "rev2 반영" } }
+        : { ...globalIssue, issue_id: id, comments: [] })),
+    addIssueComment: vi.fn((id: string, body: string) =>
+      Promise.resolve({
+        ...pinIssue, issue_id: id,
+        comments: [existingComment, { comment_id: "c2", author_id: "me", author_name: "나", body, created_at: "2026-06-30T03:00:00" }],
+      })),
   };
 });
 
@@ -103,6 +117,27 @@ describe("IssuesView (S5 이슈 영속)", () => {
     await user.click(screen.getByRole("button", { name: "삭제된 이슈" }));
     expect(api.listIssues).toHaveBeenCalledWith({ status: "삭제됨", projectName: "Study_Project" });
     expect(await screen.findByText("삭제된 이슈가 없습니다.")).toBeInTheDocument();
+  });
+
+  // B1: 댓글 스레드 — 선택 시 단건 조회로 하이드레이트되어 기존 댓글이 보인다.
+  it("hydrates and renders the comment thread for a selected issue", async () => {
+    const { user } = renderIssues();
+    await user.click(await screen.findByText(/현장 패널 번호와 도면 표기가 다름/));
+    expect(api.getIssue).toHaveBeenCalledWith("i1");
+    expect(await screen.findByText("현장 재확인 완료, 도면 반영 예정")).toBeInTheDocument();
+    // B2: 해결 버전도 함께 표시.
+    expect(screen.getByText(/해결 버전:/)).toBeInTheDocument();
+  });
+
+  // B1: 뷰어 포함 누구나 댓글 작성 → API 호출 + 새 댓글이 스레드에 노출.
+  it("posts a comment and shows it in the thread", async () => {
+    const { user } = renderIssues();
+    await user.click(await screen.findByText(/현장 패널 번호와 도면 표기가 다름/));
+    await screen.findByText("현장 재확인 완료, 도면 반영 예정");
+    await user.type(screen.getByLabelText("댓글 입력"), "확인했습니다, 승인합니다");
+    await user.click(screen.getByRole("button", { name: "댓글 남기기" }));
+    expect(api.addIssueComment).toHaveBeenCalledWith("i1", "확인했습니다, 승인합니다");
+    expect(await screen.findByText("확인했습니다, 승인합니다")).toBeInTheDocument();
   });
 
   // J7: 뷰어(canEdit=false)는 이슈 작성·상태 변경·삭제가 비활성/숨김. 조회·핀 딥링크는 유지.

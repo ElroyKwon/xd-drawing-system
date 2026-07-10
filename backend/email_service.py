@@ -39,6 +39,11 @@ _TEMPLATES = {
         "프로젝트 '{project}'의 이슈 상태가 변경되었습니다.\n\n"
         "제목: {issue_title}\n새 상태: {issue_status}\n\n앱에서 확인하세요.",
     ),
+    "issue_commented": (
+        "[XD] 새 댓글: {issue_title}",
+        "프로젝트 '{project}'의 이슈에 새 댓글이 등록되었습니다.\n\n"
+        "제목: {issue_title}\n\n앱에서 확인하세요.",
+    ),
 }
 
 
