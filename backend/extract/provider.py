@@ -138,9 +138,16 @@ class OpenAIExtractProvider(ExtractProvider):
         self._model = model or os.environ.get("XD_EXTRACT_MODEL", DEFAULT_MODEL)
 
     def _complete(self, prompt: str) -> str:
-        """실 LLM 호출 공통 경로 — 원문 텍스트만 반환. 호출 실패는 ExtractProviderError."""
+        """실 LLM 호출 공통 경로 — 원문 텍스트만 반환. 호출 실패는 ExtractProviderError.
+
+        XD_EXTRACT_EFFORT 설정 시 reasoning effort 주입(예: normal). 미설정이면 모델 기본.
+        """
         try:
-            resp = self._client.responses.create(model=self._model, input=prompt)
+            kwargs: dict = {"model": self._model, "input": prompt}
+            effort = os.environ.get("XD_EXTRACT_EFFORT")
+            if effort:
+                kwargs["reasoning"] = {"effort": effort}
+            resp = self._client.responses.create(**kwargs)
             return getattr(resp, "output_text", "") or "{}"
         except Exception as e:  # noqa: BLE001
             raise ExtractProviderError(f"OpenAI 호출 실패: {e}") from e
