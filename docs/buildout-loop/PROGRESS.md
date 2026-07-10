@@ -3,7 +3,33 @@
 > 매 재진입 시 `LOOP.md` → `PLAN.md` → 이 파일 순으로 읽고 이어받는다.
 > **★ 세션22는 `ROADMAP.md §0`(확정 방향)을 §1보다 먼저 읽는다.** 방향 표류 방지 SoT.
 
-## 세션30 (2026-07-09) — ⑥ write-back 구현 (relates_to 승격·거부) ⬅ 최신
+## 세션34 (2026-07-10) — 완료 판정 + 운영 협업 깊이 B1·B2·B3 구현 ✅ ⬅ 최신
+
+> 세션33 지시("발표자료 빼고 개발 완료 선언 가능한가")에 대한 **완료 판정 감사 + 갭 구현**. 기준선=**JSON store(TypeDB 제외)**. 완료 후 커밋·push.
+
+**판정: 발표자료·TypeDB 제외 시 R1 도면관리 개발 완료 선언 가능.** 단일 사용자 라이프사이클(S1~S15·P1/P2·메타그래프)은 이미 완료였고, 이번에 **다중 사용자 협업 깊이 3갭**을 채워 시나리오("A 이슈→다른 ID 대응→해결버전 연결→버전 추종")를 데이터로 닫음.
+
+- **감사(서브에이전트)**: 운영 시나리오 문서 vs 구현 대조 → 협업 깊이 3갭 확정(코드 검증). 단일 사용자 흐름은 전량 구현·test-backed.
+- **캔버스 결함 수정**: `src/test/setup.ts`에 `react-force-graph-2d` 전역 목킹 → App.test jsdom 캔버스 크래시 해소. vitest **138/1실패 → 141/141**.
+- **B1 이슈 댓글/답글 스레드**: `POST /api/issues/{id}/comments`(append-only)·`GET /api/issues/{id}`(단건). **뷰어 이상 허용**(canEdit 미게이팅) → 협력사/다른 담당자가 대응. author=요청시점 current_user 고정. "commented" 알림(mock outbox). 생성/상태변경/삭제는 편집자 유지.
+- **B2 이슈↔해결버전 연결**: 이슈 `resolution{file_id,version_no,note}`. PATCH 세팅+file_id 검증+명시 None clear. FE는 표시(설정 UI는 후속).
+- **B3 sheet_key 버전 승계**: create가 (file_id,sheet_id)→sheet_key 해석·저장. `list_issues(sheet_key=)` 필터. 소급 `scripts/backfill_issue_sheet_keys.py`(실데이터 9건, 멱등). sheet_key는 update 화이트리스트 밖(불변). **버전업(같은 version_set) 시 새 sheet_id가 동일 sheet_key로 해석 → 이슈가 최신 시트 추종**.
+- **FROZEN 스펙**: `docs/superpowers/specs/2026-07-10-collaboration-depth-b1b2b3-design.md`(Acceptance C1~C9).
+- **start.bat/stop.bat**(루트 신규): 3서버 각 창 기동 / 포트 8000·8001·5173 리스너 종료. stop.bat 실 종료 검증. (한글 .bat 파서 깨짐 → 영문 ASCII 확정.)
+
+### 검증(직접 재현)
+- backend pytest **231 passed·1 skip**(신규 `test_s5b_collaboration.py` 13, C1~C9 전항). vitest **141 passed**(신규 댓글 UI 2). `npm run build` GREEN(CSS 포함). `git diff --check` clean.
+- **라이브 e2e(API, JSON store)**: 뷰어(고객 열람자)→댓글 200 → 편집자(도면 검토자)→답글 200(스레드 2건) → resolution 저장 200(status=답변됨) → `list(sheet_key=)` 대상이슈 포함=True. **TypeDB 없이** 도면41·이슈11·메타그래프1717노드·온톨로지15종 서빙 확인.
+
+### 📦 버전업 백로그로 분리(사용자 지시)
+- **TypeDB 연동**(mirror + 온톨로지 적재 e2e + O13) — 별도 트랙 · **⑤ 서비스·툴 라우팅 인덱스**(스펙·코드 0, 원래 계약 밖) · **GATE-5**(실 이메일)·**GATE-6**(실 인증/SSO) · **외부 배포=설치/배포 가이드**(현재 부재) · **B2 해결버전 설정 UI**(백엔드·표시 완료, FE 세터만 미완).
+
+### ▶▶ 다음 세션(35) 진입점
+버전업 백로그 중 우선순위 선택(설치/배포 가이드 or TypeDB 연동 or ⑤ 라우팅). 진입=이 블록 + `_개발-브릿지.md` §2.
+
+---
+
+## 세션30 (2026-07-09) — ⑥ write-back 구현 (relates_to 승격·거부)
 
 **입력**: FROZEN 스펙 `specs/2026-07-09-kg-writeback-design.md`, 계획 `plans/2026-07-09-kg-writeback.md`.
 
