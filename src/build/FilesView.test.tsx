@@ -60,8 +60,23 @@ describe("FilesView (S3 파일/폴더 관리)", () => {
   });
 
   it("lists files with version and shows the placeholder markup/issue columns", async () => {
-    renderFiles();
+    const { container } = renderFiles();
     expect(await screen.findByText("plan.dwg")).toBeInTheDocument();
+    expect(within(screen.getByRole("table")).getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+      "",
+      "이름",
+      "설명",
+      "버전",
+      "공유 상태",
+      "마크업",
+      "이슈",
+      "크기",
+      "마지막 업데이트",
+      "최종 수정자",
+      "버전 추가자",
+      "",
+    ]);
+    expect(container.querySelectorAll(".files-table col")).toHaveLength(12);
     // 버전세트 표시 v2
     expect(screen.getByText("v2")).toBeInTheDocument();
     // 크기 포맷
@@ -93,6 +108,22 @@ describe("FilesView (S3 파일/폴더 관리)", () => {
     );
   });
 
+  it("shows a structured folder empty state without a zero-item pagination footer", async () => {
+    const { user } = renderFiles();
+    const tree = screen.getByRole("complementary", { name: "폴더" });
+    await screen.findByText("plan.dwg");
+    vi.mocked(api.listDrawings).mockResolvedValueOnce([]);
+
+    await user.click(await within(tree).findByRole("button", { name: "Bids" }));
+
+    const title = await screen.findByText("Bids 폴더가 비어 있습니다");
+    const emptyState = title.closest('[role="status"]');
+    expect(emptyState).not.toBeNull();
+    expect(within(emptyState as HTMLElement).getByText(/파일을 업로드하거나 새 폴더/)).toBeInTheDocument();
+    expect(screen.queryByText("0개 항목 표시 중")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("파일 페이지네이션")).not.toBeInTheDocument();
+  });
+
   it("opens the version history modal from the row menu", async () => {
     const { user } = renderFiles();
     await screen.findByText("plan.dwg");
@@ -102,6 +133,7 @@ describe("FilesView (S3 파일/폴더 관리)", () => {
     const dialog = await screen.findByRole("dialog", { name: /버전 이력/ });
     expect(within(dialog).getByText("v2 (최신)")).toBeInTheDocument();
     expect(within(dialog).getByText("v1")).toBeInTheDocument();
+    expect(dialog.querySelectorAll(".version-history-table col")).toHaveLength(6);
   });
 
   it("shows the file's own share status (not the selected folder's)", async () => {

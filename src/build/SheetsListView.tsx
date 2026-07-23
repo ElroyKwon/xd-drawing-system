@@ -54,6 +54,10 @@ export default function SheetsListView({
   );
   const rangeLabel =
     total === 0 ? "0개" : `총 ${total}개 중 ${start + 1}–${Math.min(start + SHEETS_PAGE_SIZE, total)}`;
+  const emptyDescription =
+    query.trim() || disciplineFilter !== "전체"
+      ? "검색어 또는 공종 필터를 변경해 다시 확인하세요."
+      : "파일 메뉴에서 도면을 업로드하거나 발행 세트를 만들어 시트를 등록하세요.";
 
   function toggleMenu(id: string) {
     setOpenMenuId((current) => (current === id ? null : id));
@@ -115,7 +119,7 @@ export default function SheetsListView({
         <p className="view-note">격자 보기는 다음 slice에서 확장됩니다. 현재는 목록으로 시트 메타데이터를 검토합니다.</p>
       ) : null}
 
-      <div className="table-scroll sheets-table-scroll">
+      <div className={`table-scroll sheets-table-scroll${total === 0 ? " is-empty" : ""}`}>
         <table className="project-table sheets-table">
           <thead>
             <tr>
@@ -123,7 +127,7 @@ export default function SheetsListView({
                 <input type="checkbox" name="all-sheets" aria-label="모든 시트 선택" />
               </th>
               <th scope="col">번호</th>
-              <th scope="col" aria-label="버전" />
+              <th scope="col">버전</th>
               <th scope="col">버전 세트</th>
               <th scope="col">공종</th>
               <th scope="col">태그</th>
@@ -143,8 +147,12 @@ export default function SheetsListView({
             ))}
             {sheets.length === 0 ? (
               <tr>
-                <td colSpan={8}>
-                  <div className="empty-state">{emptyMessage}</div>
+                <td colSpan={8} className="build-table-empty-cell">
+                  <div className="build-table-empty-state" role="status">
+                    <span className="build-table-empty-icon" aria-hidden="true"><List size={26} /></span>
+                    <strong>{emptyMessage}</strong>
+                    <span>{emptyDescription}</span>
+                  </div>
                 </td>
               </tr>
             ) : null}
@@ -152,28 +160,30 @@ export default function SheetsListView({
         </table>
       </div>
 
-      <div className="pagination sheets-pagination" aria-label="시트 페이지네이션">
-        <span>{rangeLabel}</span>
-        <div className="pager-buttons">
-          <button
-            type="button"
-            aria-label="이전 페이지"
-            disabled={currentPage <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            &lsaquo;
-          </button>
-          <span>{`${currentPage} / ${pageCount}`}</span>
-          <button
-            type="button"
-            aria-label="다음 페이지"
-            disabled={currentPage >= pageCount}
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-          >
-            &rsaquo;
-          </button>
+      {total > 0 ? (
+        <div className="pagination sheets-pagination" aria-label="시트 페이지네이션">
+          <span>{rangeLabel}</span>
+          <div className="pager-buttons">
+            <button
+              type="button"
+              aria-label="이전 페이지"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              &lsaquo;
+            </button>
+            <span>{`${currentPage} / ${pageCount}`}</span>
+            <button
+              type="button"
+              aria-label="다음 페이지"
+              disabled={currentPage >= pageCount}
+              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            >
+              &rsaquo;
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
@@ -218,8 +228,10 @@ function SheetRow({
         <span className="tag-link">{sheet.tag}</span>
       </td>
       <td>
-        <span className="updater-avatar">FP</span>
-        <span>{sheet.lastUpdatedBy}</span>
+        <div className="sheet-updater-cell">
+          <span className="updater-avatar">FP</span>
+          <span>{sheet.lastUpdatedBy}</span>
+        </div>
       </td>
       <td>
         <div className="row-menu-anchor">

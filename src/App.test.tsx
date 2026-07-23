@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -32,6 +32,22 @@ vi.mock("./api/drawings", async (importActual) => {
   };
 });
 
+vi.mock("./api/templates", () => ({
+  listTemplates: vi.fn(async () => []),
+  createTemplate: vi.fn(async ({ name, source = "blank", source_project = null }) => ({
+    template_id: `template-${name}`,
+    name,
+    access: "일반 액세스",
+    source,
+    source_project,
+    folders: [],
+    default_members: [],
+    created_by: "member-owner",
+    created_at: "2026-06-12T00:00:00",
+  })),
+  deleteTemplate: vi.fn(async () => undefined),
+}));
+
 // S7: 인증/구성원/프로젝트 API. getMe=개혁(관리자), 구성원은 project_name별 시드.
 vi.mock("./api/admin", () => {
   const MEMBERS = [
@@ -61,11 +77,15 @@ vi.mock("./api/admin", () => {
   };
 });
 
-function renderApp() {
-  return {
+function renderApp({ startAtProjects = true }: { startAtProjects?: boolean } = {}) {
+  const result = {
     user: userEvent.setup(),
     ...render(<App />)
   };
+  if (startAtProjects) {
+    fireEvent.click(screen.getByRole("tab", { name: /^프로젝트$/ }));
+  }
+  return result;
 }
 
 function projectRows() {
@@ -77,7 +97,6 @@ describe("initial setup project list and create modal", () => {
     renderApp();
 
     expect(screen.getByRole("tab", { name: "프로젝트", selected: true })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "My Home", selected: false })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 만들기" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("이름 또는 번호로 프로젝트 검색...")).toHaveAttribute("name", "project-search");
 
@@ -90,13 +109,34 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("2개 중 1-2개 표시 중")).toBeInTheDocument();
   });
 
-  it("renders only the three ACC hub tabs without a Hub settings tab", () => {
+  it("renders Hub views in the ERP sidebar without a separate My Home menu", () => {
     renderApp();
 
-    expect(screen.getByRole("tab", { name: "My Home" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "프로젝트" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "프로젝트 템플릿" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "허브 설정" })).not.toBeInTheDocument();
+    const sidebar = screen.getByRole("complementary", { name: "Hub Admin 사이드바" });
+    expect(within(sidebar).queryByRole("tab", { name: "My Home" })).not.toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Drawing System 대시보드로 이동" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("tab", { name: "프로젝트", selected: true })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("tab", { name: "프로젝트 템플릿" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("tab", { name: "메타그래프" })).toBeInTheDocument();
+    expect(within(sidebar).queryByRole("tab", { name: "허브 설정" })).not.toBeInTheDocument();
+  });
+
+  it("opens the user switcher as an anchored dropdown and closes it after selection", async () => {
+    const { user } = renderApp();
+    const trigger = screen.getByRole("button", { name: "사용자 메뉴" });
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const menu = screen.getByRole("menu", { name: "담당자 선택" });
+    expect(within(menu).getAllByRole("menuitemradio")).toHaveLength(4);
+    expect(within(menu).getByRole("menuitemradio", { name: /개혁 이/ })).toHaveAttribute("aria-checked", "true");
+
+    await user.click(within(menu).getByRole("menuitemradio", { name: /현장 담당자/ }));
+
+    await waitFor(() => expect(trigger).toHaveTextContent("현장 담당자"));
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("menu", { name: "담당자 선택" })).not.toBeInTheDocument();
   });
 
   it("opens the Hub-level project template screen with sample templates and a seeded hub template row", async () => {
@@ -110,6 +150,11 @@ describe("initial setup project list and create modal", () => {
     expect(screen.getByText("Owner Operator")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "허브 템플릿" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 템플릿 작성" })).toBeInTheDocument();
+    const hubTemplateTable = screen.getByRole("table", { name: "허브 템플릿 목록" });
+    expect(hubTemplateTable).toHaveClass("hub-template-table");
+    ["이름", "액세스", "작성 날짜"].forEach((column) => {
+      expect(within(hubTemplateTable).getByRole("columnheader", { name: column })).toBeInTheDocument();
+    });
     expect(screen.getByTestId("template-row")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "표준 프로젝트 템플릿 템플릿 열기" })).toBeInTheDocument();
   });
@@ -162,16 +207,21 @@ describe("initial setup project list and create modal", () => {
     expect(projectRows()).toHaveLength(2);
   });
 
-  it("shows My Home with the four ACC dashboard widgets and an actionable recent item", async () => {
-    const { user } = renderApp();
+  it("opens My Home by default and returns there when the product brand is clicked", async () => {
+    const { user } = renderApp({ startAtProjects: false });
 
-    await user.click(screen.getByRole("tab", { name: "My Home" }));
-
-    expect(screen.getByRole("tab", { name: "My Home", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My Home" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "My Home" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "나에게 할당됨" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 프로젝트" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "책갈피" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "최근에 본 항목" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /^프로젝트$/ }));
+    expect(screen.getByRole("button", { name: "프로젝트 만들기" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Drawing System 대시보드로 이동" }));
+    expect(screen.getByRole("heading", { name: "My Home" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "A001 열기" }));
 

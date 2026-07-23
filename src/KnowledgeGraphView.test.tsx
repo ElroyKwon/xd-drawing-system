@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act, within } from "@testing-library/react";
 
 // react-force-graph-2d 는 canvas 기반이라 jsdom 에서 렌더 불가 → 목킹하고, 전달된 props(onLinkClick 등)를
 // 캡처해 콜백을 직접 호출함으로써 write-back 상호작용을 검증한다.
@@ -32,7 +32,12 @@ describe("KnowledgeGraphView", () => {
   it("그래프를 불러와 노드 수·범례를 표시한다", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(twoNodeGraph());
     render(<KnowledgeGraphView projectName="P1" onBack={() => {}} />);
-    await waitFor(() => expect(screen.getByText(/노드 2/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("노드 2개, 엣지 1개")).toBeInTheDocument());
+    const nodeLegend = screen.getByRole("group", { name: "노드 유형" });
+    expect(within(nodeLegend).getByText("설비")).toBeInTheDocument();
+    expect(within(nodeLegend).getByText("시트")).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "그래프 조작 안내" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "전체보기" })).toBeInTheDocument();
   });
 
   it("projectName 전환 시 stale 그래프를 지우고 실패는 에러로 표시한다", async () => {
@@ -41,11 +46,11 @@ describe("KnowledgeGraphView", () => {
       .mockResolvedValueOnce(new Response("boom", { status: 500 }));
 
     const { rerender } = render(<KnowledgeGraphView projectName="P1" onBack={() => {}} />);
-    await waitFor(() => expect(screen.getByText(/노드 2/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("노드 2개, 엣지 1개")).toBeInTheDocument());
 
     rerender(<KnowledgeGraphView projectName="P2" onBack={() => {}} />);
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/불러오기 실패/));
-    expect(screen.queryByText(/노드 2/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("노드 2개, 엣지 1개")).not.toBeInTheDocument();
   });
 });
 
@@ -56,7 +61,7 @@ describe("KnowledgeGraphView edge write-back", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(llmGraph());
 
     render(<KnowledgeGraphView projectName="P1" onBack={() => {}} />);
-    await waitFor(() => expect(screen.getByText(/엣지 1/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("노드 2개, 엣지 1개")).toBeInTheDocument());
 
     // ForceGraph 목킹이 캡처한 onLinkClick 을 직접 호출(force-graph 는 source/target 을 노드 객체로 준다).
     const onLinkClick = fgState.props?.onLinkClick as (l: unknown) => void;

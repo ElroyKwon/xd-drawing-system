@@ -2,7 +2,7 @@
 // 노드 색=type, 엣지 track=curated 실선·llm 점선(미검증). 노드 드래그·휠 줌·팬 내장.
 // llm 엣지 클릭 → 확인(승격)/거부(숨김) write-back.
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info, Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { confirmEdge, fetchGraph, rejectEdge, type KgEdge, type KgGraph, type KgNode } from "./api/kg";
@@ -15,6 +15,16 @@ const TYPE_COLOR: Record<string, string> = {
   file: "#6b7280",
   tag: "#7c3aed",
   note: "#0891b2",
+};
+
+const TYPE_LABEL: Record<string, string> = {
+  equipment: "설비",
+  sheet: "시트",
+  issue: "이슈",
+  task: "작업",
+  file: "파일",
+  tag: "태그",
+  note: "노트",
 };
 
 type KnowledgeGraphViewProps = {
@@ -130,35 +140,59 @@ export default function KnowledgeGraphView({ projectName, onBack }: KnowledgeGra
           </div>
         </div>
         {graph && (
-          <span>
-            노드 {graph.nodes.length} · 엣지 {graph.edges.length}
-          </span>
+          <div className="kg-stats" aria-label={`노드 ${graph.nodes.length}개, 엣지 ${graph.edges.length}개`}>
+            <span>노드 <strong>{graph.nodes.length}</strong></span>
+            <span>엣지 <strong>{graph.edges.length}</strong></span>
+          </div>
         )}
       </header>
 
-      {error && <p role="alert">불러오기 실패: {error}</p>}
+      {error && <p className="kg-error" role="alert">불러오기 실패: {error}</p>}
 
-      <div className="kg-legend">
-        {Object.entries(TYPE_COLOR).map(([t, c]) => (
-          <span key={t} style={{ color: c }}>● {t}</span>
-        ))}
-        <span>— curated 실선 · llm 점선(미검증)</span>
-        <span style={{ marginLeft: "auto", color: "#6b7280" }}>
-          휠=확대/축소 · 드래그=이동 · 노드 드래그=재배치 · 클릭=상세
-        </span>
-        <button type="button" onClick={fitAll} style={{ marginLeft: 8 }}>전체보기</button>
+      <div className="kg-toolbar" aria-label="메타그래프 도구">
+        <div className="kg-toolbar-section" role="group" aria-label="노드 유형">
+          <span className="kg-toolbar-title">노드 유형</span>
+          <div className="kg-node-legend">
+            {Object.entries(TYPE_COLOR).map(([type, color]) => (
+              <span className="kg-legend-chip" key={type} title={type}>
+                <span className="kg-node-dot" style={{ backgroundColor: color }} aria-hidden="true" />
+                {TYPE_LABEL[type] ?? type}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="kg-toolbar-actions">
+          <div className="kg-edge-legend" role="group" aria-label="관계 유형">
+            <span className="kg-edge-kind">
+              <span className="kg-edge-line" aria-hidden="true" />
+              <span>검증 관계 <small>curated 실선</small></span>
+            </span>
+            <span className="kg-edge-kind">
+              <span className="kg-edge-line is-dashed" aria-hidden="true" />
+              <span>AI 제안 관계 <small>llm 점선 · 미검증</small></span>
+            </span>
+          </div>
+          <button className="secondary-action kg-fit-button" type="button" onClick={fitAll}>
+            <Maximize2 size={16} aria-hidden="true" />
+            전체보기
+          </button>
+        </div>
+      </div>
+
+      <div className="kg-guide" role="note" aria-label="그래프 조작 안내">
+        <Info size={16} aria-hidden="true" />
+        <strong>그래프 조작</strong>
+        <span><kbd>휠</kbd> 확대·축소</span>
+        <span><kbd>배경 드래그</kbd> 화면 이동</span>
+        <span><kbd>노드 드래그</kbd> 재배치</span>
+        <span><kbd>클릭</kbd> 상세 보기</span>
       </div>
 
       <div
         ref={wrapRef}
-        style={{
-          width: "100%",
-          height: dims.h,
-          border: "1px solid #e5e7eb",
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "#fafafa",
-        }}
+        className="kg-canvas"
+        style={{ height: dims.h }}
       >
         <ForceGraph2D
           ref={fgRef}

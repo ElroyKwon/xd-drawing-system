@@ -1,0 +1,23 @@
+{
+  "scope": "erp-dark-theme",
+  "iteration": "hub-template-column-readability",
+  "status": "passed",
+  "score": 94,
+  "passThreshold": 90,
+  "artifacts": {
+    "reference": [
+      ".omx/artifacts/visual-ralph/erp-dark-theme/reference-hub-template-columns-before.png"
+    ],
+    "final": [
+      ".omx/artifacts/visual-ralph/erp-dark-theme/final-hub-template-columns.png"
+    ],
+    "pixelDiff": ".omx/artifacts/visual-ralph/erp-dark-theme/pixel-diff-hub-template-columns.png"
+  },
+  "verdict": {
+    "nameColumnIsWidest": true,
+    "metadataColumnsAreBalanced": true,
+    "actionColumnIsCompact": true,
+    "longNamesStayOnOneLine": true,
+    "headersDoNotWrap": true
+  }
+}

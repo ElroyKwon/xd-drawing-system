@@ -71,6 +71,16 @@ describe("SheetsListView 페이지네이션 (S2.5)", () => {
     expect(screen.getByText("1 / 1")).toBeInTheDocument();
   });
 
+  it("빈 목록은 안내 상태만 표시하고 0개 페이지네이션은 숨긴다", () => {
+    renderList([], { emptyMessage: "아직 등록된 시트가 없습니다." });
+
+    const emptyState = screen.getByRole("status");
+    expect(emptyState).toHaveTextContent("아직 등록된 시트가 없습니다.");
+    expect(emptyState).toHaveTextContent("파일 메뉴에서 도면을 업로드");
+    expect(screen.queryByLabelText("시트 페이지네이션")).not.toBeInTheDocument();
+    expect(screen.queryByText("0개")).not.toBeInTheDocument();
+  });
+
   it("필터(disciplineFilter) 변경 시 1페이지로 리셋", async () => {
     const user = userEvent.setup();
     const { rerender } = renderList(makeSheets(68));

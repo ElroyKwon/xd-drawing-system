@@ -1,6 +1,7 @@
 import {
   Bookmark,
   CalendarDays,
+  Check,
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
@@ -8,10 +9,13 @@ import {
   FileText,
   Filter,
   Hammer,
+  LayoutTemplate,
   ListFilter,
   MapPin,
+  Network,
   Pencil,
   Plus,
+  FolderKanban,
   Search,
   Settings,
   Trash2,
@@ -157,7 +161,7 @@ export default function App() {
   const [nameError, setNameError] = useState(false);
   const [activeView, setActiveView] = useState<
     "my-home" | "projects" | "project-templates" | "project-admin" | "template-admin" | "build-sheets" | "knowledge-graph"
-  >("projects");
+  >("my-home");
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjects[0].id);
   const [selectedTemplateId, setSelectedTemplateId] = useState(seedHubTemplates[0].id);
   // S7: 로컬 모의 현재 사용자 + 백엔드 영속 프로젝트/구성원.
@@ -353,44 +357,40 @@ export default function App() {
     );
   }
 
-  return (
-    <main className="app-shell">
-      <BrandBar me={me} members={members} onSwitch={handleSwitchUser} />
+  const hubViewTitle =
+    activeView === "my-home"
+      ? "My Home"
+      : activeView === "project-templates"
+        ? "프로젝트 템플릿"
+        : activeView === "knowledge-graph"
+          ? "메타그래프"
+          : "프로젝트";
 
-      <section className="workspace">
-        <HubAdminBar />
+  const hubViewDescription =
+    activeView === "my-home"
+      ? "오늘 진행 중인 업무와 최근 활동을 확인합니다."
+      : activeView === "project-templates"
+        ? "반복 가능한 프로젝트 구성을 표준화합니다."
+        : activeView === "knowledge-graph"
+          ? "프로젝트 정보와 도면 지식의 연결 관계를 탐색합니다."
+          : "허브에 등록된 프로젝트와 접근 정보를 관리합니다.";
+
+  return (
+    <main className="app-shell hub-shell">
+      <HubSidebar activeView={activeView} onChange={setActiveView} />
+
+      <div className="hub-main">
+        <BrandBar title={hubViewTitle} me={me} members={members} onSwitch={handleSwitchUser} />
+
+        <section className="workspace hub-workspace">
 
         <div className="hero-row">
           <div>
-            <h1>{me?.member?.name ?? "사용자"} 님, 환영합니다.</h1>
-            <p>오늘 무엇을 하시겠습니까?</p>
+            <span className="page-kicker">Hub Admin</span>
+            <h1>{hubViewTitle}</h1>
+            <p>{hubViewDescription}</p>
           </div>
         </div>
-
-        <nav className="tabs" aria-label="허브 메뉴">
-          <button type="button" role="tab" aria-selected={activeView === "my-home"} onClick={() => setActiveView("my-home")}>
-            My Home
-          </button>
-          <button type="button" role="tab" aria-selected={activeView === "projects"} onClick={() => setActiveView("projects")}>
-            프로젝트
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeView === "project-templates"}
-            onClick={() => setActiveView("project-templates")}
-          >
-            프로젝트 템플릿
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeView === "knowledge-graph"}
-            onClick={() => setActiveView("knowledge-graph")}
-          >
-            메타그래프
-          </button>
-        </nav>
 
         {activeView === "my-home" ? (
           <MyHomeView onOpenProject={openProject} />
@@ -539,7 +539,8 @@ export default function App() {
             </div>
           </section>
         )}
-      </section>
+        </section>
+      </div>
 
       {isModalOpen ? (
         <ProjectCreateModal
@@ -555,7 +556,7 @@ export default function App() {
   );
 }
 
-function BrandBar({ me, members, onSwitch }: { me: Me | null; members: Member[]; onSwitch: (memberId: string) => void }) {
+function BrandBar({ title, me, members, onSwitch }: { title: string; me: Me | null; members: Member[]; onSwitch: (memberId: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -569,9 +570,10 @@ function BrandBar({ me, members, onSwitch }: { me: Me | null; members: Member[];
   const name = me?.member?.name ?? "사용자";
   return (
     <header className="brand-bar">
-      <div className="brand">
-        <span className="brand-mark">XD</span>
-        <span>Drawing System</span>
+      <div className="hub-breadcrumb" aria-label="현재 위치">
+        <span>홈</span>
+        <span aria-hidden="true">/</span>
+        <strong>{title}</strong>
       </div>
 
       <div className="brand-tools">
@@ -580,23 +582,34 @@ function BrandBar({ me, members, onSwitch }: { me: Me | null; members: Member[];
         </button>
         <div className="user-switch" ref={ref}>
           <button type="button" className="avatar" aria-label="사용자 메뉴" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((v) => !v)}>
-            {name} <ChevronDown size={14} />
+            {name}
+            <ChevronDown className={`account-caret${open ? " is-open" : ""}`} size={14} aria-hidden="true" />
           </button>
           {open ? (
-            <div className="user-switch-menu" role="menu">
-              <p className="user-switch-head">사용자 전환 (로컬 모의)</p>
-              {members.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={me?.member_id === m.id}
-                  className={me?.member_id === m.id ? "is-current" : ""}
-                  onClick={() => { onSwitch(m.id); setOpen(false); }}
-                >
-                  {m.name}
-                </button>
-              ))}
+            <div className="user-switch-menu" role="menu" aria-label="담당자 선택">
+              <div className="user-switch-head">
+                <strong>담당자 선택</strong>
+                <span>확인할 사용자 계정을 선택하세요.</span>
+              </div>
+              <div className="user-switch-options">
+                {members.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={me?.member_id === m.id}
+                    className={me?.member_id === m.id ? "is-current" : ""}
+                    onClick={() => { onSwitch(m.id); setOpen(false); }}
+                  >
+                    <span className="user-option-avatar" aria-hidden="true">{m.name.trim().slice(0, 1)}</span>
+                    <span className="user-option-copy">
+                      <strong>{m.name}</strong>
+                      <span>{m.email}</span>
+                    </span>
+                    {me?.member_id === m.id ? <Check className="user-option-check" size={16} aria-hidden="true" /> : null}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
@@ -605,16 +618,50 @@ function BrandBar({ me, members, onSwitch }: { me: Me | null; members: Member[];
   );
 }
 
-function HubAdminBar() {
+type HubNavigationView = "my-home" | "projects" | "project-templates" | "knowledge-graph";
+
+function HubSidebar({ activeView, onChange }: { activeView: string; onChange: (view: HubNavigationView) => void }) {
+  const items = [
+    { id: "projects", label: "프로젝트", icon: FolderKanban },
+    { id: "project-templates", label: "프로젝트 템플릿", icon: LayoutTemplate },
+    { id: "knowledge-graph", label: "메타그래프", icon: Network }
+  ] as const;
+
   return (
-    <div className="hub-admin-bar">
-      <div className="hub-label">
-        <span className="hub-icon" aria-hidden="true">
-          <Settings size={16} />
+    <aside className="hub-sidebar" aria-label="Hub Admin 사이드바">
+      <button
+        type="button"
+        className="hub-sidebar-brand"
+        aria-label="Drawing System 대시보드로 이동"
+        onClick={() => onChange("my-home")}
+      >
+        <img src="/ls-sauter-logo.png" alt="LS사우타" className="hub-brand-logo" />
+        <span className="hub-brand-product-lockup">
+          <span className="hub-brand-xd" aria-hidden="true">XD</span>
+          <span className="hub-brand-system">Drawing System</span>
         </span>
-        <span>Hub Admin</span>
+      </button>
+
+      <div className="hub-sidebar-section-label">Hub Admin</div>
+      <nav className="hub-side-nav" aria-label="허브 메뉴">
+        {items.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeView === id}
+            onClick={() => onChange(id)}
+          >
+            <Icon size={17} aria-hidden="true" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+      <div className="hub-sidebar-footer">
+        <Settings size={16} aria-hidden="true" />
+        <span>시스템 관리</span>
       </div>
-    </div>
+    </aside>
   );
 }
 
@@ -854,8 +901,14 @@ function ProjectTemplatesView({ hubTemplates, projects, onCreateTemplate, onUseT
             </p>
           </div>
         ) : (
-          <div className="table-scroll">
-            <table className="project-table">
+          <div className="table-scroll hub-template-table-scroll">
+            <table className="project-table hub-template-table" aria-label="허브 템플릿 목록">
+              <colgroup>
+                <col className="hub-template-col-name" />
+                <col className="hub-template-col-access" />
+                <col className="hub-template-col-created" />
+                <col className="hub-template-col-actions" />
+              </colgroup>
               <thead>
                 <tr>
                   <th scope="col">이름</th>

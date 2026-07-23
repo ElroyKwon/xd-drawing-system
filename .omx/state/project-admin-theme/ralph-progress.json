@@ -1,0 +1,31 @@
+{
+  "scope": "project-admin-theme",
+  "iteration": "project-admin-shell-alignment",
+  "status": "passed",
+  "score": 95,
+  "passThreshold": 90,
+  "reference": ".omx/artifacts/visual-ralph/erp-dark-theme/final-hub-projects.png",
+  "artifacts": {
+    "final": ".omx/artifacts/visual-ralph/project-admin-theme/final-project-admin-wide.png",
+    "responsive": ".omx/artifacts/visual-ralph/project-admin-theme/final-project-admin.png",
+    "overlay": ".omx/artifacts/visual-ralph/project-admin-theme/theme-overlay.png"
+  },
+  "verdict": {
+    "score": 95,
+    "verdict": "pass",
+    "category_match": {
+      "shell": true,
+      "navigation": true,
+      "surface_hierarchy": true,
+      "color_system": true,
+      "table_density": true,
+      "responsive_layout": true
+    },
+    "differences": [
+      "Project Admin uses a module-specific gear mark instead of the Hub XD product mark.",
+      "The selected-member inspector is shown as a right-side card on wide screens and stacks below the table at 1280px."
+    ],
+    "suggestions": [],
+    "reasoning": "The dark rail width, top context-bar height, card radius, borders, shadows, primary blue, typography hierarchy, and table treatment align with the approved Hub and Build theme. The remaining differences are intentional indicators of the Project Admin module and its detail workflow."
+  }
+}

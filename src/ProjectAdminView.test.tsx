@@ -76,6 +76,34 @@ describe("ProjectAdminView", () => {
     }
   });
 
+  it("renders section-specific tools instead of generic placeholder rows", async () => {
+    const { user } = renderProjectAdmin();
+
+    await user.click(screen.getByRole("button", { name: "회사" }));
+    expect(screen.getByRole("button", { name: "회사 추가" })).toBeInTheDocument();
+    expect(screen.getByRole("table")).toHaveTextContent("Delta Engineers");
+
+    await user.click(screen.getByRole("button", { name: "브리지" }));
+    expect(screen.getByRole("button", { name: "브리지 만들기" })).toBeInTheDocument();
+    expect(screen.getByText("아직 연결된 브리지가 없습니다")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "액티비티" }));
+    expect(screen.getByRole("textbox", { name: "활동 검색" })).toBeInTheDocument();
+    expect(screen.getByText("구성원 권한 확인")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "알림" }));
+    expect(screen.getByRole("button", { name: "알림 저장" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "시트 게시 알림" })).toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "위치" }));
+    expect(screen.getByRole("img", { name: "프로젝트 위치 미리보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "위치 저장" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "설정" }));
+    expect(screen.getByRole("button", { name: "변경사항 저장" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "프로젝트 시작 앱" })).toHaveValue("Build");
+  });
+
   it("shows the selected member in the right inspector", async () => {
     renderProjectAdmin();
     await loadedRows();

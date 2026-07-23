@@ -1,5 +1,5 @@
 import {
-  Boxes, ChevronDown, Download, Eye, Filter, Folder, FolderPlus, History, Loader2,
+  Boxes, ChevronDown, Download, Eye, Filter, Folder, FolderOpen, FolderPlus, History, Loader2,
   Maximize2, MonitorUp, MoreVertical, Pencil, Search, Share2, Trash2, Upload, UploadCloud, X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
@@ -426,8 +426,22 @@ export default function FilesView({
 
           {error ? <p className="upload-error" role="alert">{error}</p> : null}
 
-          <div className="table-scroll files-table-scroll">
+          <div className={`table-scroll files-table-scroll${totalRows === 0 ? " is-empty" : ""}`}>
             <table className="project-table files-table">
+              <colgroup>
+                <col className="files-col-select" />
+                <col className="files-col-name" />
+                <col className="files-col-description" />
+                <col className="files-col-version" />
+                <col className="files-col-share" />
+                <col className="files-col-markup" />
+                <col className="files-col-issues" />
+                <col className="files-col-size" />
+                <col className="files-col-updated" />
+                <col className="files-col-editor" />
+                <col className="files-col-version-author" />
+                <col className="files-col-actions" />
+              </colgroup>
               <thead>
                 <tr>
                   <th scope="col" aria-label="선택">
@@ -590,20 +604,53 @@ export default function FilesView({
                   );
                 })}
 
+                {totalRows === 0 && loading ? (
+                  <tr>
+                    <td colSpan={12} className="build-table-empty-cell">
+                      <div className="build-table-loading" role="status">
+                        <Loader2 size={18} className="spin" aria-hidden="true" />
+                        <span>폴더 내용을 불러오는 중...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+
                 {totalRows === 0 && !loading ? (
                   <tr>
-                    <td colSpan={12} className="files-empty">이 폴더에 항목이 없습니다. 파일을 업로드하거나 폴더를 만드세요.</td>
+                    <td colSpan={12} className="build-table-empty-cell">
+                      <div className="build-table-empty-state files-folder-empty-state" role="status">
+                        <span className="build-table-empty-icon" aria-hidden="true"><FolderOpen size={26} /></span>
+                        <strong>{currentFolder ? `${currentFolder.name} 폴더가 비어 있습니다` : "프로젝트 파일이 비어 있습니다"}</strong>
+                        <span>
+                          {canEdit
+                            ? "파일을 업로드하거나 새 폴더를 만들어 프로젝트 자료를 정리하세요."
+                            : "이 폴더에 등록된 파일이나 하위 폴더가 없습니다."}
+                        </span>
+                        {canEdit ? (
+                          <div className="build-table-empty-actions">
+                            <button className="primary-action" type="button" onClick={() => setIsUploadOpen(true)}>
+                              <Upload size={15} aria-hidden="true" />
+                              파일 업로드
+                            </button>
+                            <button className="secondary-action build-empty-secondary" type="button" onClick={() => setNewFolderOpen(true)}>
+                              <FolderPlus size={15} aria-hidden="true" />
+                              새 폴더
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
           </div>
 
-          <div className="pagination" aria-label="파일 페이지네이션">
-            <span>
-              {loading ? "불러오는 중..." : `${totalRows}개 항목 표시 중`}
-            </span>
-          </div>
+          {totalRows > 0 ? (
+            <div className="pagination files-pagination" aria-label="파일 페이지네이션">
+              <span>총 {totalRows}개 항목</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -666,34 +713,44 @@ function VersionHistoryModal({ drawing, versions, onClose }: { drawing: Drawing;
           </button>
         </header>
         <div className="modal-body">
-          <table className="project-table">
-            <thead>
-              <tr>
-                <th scope="col">버전</th>
-                <th scope="col">파일명</th>
-                <th scope="col">크기</th>
-                <th scope="col">업로드 일시</th>
-                <th scope="col">추가자</th>
-                <th scope="col">상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {versions.map((v) => (
-                <tr key={v.file_id}>
-                  <td>v{v.version_no ?? 1}{v.is_latest ? " (최신)" : ""}</td>
-                  <td>{v.filename}</td>
-                  <td>{formatSize(v.file_size)}</td>
-                  <td>{formatDate(v.upload_date)}</td>
-                  <td>{v.uploaded_by ?? "업로드"}</td>
-                  <td>
-                    <a href={downloadUrl(v.file_id)} download={v.filename}>
-                      <Download size={14} aria-hidden="true" /> 다운로드
-                    </a>
-                  </td>
+          <div className="table-scroll version-history-table-scroll">
+            <table className="project-table version-history-table">
+              <colgroup>
+                <col className="version-history-col-version" />
+                <col className="version-history-col-name" />
+                <col className="version-history-col-size" />
+                <col className="version-history-col-uploaded" />
+                <col className="version-history-col-author" />
+                <col className="version-history-col-status" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col">버전</th>
+                  <th scope="col">파일명</th>
+                  <th scope="col">크기</th>
+                  <th scope="col">업로드 일시</th>
+                  <th scope="col">추가자</th>
+                  <th scope="col">상태</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {versions.map((v) => (
+                  <tr key={v.file_id}>
+                    <td>v{v.version_no ?? 1}{v.is_latest ? " (최신)" : ""}</td>
+                    <td>{v.filename}</td>
+                    <td>{formatSize(v.file_size)}</td>
+                    <td>{formatDate(v.upload_date)}</td>
+                    <td>{v.uploaded_by ?? "업로드"}</td>
+                    <td>
+                      <a href={downloadUrl(v.file_id)} download={v.filename}>
+                        <Download size={14} aria-hidden="true" /> 다운로드
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

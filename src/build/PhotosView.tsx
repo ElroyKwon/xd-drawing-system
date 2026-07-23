@@ -158,8 +158,10 @@ export default function PhotosView({
       </div>
 
       {visible.length === 0 ? (
-        <div className="photo-empty">
-          <ImageIcon size={42} aria-hidden="true" />
+        <div className="photo-empty" role="status">
+          <span className="build-table-empty-icon" aria-hidden="true">
+            <ImageIcon size={24} />
+          </span>
           <strong>{photos.length === 0 ? "갤러리 비어 있음" : "조건에 맞는 사진이 없습니다."}</strong>
           <span>
             {photos.length === 0

@@ -229,12 +229,21 @@ export default function IssuesView({
           </div>
 
           {visible.length === 0 ? (
-            <div className="empty-state" role="status">
-              {view === "deleted"
-                ? "삭제된 이슈가 없습니다."
-                : view === "closed"
-                  ? "닫힌 이슈가 없습니다."
-                  : "열린 이슈가 없습니다. 이슈를 작성하거나 뷰어에서 핀을 추가하세요."}
+            <div className="empty-state list-empty-state" role="status">
+              <strong>
+                {view === "deleted"
+                  ? "삭제된 이슈가 없습니다."
+                  : view === "closed"
+                    ? "닫힌 이슈가 없습니다."
+                    : "열린 이슈가 없습니다."}
+              </strong>
+              <span>
+                {view === "deleted"
+                  ? "삭제된 이슈가 여기에 표시됩니다."
+                  : view === "closed"
+                    ? "완료 처리된 이슈가 여기에 표시됩니다."
+                    : "‘이슈 작성’을 누르거나 뷰어에서 핀을 추가하세요."}
+              </span>
             </div>
           ) : (
             visible.map((issue) => (

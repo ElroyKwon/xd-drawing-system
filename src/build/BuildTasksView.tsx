@@ -148,8 +148,13 @@ export default function BuildTasksView({
           </div>
 
           {visible.length === 0 ? (
-            <div className="empty-state" role="status">
-              {tasks.length === 0 ? "작업이 없습니다. 작업을 작성하세요." : "조건에 맞는 작업이 없습니다."}
+            <div className="empty-state list-empty-state" role="status">
+              <strong>{tasks.length === 0 ? "작업이 없습니다." : "조건에 맞는 작업이 없습니다."}</strong>
+              <span>
+                {tasks.length === 0
+                  ? "상단의 ‘작업 작성’에서 새 작업을 추가하세요."
+                  : "상태 필터나 검색어를 변경해 보세요."}
+              </span>
             </div>
           ) : (
             visible.map((task) => (

@@ -22,7 +22,7 @@ import {
   X,
   type LucideIcon
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useModalDismiss } from "./hooks/useModalDismiss";
 import {
   addProjectMember,
@@ -178,7 +178,9 @@ function ProjectMemberAdminView({
     <main className="admin-shell">
       <aside className="admin-rail" aria-label="Project Admin 메뉴">
         <div className="admin-product">
-          <Settings size={18} aria-hidden="true" />
+          <span className="admin-product-mark" aria-hidden="true">
+            <Settings size={17} />
+          </span>
           <span>Project Admin</span>
         </div>
         {adminSections.map((item) => {
@@ -197,7 +199,7 @@ function ProjectMemberAdminView({
         })}
       </aside>
 
-      <section className="admin-main">
+      <section className="admin-workspace">
         <header className="admin-topline">
           <div className="project-context-stack">
             <button className="ghost-action" type="button" onClick={onBackToProjects}>
@@ -210,87 +212,114 @@ function ProjectMemberAdminView({
           <span className="settings-scope-chip">프로젝트 관리</span>
         </header>
 
-        {activeSection === "구성원" ? (
-          <section className="admin-panel" aria-label="Project Admin 구성원 목록">
-            <div className="admin-heading">
-              <h1 id="member-access-title">구성원</h1>
-              <button
-                className="primary-action"
-                type="button"
-                onClick={openAddModal}
-                disabled={!canManage}
-                title={canManage ? undefined : "구성원 추가는 관리자만 가능합니다"}
-              >
-                구성원 추가
-              </button>
-            </div>
+        <div className="admin-content-grid">
+          <section className="admin-main">
+            {activeSection === "구성원" ? (
+              <section className="admin-panel" aria-label="Project Admin 구성원 목록">
+                <div className="admin-heading">
+                  <div>
+                    <span className="admin-page-kicker">Project access</span>
+                    <h1 id="member-access-title">구성원</h1>
+                  </div>
+                  <button
+                    className="primary-action"
+                    type="button"
+                    onClick={openAddModal}
+                    disabled={!canManage}
+                    title={canManage ? undefined : "구성원 추가는 관리자만 가능합니다"}
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                    <span>구성원 추가</span>
+                  </button>
+                </div>
 
-            <div className="admin-tools">
-              <button className="secondary-action admin-export" type="button">
-                <Download size={16} aria-hidden="true" />
-                <span>내보내기</span>
-              </button>
-              <label className="search-field admin-search">
-                <Search size={18} aria-hidden="true" />
-                <input
-                  aria-label="구성원 검색"
-                  name="project-member-search"
-                  placeholder="이름 또는 이메일로 구성원 검색..."
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              <button className="icon-button" type="button" aria-label="필터">
-                <Filter size={18} />
-              </button>
-            </div>
+                <div className="admin-tools">
+                  <button className="secondary-action admin-export" type="button">
+                    <Download size={16} aria-hidden="true" />
+                    <span>내보내기</span>
+                  </button>
+                  <label className="search-field admin-search">
+                    <Search size={18} aria-hidden="true" />
+                    <input
+                      aria-label="구성원 검색"
+                      name="project-member-search"
+                      placeholder="이름 또는 이메일로 구성원 검색..."
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                    />
+                  </label>
+                  <button className="icon-button" type="button" aria-label="필터">
+                    <Filter size={18} />
+                  </button>
+                </div>
 
-            <div className="table-scroll admin-table-scroll">
-              <table className="project-table admin-member-table">
-                <thead>
-                  <tr>
-                    <th scope="col">이름</th>
-                    <th scope="col">이메일</th>
-                    <th scope="col">전화</th>
-                    <th scope="col">상태</th>
-                    <th scope="col">역할</th>
-                    <th scope="col">추가된 일시</th>
-                    <th scope="col" aria-label="설정">
-                      <Settings size={18} />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((row) => (
-                    <tr
-                      key={row.memberId}
-                      data-testid="project-access-row"
-                      className={row.memberId === selectedRow?.memberId ? "selected-row" : undefined}
-                      onClick={() => setSelectedMemberId(row.memberId)}
-                    >
-                      <td>{row.name}</td>
-                      <td>{row.email}</td>
-                      <td>{row.phone}</td>
-                      <td>{row.status}</td>
-                      <td>{row.role}</td>
-                      <td>{row.addedAt}</td>
-                      <td />
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                <div className="table-scroll admin-table-scroll">
+                  <table className="project-table admin-member-table">
+                    <colgroup>
+                      <col className="admin-member-col-name" />
+                      <col className="admin-member-col-email" />
+                      <col className="admin-member-col-phone" />
+                      <col className="admin-member-col-status" />
+                      <col className="admin-member-col-role" />
+                      <col className="admin-member-col-date" />
+                      <col className="admin-member-col-action" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th scope="col">이름</th>
+                        <th scope="col">이메일</th>
+                        <th scope="col">전화</th>
+                        <th scope="col">상태</th>
+                        <th scope="col">역할</th>
+                        <th scope="col">추가된 일시</th>
+                        <th scope="col" aria-label="설정">
+                          <Settings size={17} />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRows.map((row) => (
+                        <tr
+                          key={row.memberId}
+                          data-testid="project-access-row"
+                          className={row.memberId === selectedRow?.memberId ? "selected-row" : undefined}
+                          onClick={() => setSelectedMemberId(row.memberId)}
+                        >
+                          <td>
+                            <span className="admin-member-identity">
+                              <span className="admin-member-mini-avatar" aria-hidden="true">{row.name.slice(0, 1)}</span>
+                              <strong>{row.name}</strong>
+                            </span>
+                          </td>
+                          <td>{row.email}</td>
+                          <td>{row.phone}</td>
+                          <td><span className="admin-status-badge">{row.status}</span></td>
+                          <td><span className="admin-role-badge">{row.role}</span></td>
+                          <td>{row.addedAt}</td>
+                          <td><ChevronRight size={16} aria-hidden="true" /></td>
+                        </tr>
+                      ))}
+                      {filteredRows.length === 0 ? (
+                        <tr>
+                          <td className="admin-table-empty" colSpan={7}>검색 조건에 맞는 구성원이 없습니다.</td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : (
+              <ProjectAdminSectionPanel activeSection={activeSection} />
+            )}
           </section>
-        ) : (
-          <ProjectAdminSectionPanel activeSection={activeSection} />
-        )}
-      </section>
 
-      {activeSection === "구성원" ? (
-        <MemberInspector row={selectedRow} canManage={canManage} onRoleChange={changeRole} />
-      ) : (
-        <AdminSectionInspector activeSection={activeSection} />
-      )}
+          {activeSection === "구성원" ? (
+            <MemberInspector row={selectedRow} canManage={canManage} onRoleChange={changeRole} />
+          ) : (
+            <AdminSectionInspector activeSection={activeSection} />
+          )}
+        </div>
+      </section>
 
       {isAddModalOpen ? (
         <AddMemberModal
@@ -307,58 +336,341 @@ function ProjectMemberAdminView({
 }
 
 function ProjectAdminSectionPanel({ activeSection }: { activeSection: Exclude<AdminSection, "구성원"> }) {
-  const sectionCopy: Record<Exclude<AdminSection, "구성원">, { lead: string; rows: string[] }> = {
-    회사: {
-      lead: "프로젝트 회사 관리",
-      rows: ["Delta Engineers", "Crystal Clear Glazing", "Forma Sample Contractor"]
-    },
-    브리지: {
-      lead: "프로젝트 브리지",
-      rows: ["수신 컨텐츠 없음", "송신 컨텐츠 없음", "공유 패키지 대기"]
-    },
-    액티비티: {
-      lead: "최근 Project Admin 활동",
-      rows: ["구성원 권한 확인", "프로젝트 설정 검토", "Build 기본 앱 확인"]
-    },
-    알림: {
-      lead: "프로젝트 알림 설정",
-      rows: ["구성원 변경", "시트 게시", "이슈 할당"]
-    },
-    위치: {
-      lead: "프로젝트 위치",
-      rows: ["주소 미지정", "시간대: 서울", "위치 계층 결정 보류"]
-    },
-    설정: {
-      lead: "Project 설정",
-      rows: ["프로젝트 이름", "기본 앱", "권한 정책"]
-    }
-  };
-  const copy = sectionCopy[activeSection];
+  if (activeSection === "회사") {
+    const companies = [
+      { name: "Delta Engineers", trade: "설계·엔지니어링", members: 8, access: "프로젝트 구성원", status: "활성" },
+      { name: "Crystal Clear Glazing", trade: "외장·유리", members: 4, access: "제한된 액세스", status: "활성" },
+      { name: "Forma Sample Contractor", trade: "종합 시공", members: 12, access: "프로젝트 구성원", status: "활성" }
+    ];
+    return (
+      <AdminSectionFrame
+        activeSection={activeSection}
+        kicker="Project directory"
+        description="프로젝트 회사 관리"
+        action={<button className="primary-action" type="button"><Plus size={16} /><span>회사 추가</span></button>}
+      >
+        <div className="admin-section-toolbar">
+          <label className="search-field">
+            <Search size={17} aria-hidden="true" />
+            <input aria-label="회사 검색" name="project-company-search" placeholder="회사명 또는 전문 분야 검색..." />
+          </label>
+          <button className="icon-button" type="button" aria-label="회사 필터"><Filter size={17} /></button>
+        </div>
+        <div className="table-scroll admin-section-table-scroll">
+          <table className="project-table admin-company-table">
+            <thead>
+              <tr>
+                <th scope="col">회사명</th>
+                <th scope="col">전문 분야</th>
+                <th scope="col">구성원</th>
+                <th scope="col">액세스</th>
+                <th scope="col">상태</th>
+                <th scope="col" aria-label="작업" />
+              </tr>
+            </thead>
+            <tbody>
+              {companies.map((company) => (
+                <tr key={company.name}>
+                  <td>
+                    <span className="admin-company-identity">
+                      <span className="admin-company-mark" aria-hidden="true"><Building2 size={16} /></span>
+                      <strong>{company.name}</strong>
+                    </span>
+                  </td>
+                  <td>{company.trade}</td>
+                  <td>{company.members}명</td>
+                  <td><span className="admin-role-badge">{company.access}</span></td>
+                  <td><span className="admin-status-badge">{company.status}</span></td>
+                  <td><button className="table-icon" type="button" aria-label={`${company.name} 메뉴`}><MoreVertical size={17} /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </AdminSectionFrame>
+    );
+  }
 
+  if (activeSection === "브리지") {
+    return (
+      <AdminSectionFrame
+        activeSection={activeSection}
+        kicker="Cross-project collaboration"
+        description="프로젝트 브리지"
+        action={<button className="primary-action" type="button"><Plus size={16} /><span>브리지 만들기</span></button>}
+      >
+        <div className="admin-metric-grid">
+          <AdminMetricCard label="연결된 프로젝트" value="0" note="현재 활성 연결 없음" />
+          <AdminMetricCard label="수신 자동화" value="0" note="수신 컨텐츠 없음" />
+          <AdminMetricCard label="송신 자동화" value="0" note="송신 컨텐츠 없음" />
+        </div>
+        <div className="admin-empty-feature">
+          <span className="admin-empty-icon" aria-hidden="true"><ArrowLeftRight size={28} /></span>
+          <strong>아직 연결된 브리지가 없습니다</strong>
+          <p>다른 프로젝트의 시트와 파일을 공유하면 중복 업로드 없이 최신 컨텐츠를 함께 사용할 수 있습니다.</p>
+          <button className="secondary-action admin-bordered-action" type="button">브리지 설정 알아보기</button>
+        </div>
+      </AdminSectionFrame>
+    );
+  }
+
+  if (activeSection === "액티비티") {
+    const activities = [
+      { title: "구성원 권한 확인", detail: "개혁 이 님이 도면 검토자의 역할을 확인했습니다.", time: "오늘 14:20" },
+      { title: "프로젝트 설정 검토", detail: "프로젝트 기본 정보와 액세스 정책을 검토했습니다.", time: "오늘 11:05" },
+      { title: "Build 기본 앱 확인", detail: "시트, 파일, 이슈 앱의 활성 상태를 확인했습니다.", time: "어제 16:42" }
+    ];
+    return (
+      <AdminSectionFrame activeSection={activeSection} kicker="Audit trail" description="최근 Project Admin 활동">
+        <div className="admin-section-toolbar">
+          <label className="search-field">
+            <Search size={17} aria-hidden="true" />
+            <input aria-label="활동 검색" name="project-activity-search" placeholder="사용자 또는 활동 검색..." />
+          </label>
+          <button className="secondary-action admin-bordered-action" type="button"><Download size={16} />활동 내보내기</button>
+        </div>
+        <div className="admin-activity-list">
+          {activities.map((activity, index) => (
+            <article className="admin-activity-row" key={activity.title}>
+              <span className="admin-activity-icon" aria-hidden="true">{index === 0 ? <Users size={17} /> : index === 1 ? <Settings size={17} /> : <HardHat size={17} />}</span>
+              <div>
+                <strong>{activity.title}</strong>
+                <p>{activity.detail}</p>
+              </div>
+              <time>{activity.time}</time>
+            </article>
+          ))}
+        </div>
+      </AdminSectionFrame>
+    );
+  }
+
+  if (activeSection === "알림") {
+    const notifications = [
+      { title: "구성원 변경", detail: "구성원 추가, 제거 또는 역할 변경 시 알림", enabled: true },
+      { title: "시트 게시", detail: "새 시트 버전 또는 시트 세트가 게시될 때 알림", enabled: true },
+      { title: "이슈 할당", detail: "나 또는 내 회사에 이슈가 할당될 때 알림", enabled: false }
+    ];
+    return (
+      <AdminSectionFrame
+        activeSection={activeSection}
+        kicker="Communication preferences"
+        description="프로젝트 알림 설정"
+        action={<button className="primary-action" type="button"><Check size={16} /><span>알림 저장</span></button>}
+      >
+        <div className="admin-settings-intro">
+          <Bell size={18} aria-hidden="true" />
+          <span>프로젝트 수준 알림은 개인 알림 설정보다 우선하지 않습니다.</span>
+        </div>
+        <div className="admin-preference-list">
+          {notifications.map((notification) => (
+            <label className="admin-preference-row" key={notification.title}>
+              <span>
+                <strong>{notification.title}</strong>
+                <small>{notification.detail}</small>
+              </span>
+              <input type="checkbox" defaultChecked={notification.enabled} aria-label={`${notification.title} 알림`} />
+            </label>
+          ))}
+        </div>
+        <div className="admin-form-row">
+          <div>
+            <strong>요약 메일</strong>
+            <small>선택한 주기로 프로젝트 활동을 요약하여 발송합니다.</small>
+          </div>
+          <select aria-label="요약 메일 주기" defaultValue="매일">
+            <option>즉시</option>
+            <option>매일</option>
+            <option>매주</option>
+          </select>
+        </div>
+      </AdminSectionFrame>
+    );
+  }
+
+  if (activeSection === "위치") {
+    return (
+      <AdminSectionFrame
+        activeSection={activeSection}
+        kicker="Project location"
+        description="프로젝트 위치"
+        action={<button className="primary-action" type="button"><Check size={16} /><span>위치 저장</span></button>}
+      >
+        <div className="admin-location-layout">
+          <div className="admin-location-form">
+            <label className="field">
+              <span>주소</span>
+              <input aria-label="프로젝트 주소" name="project-address" defaultValue="서울특별시 강서구 마곡중앙로 161-8" />
+            </label>
+            <div className="admin-form-columns">
+              <label className="field">
+                <span>도시</span>
+                <input aria-label="도시" name="project-city" defaultValue="서울" />
+              </label>
+              <label className="field">
+                <span>국가</span>
+                <select aria-label="국가" defaultValue="대한민국"><option>대한민국</option></select>
+              </label>
+            </div>
+            <label className="field">
+              <span>시간대</span>
+              <select aria-label="시간대" defaultValue="Asia/Seoul">
+                <option value="Asia/Seoul">Asia/Seoul (UTC+09:00)</option>
+              </select>
+            </label>
+          </div>
+          <div className="admin-map-preview" role="img" aria-label="프로젝트 위치 미리보기">
+            <span className="admin-map-grid" aria-hidden="true" />
+            <span className="admin-map-pin" aria-hidden="true"><MapPin size={24} /></span>
+            <div>
+              <strong>Study_Project</strong>
+              <span>서울특별시 강서구</span>
+            </div>
+          </div>
+        </div>
+      </AdminSectionFrame>
+    );
+  }
+
+  return (
+    <AdminSectionFrame
+      activeSection={activeSection}
+      kicker="Project configuration"
+      description="Project 설정"
+      action={<button className="primary-action" type="button"><Check size={16} /><span>변경사항 저장</span></button>}
+    >
+      <div className="admin-settings-groups">
+        <section className="admin-settings-card">
+          <div className="admin-settings-card-heading">
+            <span className="admin-settings-card-icon" aria-hidden="true"><Pencil size={17} /></span>
+            <div><strong>프로젝트 정보</strong><small>허브에 표시되는 프로젝트 기본 정보입니다.</small></div>
+          </div>
+          <div className="admin-form-columns">
+            <label className="field"><span>프로젝트 이름</span><input aria-label="설정 프로젝트 이름" defaultValue="Study_Project" /></label>
+            <label className="field"><span>프로젝트 번호</span><input aria-label="프로젝트 번호" placeholder="번호 없음" /></label>
+          </div>
+        </section>
+        <section className="admin-settings-card">
+          <div className="admin-settings-card-heading">
+            <span className="admin-settings-card-icon" aria-hidden="true"><HardHat size={17} /></span>
+            <div><strong>기본 앱</strong><small>프로젝트 구성원이 처음 진입할 작업 영역을 선택합니다.</small></div>
+          </div>
+          <label className="field"><span>시작 앱</span><select aria-label="프로젝트 시작 앱" defaultValue="Build"><option>Build</option><option>Project Admin</option></select></label>
+        </section>
+        <section className="admin-settings-card">
+          <div className="admin-settings-card-heading">
+            <span className="admin-settings-card-icon" aria-hidden="true"><Settings size={17} /></span>
+            <div><strong>권한 정책</strong><small>새 구성원에게 적용되는 기본 액세스 수준입니다.</small></div>
+          </div>
+          <label className="field"><span>기본 역할</span><select aria-label="기본 역할" defaultValue="뷰어"><option>관리자</option><option>편집자</option><option>뷰어</option></select></label>
+        </section>
+      </div>
+    </AdminSectionFrame>
+  );
+}
+
+function AdminSectionFrame({
+  activeSection,
+  kicker,
+  description,
+  action,
+  children
+}: {
+  activeSection: Exclude<AdminSection, "구성원">;
+  kicker: string;
+  description: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="admin-panel admin-section-shell" aria-labelledby={`project-admin-${activeSection}`}>
       <div className="admin-heading">
-        <h1 id={`project-admin-${activeSection}`}>{activeSection}</h1>
+        <div>
+          <span className="admin-page-kicker">{kicker}</span>
+          <h1 id={`project-admin-${activeSection}`}>{activeSection}</h1>
+          <p className="admin-section-lead">{description}</p>
+        </div>
+        {action}
       </div>
-      <p>{copy.lead}</p>
-      <div className="section-list">
-        {copy.rows.map((row) => (
-          <div className="section-list-row" key={row}>
-            <span>{row}</span>
-            <strong>로컬 shell</strong>
-          </div>
-        ))}
-      </div>
+      <div className="admin-section-content">{children}</div>
     </section>
   );
 }
 
+function AdminMetricCard({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <article className="admin-metric-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </article>
+  );
+}
+
 function AdminSectionInspector({ activeSection }: { activeSection: Exclude<AdminSection, "구성원"> }) {
+  const inspectorCopy = {
+    회사: {
+      kicker: "Project directory",
+      title: "회사 요약",
+      summary: "3개 회사",
+      rows: [["활성 회사", "3"], ["전체 구성원", "24명"], ["제한된 액세스", "1개 회사"]]
+    },
+    브리지: {
+      kicker: "Bridge status",
+      title: "연결 상태",
+      summary: "연결 대기",
+      rows: [["수신 프로젝트", "0"], ["송신 프로젝트", "0"], ["공유 패키지", "0"]]
+    },
+    액티비티: {
+      kicker: "Activity summary",
+      title: "최근 기록",
+      summary: "3개 활동",
+      rows: [["오늘", "2개"], ["이번 주", "3개"], ["내보내기", "사용 가능"]]
+    },
+    알림: {
+      kicker: "Notification status",
+      title: "알림 요약",
+      summary: "2개 활성",
+      rows: [["구성원 변경", "켜짐"], ["시트 게시", "켜짐"], ["이슈 할당", "꺼짐"]]
+    },
+    위치: {
+      kicker: "Location summary",
+      title: "위치 정보",
+      summary: "대한민국",
+      rows: [["도시", "서울"], ["시간대", "UTC+09:00"], ["좌표", "주소 기준"]]
+    },
+    설정: {
+      kicker: "Configuration",
+      title: "설정 요약",
+      summary: "Build",
+      rows: [["프로젝트 상태", "활성"], ["시작 앱", "Build"], ["기본 역할", "뷰어"]]
+    }
+  } satisfies Record<Exclude<AdminSection, "구성원">, { kicker: string; title: string; summary: string; rows: string[][] }>;
+  const detail = inspectorCopy[activeSection];
+  const DetailIcon = adminSectionIcons[activeSection];
+
   return (
     <aside className="admin-inspector" role="complementary" aria-label={`${activeSection} 상세`}>
-      <h2>{activeSection} 상세</h2>
-      <p>Project Admin 범위의 {activeSection} 화면입니다.</p>
-      <span className="status-pill">Project 레벨</span>
+      <div className="admin-inspector-label">{detail.kicker}</div>
+      <div className="admin-section-inspector-heading">
+        <span aria-hidden="true"><DetailIcon size={19} /></span>
+        <div>
+          <h2>{detail.title}</h2>
+          <strong>{detail.summary}</strong>
+        </div>
+      </div>
+      <dl className="admin-inspector-meta">
+        {detail.rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="admin-inspector-note">
+        <Info size={15} aria-hidden="true" />
+        <span>Project Admin 범위에서 관리되는 항목입니다.</span>
+      </div>
     </aside>
   );
 }
@@ -382,13 +694,30 @@ function MemberInspector({
 
   return (
     <aside className="admin-inspector" role="complementary" aria-label="구성원 상세">
-      <div className="member-avatar" aria-hidden="true">
-        {row.name.slice(0, 1)}
+      <div className="admin-inspector-label">선택한 구성원</div>
+      <div className="admin-inspector-profile">
+        <div className="member-avatar" aria-hidden="true">
+          {row.name.slice(0, 1)}
+        </div>
+        <div>
+          <h2>{row.name}</h2>
+          <span className="status-pill">{row.status}</span>
+        </div>
       </div>
-      <h2>{row.name}</h2>
-      <a href={`mailto:${row.email}`}>{row.email}</a>
-      <p>{row.phone}</p>
-      <span className="status-pill">{row.status}</span>
+      <dl className="admin-inspector-meta">
+        <div>
+          <dt>이메일</dt>
+          <dd><a href={`mailto:${row.email}`}>{row.email}</a></dd>
+        </div>
+        <div>
+          <dt>전화</dt>
+          <dd>{row.phone}</dd>
+        </div>
+        <div>
+          <dt>추가된 일시</dt>
+          <dd>{row.addedAt}</dd>
+        </div>
+      </dl>
       <div className="field select-field">
         <span>역할</span>
         <select
@@ -511,7 +840,9 @@ function TemplateAdminView({ templateName, onBackToProjects }: { templateName: s
     <main className="admin-shell template-admin">
       <aside className="admin-rail" aria-label="템플릿 관리 메뉴">
         <div className="admin-product">
-          <Settings size={18} aria-hidden="true" />
+          <span className="admin-product-mark" aria-hidden="true">
+            <Settings size={17} />
+          </span>
           <span>Project Admin</span>
         </div>
         {templateRailGroups.map((group) => (
@@ -535,7 +866,7 @@ function TemplateAdminView({ templateName, onBackToProjects }: { templateName: s
         ))}
       </aside>
 
-      <section className="admin-main">
+      <section className="admin-workspace">
         <header className="admin-topline">
           <div className="project-context-stack">
             <button className="ghost-action" type="button" onClick={onBackToProjects}>
@@ -548,17 +879,19 @@ function TemplateAdminView({ templateName, onBackToProjects }: { templateName: s
           <span className="settings-scope-chip">템플릿 관리</span>
         </header>
 
-        {activeSection === "구성" ? (
-          <TemplateConfigSection templateName={templateName} published={published} onTogglePublished={() => setPublished((value) => !value)} />
-        ) : activeSection === "템플릿 구성원" ? (
-          <TemplateMembersSection onAdd={() => setMemberModalOpen(true)} />
-        ) : activeSection === "프로젝트 구성원" ? (
-          <TemplateProjectMembersSection />
-        ) : activeSection === "회사" ? (
-          <TemplateCompaniesSection onAdd={() => setCompanyModalOpen(true)} />
-        ) : (
-          <TemplateNotificationsSection />
-        )}
+        <section className="admin-main admin-template-main">
+          {activeSection === "구성" ? (
+            <TemplateConfigSection templateName={templateName} published={published} onTogglePublished={() => setPublished((value) => !value)} />
+          ) : activeSection === "템플릿 구성원" ? (
+            <TemplateMembersSection onAdd={() => setMemberModalOpen(true)} />
+          ) : activeSection === "프로젝트 구성원" ? (
+            <TemplateProjectMembersSection />
+          ) : activeSection === "회사" ? (
+            <TemplateCompaniesSection onAdd={() => setCompanyModalOpen(true)} />
+          ) : (
+            <TemplateNotificationsSection />
+          )}
+        </section>
       </section>
 
       {memberModalOpen ? <TemplateAddModal title="템플릿 구성원 추가" onClose={() => setMemberModalOpen(false)} /> : null}

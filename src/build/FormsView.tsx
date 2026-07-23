@@ -153,8 +153,13 @@ export default function FormsView({
           </div>
 
           {visible.length === 0 ? (
-            <div className="empty-state" role="status">
-              {forms.length === 0 ? "양식이 없습니다. 양식을 작성하세요." : "조건에 맞는 양식이 없습니다."}
+            <div className="empty-state list-empty-state" role="status">
+              <strong>{forms.length === 0 ? "양식이 없습니다." : "조건에 맞는 양식이 없습니다."}</strong>
+              <span>
+                {forms.length === 0
+                  ? "상단의 ‘양식 작성’에서 새 양식을 추가하세요."
+                  : "상태 필터나 검색어를 변경해 보세요."}
+              </span>
             </div>
           ) : (
             visible.map((form) => (

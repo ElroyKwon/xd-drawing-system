@@ -91,7 +91,7 @@ describe("BuildSheetsView", () => {
     expect(screen.getByRole("heading", { name: "시트" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("시트 검색 및 필터")).toBeInTheDocument();
 
-    ["번호", "버전 세트", "공종", "태그", "최종 수정자"].forEach((column) => {
+    ["번호", "버전", "버전 세트", "공종", "태그", "최종 수정자"].forEach((column) => {
       expect(screen.getByRole("columnheader", { name: column })).toBeInTheDocument();
     });
 
@@ -184,15 +184,17 @@ describe("BuildSheetsView", () => {
 
     await user.click(screen.getByRole("button", { name: "구성원" }));
     expect(screen.getByRole("heading", { name: "Build 구성원" })).toBeInTheDocument();
-    expect(screen.getByText("프로젝트 작업 구성원")).toBeInTheDocument();
+    expect(screen.getByText("Study_Project에서 Build를 사용하는 구성원과 역할을 확인합니다.")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("이름 또는 이메일 검색")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "브리지" }));
     expect(screen.getByRole("heading", { name: "Build 브리지" })).toBeInTheDocument();
-    expect(screen.getByText("전송된 항목 없음")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("연결된 프로젝트가 없습니다");
 
     await user.click(screen.getByRole("button", { name: "설정" }));
     expect(screen.getByRole("heading", { name: "Build 설정" })).toBeInTheDocument();
-    expect(screen.getByText("프로젝트 작업 설정")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "번호 형식" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "변경사항 저장" })).toBeInTheDocument();
   });
 
   it("opens issues and shows the create issue modal affordance", async () => {

@@ -1,0 +1,32 @@
+{
+  "scope": "project-admin-sections",
+  "iteration": "section-interiors",
+  "status": "passed",
+  "score": 96,
+  "passThreshold": 90,
+  "reference": ".omx/artifacts/visual-ralph/project-admin-theme/final-project-admin-wide.png",
+  "artifacts": {
+    "companies": ".omx/artifacts/visual-ralph/project-admin-sections/final-companies.png",
+    "location": ".omx/artifacts/visual-ralph/project-admin-sections/final-location.png",
+    "settings": ".omx/artifacts/visual-ralph/project-admin-sections/final-settings.png",
+    "overlay": ".omx/artifacts/visual-ralph/project-admin-sections/theme-overlay.png"
+  },
+  "verdict": {
+    "score": 96,
+    "verdict": "pass",
+    "category_match": {
+      "shell": true,
+      "navigation": true,
+      "surface_hierarchy": true,
+      "color_system": true,
+      "section_specificity": true,
+      "responsive_layout": true
+    },
+    "differences": [
+      "Section bodies intentionally use different information patterns: table, metrics and empty state, timeline, preferences, location form, and configuration cards.",
+      "The location surface currently uses a deterministic local preview rather than a live external map."
+    ],
+    "suggestions": [],
+    "reasoning": "All six section interiors retain the approved dark rail, context bar, card radius, table density, typography, blue actions, and summary inspector while replacing the generic placeholder list with task-specific controls and states."
+  }
+}

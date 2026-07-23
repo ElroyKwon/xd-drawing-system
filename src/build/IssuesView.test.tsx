@@ -116,7 +116,10 @@ describe("IssuesView (S5 이슈 영속)", () => {
     await screen.findByText("구역명/장비 태그 식별 불명확");
     await user.click(screen.getByRole("button", { name: "삭제된 이슈" }));
     expect(api.listIssues).toHaveBeenCalledWith({ status: "삭제됨", projectName: "Study_Project" });
-    expect(await screen.findByText("삭제된 이슈가 없습니다.")).toBeInTheDocument();
+    const issueList = screen.getByRole("region", { name: "이슈 목록" });
+    const emptyState = await within(issueList).findByRole("status");
+    expect(emptyState).toHaveClass("list-empty-state");
+    expect(within(emptyState).getByText("삭제된 이슈가 없습니다.")).toBeInTheDocument();
   });
 
   // B1: 댓글 스레드 — 선택 시 단건 조회로 하이드레이트되어 기존 댓글이 보인다.
